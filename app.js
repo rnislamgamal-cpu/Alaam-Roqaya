@@ -8,6 +8,7 @@ const screen = $('#screen');
 const message = $('#message');
 const connection = $('#connection');
 const LETTERS = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789';
+const APP_VERSION = '3.0';
 const DRAW_ITEMS = [
   { name:'قطة', emoji:'🐱', choices:['🐱','🐶','🐰'] },
   { name:'شمس', emoji:'☀️', choices:['☀️','🌙','⭐'] },
@@ -20,7 +21,30 @@ const DRAW_ITEMS = [
   { name:'بالونة', emoji:'🎈', choices:['🎈','🎁','🎀'] },
   { name:'فراشة', emoji:'🦋', choices:['🦋','🐝','🐞'] },
   { name:'موزة', emoji:'🍌', choices:['🍌','🍎','🍐'] },
-  { name:'نجمة', emoji:'⭐', choices:['⭐','☀️','🌙'] }
+  { name:'نجمة', emoji:'⭐', choices:['⭐','☀️','🌙'] },
+  { name:'شجرة', emoji:'🌳', choices:['🌳','🌴','🌵'] },
+  { name:'أسد', emoji:'🦁', choices:['🦁','🐯','🐻'] },
+  { name:'قمر', emoji:'🌙', choices:['🌙','⭐','☀️'] },
+  { name:'فيل', emoji:'🐘', choices:['🐘','🦒','🦓'] },
+  { name:'دراجة', emoji:'🚲', choices:['🚲','🚗','🛵'] },
+  { name:'صاروخ', emoji:'🚀', choices:['🚀','✈️','🚂'] },
+  { name:'مظلة', emoji:'☂️', choices:['☂️','🎈','🌂'] },
+  { name:'مفتاح', emoji:'🔑', choices:['🔑','🔒','🗝️'] },
+  { name:'ساعة', emoji:'⏰', choices:['⏰','⌚','🕰️'] },
+  { name:'قارب', emoji:'⛵', choices:['⛵','🚗','🚀'] },
+  { name:'طائرة', emoji:'✈️', choices:['✈️','🚁','🚀'] },
+  { name:'سلحفاة', emoji:'🐢', choices:['🐢','🐸','🐠'] },
+  { name:'جمل', emoji:'🐪', choices:['🐪','🦒','🐘'] },
+  { name:'دب', emoji:'🐻', choices:['🐻','🐼','🦁'] },
+  { name:'نحلة', emoji:'🐝', choices:['🐝','🦋','🐞'] },
+  { name:'بطة', emoji:'🦆', choices:['🦆','🐥','🐧'] },
+  { name:'حذاء', emoji:'👟', choices:['👟','🧦','🧢'] },
+  { name:'كتاب', emoji:'📖', choices:['📖','📓','✏️'] },
+  { name:'كرسي', emoji:'🪑', choices:['🪑','🛋️','🛏️'] },
+  { name:'كعكة', emoji:'🎂', choices:['🎂','🍩','🍪'] },
+  { name:'موز', emoji:'🍌', choices:['🍌','🍐','🌽'] },
+  { name:'نظارة', emoji:'👓', choices:['👓','🕶️','🎩'] },
+  { name:'بالون', emoji:'🎈', choices:['🎈','🎁','🎀'] }
 ];
 const MEMORY_EMOJI = [
   '🐱','🐶','🐸','🦊','🐼','🐻','🐰','🦁','🐯','🐨','🐵','🐮','🐷','🐧','🐢',
@@ -29,7 +53,7 @@ const MEMORY_EMOJI = [
   '🚗','🚀','🚂','🚲','✈️','⚽','🎈','🎁','🎠','🎡','⭐','☀️','🌙','💎','🏀'
 ];
 const MEMORY_SIZES = [8,12,16,20,24,30];
-const QUIZ_GAMES = ['odd','count','pattern','animals','colors','math'];
+const QUIZ_GAMES = ['odd','count','pattern','animals','colors','math','read','english','compare','numberline'];
 const GAMES = ['draw','memory','ttt',...QUIZ_GAMES,'treasure'];
 const GAME_LABELS = {
   draw:['🎨','ارسم وخمّن','واحد يرسم والتاني يخمّن'],
@@ -41,38 +65,182 @@ const GAME_LABELS = {
   animals:['🐾','بيوت الحيوانات','اختار مكان الحيوان'],
   colors:['🌈','ألوان وأشكال','اختار اللون المطلوب'],
   math:['➕','حساب الملاهي','جمع بسيط وممتع'],
-  treasure:['🗝️','رحلة الكنز','4 مفاتيح بالتناوب']
+  treasure:['🗝️','رحلة الكنز','4 مفاتيح بالتناوب'],
+  read:['📖','اقرئي واختاري','اقرئي كلمة عربية واختاري صورتها'],
+  english:['🔤','عربي وإنجليزي','معاني كلمات بسيطة'],
+  compare:['📐','مين الأكبر؟','مقارنة أحجام مرسومة'],
+  numberline:['🔢','الرقم الناقص','كمّلي تسلسل الأرقام']
 };
-const ODD_GROUPS = [
-  ['🐱','🐶','🐰','🚗'], ['🍎','🍌','🍓','🐢'],
-  ['🚗','🚲','🚂','🌻'], ['☀️','⭐','🌙','🍇'],
-  ['⚽','🏀','🎾','🐝'], ['🦁','🐯','🐼','🎈'],
-  ['🍉','🍒','🥝','✈️'], ['🐬','🐳','🐙','🚀']
+// All illustration assets below are original inline SVG drawings, not third-party photographs.
+// Asset identifiers (rather than markup) travel through Firebase; both clients draw the same image.
+const SCENE_IDS = ['desert','sea','forest','pond','garden','snow','nest','farm','jungle','meadow','river','mountain','home'];
+const SCENE_LABELS = {desert:'صحراء',sea:'بحر',forest:'غابة',pond:'بركة',garden:'حديقة',snow:'منطقة جليدية',nest:'عش',farm:'مزرعة',jungle:'غابة استوائية',meadow:'مرج',river:'نهر',mountain:'جبال',home:'منزل'};
+const PICTURE_IDS = ['heart','star','sun','moon','flower','tree','house','fish','car','boat','balloon','apple','butterfly','key','cloud','umbrella'];
+const PICTURE_AR = {heart:'قلب',star:'نجمة',sun:'شمس',moon:'قمر',flower:'وردة',tree:'شجرة',house:'بيت',fish:'سمكة',car:'سيارة',boat:'قارب',balloon:'بالونة',apple:'تفاحة',butterfly:'فراشة',key:'مفتاح',cloud:'سحابة',umbrella:'مظلة'};
+const READ_BANK = PICTURE_IDS.map(id=>({id,word:PICTURE_AR[id]}));
+const ENGLISH_BANK = [
+ ['CAT','قطة','كلب','حصان'],['DOG','كلب','قطة','سمكة'],['SUN','شمس','قمر','نجمة'],
+ ['MOON','قمر','شمس','مطر'],['STAR','نجمة','شجرة','باب'],['TREE','شجرة','وردة','بيت'],
+ ['FISH','سمكة','عصفور','قطة'],['HOUSE','بيت','سيارة','قارب'],['CAR','سيارة','طائرة','دراجة'],
+ ['APPLE','تفاحة','موزة','برتقالة'],['BOOK','كتاب','قلم','مكتب'],['BIRD','عصفور','سمكة','كلب'],
+ ['RED','أحمر','أزرق','أخضر'],['BLUE','أزرق','أصفر','أحمر'],['GREEN','أخضر','أبيض','أسود'],
+ ['WATER','ماء','رمل','ثلج'],['FLOWER','وردة','شجرة','حجر'],['HAND','يد','رجل','عين']
 ];
+// Do not place an animal emoji beside its name: that would give away the answer.
 const ANIMAL_QUESTIONS = [
-  ['أين يعيش السمك؟ 🐟','🌊 في الماء',['🌊 في الماء','🌳 على الشجرة','🏜️ في الصحراء']],
-  ['أين يعيش الجمل؟ 🐪','🏜️ في الصحراء',['🏜️ في الصحراء','🌊 في البحر','❄️ وسط الثلج']],
-  ['أين تعيش الأسماك الملونة؟ 🐠','🌊 في الماء',['🌊 في الماء','🌳 على الشجرة','☁️ في السحاب']],
-  ['أين تعيش النحلة؟ 🐝','🌸 قرب الزهور',['🌸 قرب الزهور','🌊 تحت البحر','🏠 داخل الثلاجة']],
-  ['أين ينام الطائر عادة؟ 🐦','🪺 في العش',['🪺 في العش','🛁 في البانيو','🚗 في السيارة']],
-  ['ما الذي يأكله الأرنب غالبًا؟ 🐰','🥕 الجزر',['🥕 الجزر','🔩 المسامير','🧱 الطوب']]
+ ['أين يعيش الجمل عادة؟','desert',['desert','sea','snow']],
+ ['أين تعيش السمكة؟','sea',['sea','desert','nest']],
+ ['أين يعيش الضفدع غالبًا؟','pond',['pond','desert','snow']],
+ ['أين تصنع النحلة العسل؟','garden',['garden','sea','snow']],
+ ['أين يعيش الدب القطبي؟','snow',['snow','desert','farm']],
+ ['أين يضع الطائر بيضه؟','nest',['nest','sea','desert']],
+ ['أين تعيش البقرة عادةً؟','farm',['farm','sea','snow']],
+ ['أين تعيش الفراشات بين الأزهار؟','garden',['garden','desert','snow']],
+ ['أين يعيش الحوت؟','sea',['sea','forest','farm']],
+ ['أين يعيش القرد في الطبيعة غالبًا؟','jungle',['jungle','snow','sea']],
+ ['أين تقف الضفادع قرب الماء؟','pond',['pond','mountain','desert']],
+ ['أين تنمو أشجار كثيرة متجاورة؟','forest',['forest','sea','snow']],
+ ['أين يسبح البط غالبًا؟','pond',['pond','desert','mountain']],
+ ['أين ترعى الأغنام عادةً؟','meadow',['meadow','sea','snow']]
 ];
 const COLOR_QUESTIONS = [
-  ['اختار اللون الأحمر ❤️','🔴',['🔴','🔵','🟢']],
-  ['اختار اللون الأزرق 💙','🔵',['🟡','🔵','🟣']],
-  ['اختار اللون الأخضر 💚','🟢',['🟠','🟢','🔴']],
-  ['اختار اللون الأصفر 💛','🟡',['🟣','🔵','🟡']],
-  ['اختار اللون البرتقالي 🧡','🟠',['🟠','🔴','🟢']],
-  ['اختار اللون البنفسجي 💜','🟣',['🔵','🟣','🟡']]
+ ['اختاري اللون الأحمر','🔴',['🔴','🔵','🟢']],
+ ['اختاري اللون الأزرق','🔵',['🟡','🔵','🟣']],
+ ['اختاري اللون الأخضر','🟢',['🟠','🟢','🔴']],
+ ['اختاري اللون الأصفر','🟡',['🟣','🔵','🟡']],
+ ['اختاري اللون البرتقالي','🟠',['🟠','🔴','🟢']],
+ ['اختاري اللون البنفسجي','🟣',['🔵','🟣','🟡']]
 ];
-const TREASURE_QUESTIONS = [
-  ['اختار مفتاح الشمس ☀️','☀️',['☀️','🌙','⭐']],
-  ['اختار مفتاح القلب ❤️','❤️',['🌻','❤️','🍎']],
-  ['اختار مفتاح القمر 🌙','🌙',['🪐','⭐','🌙']],
-  ['اختار مفتاح النجمة ⭐','⭐',['⭐','☀️','💎']],
-  ['اختار مفتاح السمكة 🐠','🐠',['🐠','🐱','🐝']],
-  ['اختار مفتاح الوردة 🌹','🌹',['🌷','🌹','🌈']]
-];
+const TREASURE_IDS = ['heart','star','sun','moon','flower','tree','house','fish','car','boat','balloon','apple','butterfly','key','cloud','umbrella'];
+const VECTOR_COLORS = ['#f36d96','#6f80e9','#30b898','#f9b44d','#8f6ad9','#36a8da'];
+function artSvg(id,scene=false) {
+  const sky='<rect width="160" height="112" rx="17" fill="#daefff"/>';
+  const ground='<path d="M0 79 Q60 66 160 82 V112 H0Z" fill="#a7d88b"/>';
+  const C={heart:'#f46f98',star:'#ffc553',sun:'#f9b843',moon:'#f9d98b',flower:'#ee7caf',tree:'#53b982',house:'#9585ee',fish:'#4bbde3',car:'#7f81e8',boat:'#f8ac5f',balloon:'#f27baf',apple:'#e96569',butterfly:'#b28af5',key:'#edb75a',cloud:'#fff',umbrella:'#fa709d'};
+  const base=(inner)=>`<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 160 112" role="img"><rect width="160" height="112" rx="17" fill="#f1f6ff"/>${inner}</svg>`;
+  if (scene) {
+    const sketches={
+      desert:`<rect width="160" height="112" rx="17" fill="#ffe6a9"/><circle cx="130" cy="24" r="15" fill="#ffbf56"/><path d="M0 68 Q46 37 93 67 Q132 42 160 66 V112 H0Z" fill="#e4b571"/><path d="M0 89 Q69 68 160 88 V112 H0Z" fill="#c8874f"/><path d="M42 89 V43 M42 65 Q26 70 26 51 M42 76 Q58 82 59 61" stroke="#36896b" stroke-width="7" fill="none" stroke-linecap="round"/>`,
+      sea:`<rect width="160" height="112" rx="17" fill="#b8e9ff"/><circle cx="125" cy="24" r="12" fill="#ffcf68"/><path d="M0 56 Q18 44 39 56 T80 56 T121 56 T160 56 V112 H0Z" fill="#47b6dd"/><path d="M0 73 Q17 65 34 73 T69 73 T104 73 T139 73 T174 73" stroke="#ecffff" stroke-width="4" fill="none"/><path d="M45 91 Q60 75 77 91 Q60 107 45 91 M77 91 L87 84 L87 99Z" fill="#ffdf8e"/>`,
+      forest:`<rect width="160" height="112" rx="17" fill="#d5f5d3"/>${ground}<path d="M25 101 V43 M75 103 V32 M125 101 V41" stroke="#8c694c" stroke-width="11"/><circle cx="25" cy="43" r="25" fill="#4ca783"/><circle cx="75" cy="33" r="30" fill="#339977"/><circle cx="125" cy="40" r="27" fill="#56b579"/>`,
+      pond:`${sky}${ground}<ellipse cx="80" cy="88" rx="73" ry="23" fill="#59b7da"/><ellipse cx="48" cy="82" rx="15" ry="6" fill="#80c877"/><path d="M25 82V49 M137 81V52" stroke="#62a66c" stroke-width="5"/><path d="M19 54Q25 34 31 54 M131 57Q137 36 143 57" fill="#92724e"/>`,
+      garden:`${sky}${ground}<path d="M30 90V55 M79 90V47 M131 90V54" stroke="#4f9b69" stroke-width="4"/><circle cx="30" cy="52" r="12" fill="#f47da7"/><circle cx="79" cy="45" r="13" fill="#f8c45a"/><circle cx="131" cy="52" r="12" fill="#ae8aee"/><circle cx="30" cy="52" r="4" fill="#fff"/><circle cx="79" cy="45" r="4" fill="#fff"/><circle cx="131" cy="52" r="4" fill="#fff"/>`,
+      snow:`<rect width="160" height="112" rx="17" fill="#cfeaff"/><path d="M0 87 L40 38 L74 79 L111 26 L160 85 V112 H0Z" fill="#9ebfcf"/><path d="M24 59L40 38L55 58 M95 48L111 26L129 48" fill="#fff"/><path d="M0 90 Q80 75 160 91 V112 H0Z" fill="#f8fdff"/><circle cx="31" cy="20" r="4" fill="white"/><circle cx="75" cy="13" r="4" fill="white"/>`,
+      nest:`${sky}${ground}<path d="M8 92 Q90 80 159 50" stroke="#8b654e" stroke-width="14" fill="none"/><path d="M51 65 Q80 100 113 61 L101 88 Q79 105 59 85Z" fill="#ae754c"/><ellipse cx="73" cy="70" rx="9" ry="12" fill="#fff0cc"/><ellipse cx="94" cy="70" rx="9" ry="12" fill="#fff0cc"/>`,
+      farm:`${sky}${ground}<path d="M39 54 L80 27 L121 54Z" fill="#d86c61"/><rect x="47" y="54" width="67" height="48" rx="2" fill="#fff2d9"/><rect x="70" y="70" width="24" height="32" fill="#a96c52"/><path d="M0 97H160 M6 83V106 M35 83V106 M126 83V106 M154 83V106" stroke="#a87955" stroke-width="4"/>`,
+      jungle:`<rect width="160" height="112" rx="17" fill="#c4ecd9"/><path d="M0 84Q80 43 160 84V112H0Z" fill="#4dad75"/><path d="M24 112L50 24 M124 112L101 14" stroke="#8b6955" stroke-width="12"/><circle cx="51" cy="30" r="26" fill="#258c6d"/><circle cx="105" cy="26" r="28" fill="#379e6d"/><path d="M0 42Q55 20 80 43T160 40" stroke="#277c69" stroke-width="5" fill="none"/>`,
+      meadow:`${sky}${ground}<path d="M0 93 Q43 52 92 84 Q135 56 160 88 V112 H0Z" fill="#83c979"/><circle cx="21" cy="82" r="4" fill="#fff"/><circle cx="72" cy="97" r="4" fill="#ffc6db"/><circle cx="139" cy="85" r="4" fill="#fff"/>`,
+      river:`${sky}${ground}<path d="M112 59Q50 72 79 88T39 112H116Q134 88 102 74T134 59Z" fill="#4db9dd"/><path d="M111 75Q88 88 100 96" stroke="#fff" stroke-width="3" fill="none"/>`,
+      mountain:`<rect width="160" height="112" rx="17" fill="#bfe5ff"/><path d="M0 100L50 26L89 100Z" fill="#829fb5"/><path d="M55 100L112 18L160 100Z" fill="#6f8da5"/><path d="M35 47L50 26L64 48 M98 39L112 18L125 40" fill="#fff"/><path d="M0 96 Q78 81 160 98V112H0Z" fill="#77b98f"/>`,
+      home:`${sky}${ground}<path d="M25 58L80 21L135 58Z" fill="#ee8975"/><rect x="35" y="57" width="90" height="47" fill="#fff0cc"/><rect x="72" y="73" width="20" height="31" fill="#9d7ac8"/><rect x="43" y="67" width="17" height="14" fill="#92d5ef"/>`
+    };
+    return base(sketches[id]||sketches.garden);
+  }
+  const shapes={
+    heart:'<path d="M80 94C23 57 34 26 58 27Q73 27 80 44Q88 26 103 27C128 26 137 57 80 94Z"/>',
+    star:'<path d="M80 16L94 51L131 54L103 77L112 105L80 87L48 105L57 77L29 54L66 51Z"/>',
+    sun:'<circle cx="80" cy="56" r="24"/><path d="M80 13V24M80 89V101M36 56H48M112 56H124M49 25L56 33M104 79L112 87M111 24L103 33M56 79L48 87" stroke="#f9b843" stroke-width="7" stroke-linecap="round"/>',
+    moon:'<path d="M98 15A40 40 0 1 0 126 80A46 46 0 0 1 98 15Z"/>',
+    flower:'<circle cx="80" cy="55" r="11" fill="#ffe3a2"/><circle cx="80" cy="33" r="12"/><circle cx="80" cy="77" r="12"/><circle cx="58" cy="55" r="12"/><circle cx="102" cy="55" r="12"/><path d="M80 85V103" stroke="#4ba977" stroke-width="5"/>',
+    tree:'<path d="M80 62V100" stroke="#997052" stroke-width="12"/><circle cx="80" cy="39" r="25"/><circle cx="57" cy="58" r="20"/><circle cx="101" cy="58" r="20"/>',
+    house:'<path d="M32 56L80 20L128 56Z"/><rect x="43" y="55" width="75" height="45" rx="3"/><rect x="73" y="68" width="21" height="32" fill="#fff"/>',
+    fish:'<path d="M31 61Q65 17 113 58Q70 101 31 61Z"/><path d="M106 57L131 35V84Z"/><circle cx="54" cy="56" r="4" fill="#fff"/>',
+    car:'<rect x="22" y="53" width="118" height="36" rx="10"/><path d="M48 53L65 33H110L126 53Z"/><circle cx="49" cy="91" r="12" fill="#3d456d"/><circle cx="114" cy="91" r="12" fill="#3d456d"/>',
+    boat:'<path d="M19 79H140L121 98H43Z"/><path d="M80 18V78M78 23L28 73H78Z" stroke="#805a50" stroke-width="4"/>',
+    balloon:'<ellipse cx="80" cy="42" rx="28" ry="34"/><path d="M80 76L74 83H86Z"/><path d="M80 84Q62 96 81 105" stroke="#936e9e" stroke-width="3" fill="none"/>',
+    apple:'<path d="M80 39C47 16 24 56 43 88Q58 108 80 94Q108 108 122 88C143 55 109 17 80 39Z"/><path d="M80 35Q85 16 104 18Q100 35 80 35" fill="#64b687"/>',
+    butterfly:'<ellipse cx="54" cy="49" rx="23" ry="22"/><ellipse cx="106" cy="49" rx="23" ry="22"/><ellipse cx="58" cy="79" rx="18" ry="18"/><ellipse cx="102" cy="79" rx="18" ry="18"/><path d="M80 34V98" stroke="#68567f" stroke-width="6"/>',
+    key:'<circle cx="55" cy="50" r="19" fill="none" stroke="#edb75a" stroke-width="11"/><path d="M73 62L120 101M108 88L121 75M95 76L106 65" stroke="#edb75a" stroke-width="10" fill="none"/>',
+    cloud:'<path d="M40 89Q19 87 23 65Q27 52 44 51Q50 23 80 27Q106 28 110 52Q139 48 142 71Q143 90 120 89Z" stroke="#b9d4ea" stroke-width="3"/>',
+    umbrella:'<path d="M20 58Q80 -7 140 58Z"/><path d="M80 58V88Q80 105 64 94" fill="none" stroke="#7e7297" stroke-width="6" stroke-linecap="round"/>'
+  };
+  return base(`<g fill="${C[id]||'#8c82e3'}" stroke-linejoin="round">${shapes[id]||shapes.heart}</g>`);
+}
+function artPicture(id,scene=false) {
+  if (!scene && id.startsWith('shape:')) {
+    const parts=id.split(':'),color=VECTOR_COLORS[Number(parts[2])%VECTOR_COLORS.length];
+    const el=parts[1]==='triangle'?`<path d="M80 17L136 98H24Z"/>`:parts[1]==='square'?`<rect x="31" y="16" width="98" height="83" rx="9"/>`:parts[1]==='diamond'?`<path d="M80 12L140 56L80 105L20 56Z"/>`:`<circle cx="80" cy="57" r="42"/>`;
+    return `<img class="art-image" alt="شكل هندسي" src="data:image/svg+xml,${encodeURIComponent(`<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 160 112"><rect width="160" height="112" rx="17" fill="#f1f6ff"/><g fill="${color}">${el}</g></svg>`)}">`;
+  }
+  return `<img class="art-image" alt="${scene?SCENE_LABELS[id]:PICTURE_AR[id]}" src="data:image/svg+xml,${encodeURIComponent(artSvg(id,scene))}">`;
+}
+function renderOption(option,q) {
+  if(q?.visual==='sizes'){
+    const size=Number(option.split(':')[1]);return `<span class="size-illustration"><span style="width:${size*2}px;height:${size*2}px"></span></span>`;
+  }
+  return q?.visual==='scenes'?artPicture(option,true):q?.visual==='pictures'?artPicture(option):q?.visual==='shapes'?artPicture(option):option;
+}
+function renderQuestionDisplay(q) {
+  if (q.visual==='pattern' && Array.isArray(q.sequence)) return `<div class="picture-sequence">${q.sequence.map(x=>artPicture(x)).join('')}<span class="missing-mark">؟</span></div>`;
+  if (q.visual==='count' && Array.isArray(q.sequence)) return `<div class="count-objects">${q.sequence.map(x=>`<span aria-hidden="true">${x}</span>`).join('')}</div>`;
+  if (q.visual==='compare' && Array.isArray(q.sequence)) return `<div class="picture-sequence">${q.sequence.map(x=>artPicture(x)).join('')}</div>`;
+  return q.display?`<div class="quiz-display" aria-label="صور السؤال">${q.display}</div>`:'';
+}
+function newQuestion(which,previousIndex=-1) {
+  const pick=(length)=>{let n=Math.floor(Math.random()*length);if(length>1 && n===previousIndex)n=(n+1)%length;return n;};
+  if(which==='odd') {
+    const n=pick(15);
+    if(n<6) {
+      const cats=[['🐱','🐶','🐰','🚗'],['🍎','🍌','🍓','🐢'],['🚗','🚲','🚂','🌻'],['☀️','⭐','🌙','🍇'],['⚽','🏀','🎾','🐝'],['🦁','🐯','🐼','🎈']];
+      const options=shuffle(cats[n]);return {index:n,prompt:'مين المختلف عن الثلاثة الباقيين؟',display:'',options,correct:options.indexOf(cats[n][3])};
+    }
+    if(n<11) {
+      const shape=['circle','triangle','square','diamond'][n%4];const different=['circle','triangle','square','diamond'][(n+1)%4];
+      const colors=[0,1,2,3];const targets=colors.slice(0,3).map(c=>`shape:${shape}:${c}`),odd=`shape:${different}:4`;
+      const options=shuffle([...targets,odd]);return {index:n,prompt:'اختاري الشكل المختلف عن الباقيين',options,correct:options.indexOf(odd),visual:'shapes'};
+    }
+    const catSets=[['forest','jungle','meadow','sea'],['sea','river','pond','desert'],['desert','mountain','snow','farm'],['garden','meadow','forest','sea']];
+    const items=catSets[n-11],options=shuffle(items);return {index:n,prompt:'اختاري المكان المختلف عن بقية الصور',options,correct:options.indexOf(items[3]),visual:'scenes'};
+  }
+  if(which==='count') {
+    const n=3+Math.floor(Math.random()*8),emoji=['🍎','🐱','⭐','🎈','🐠','🧸'][Math.floor(Math.random()*6)];
+    const alternatives=shuffle([String(n),String(n===10?n-2:n+1),String(n===3?n+2:n-1)]);
+    return {index:n,prompt:'عدّي الصور… كام واحدة؟',visual:'count',sequence:Array(n).fill(emoji),options:alternatives,correct:alternatives.indexOf(String(n))};
+  }
+  if(which==='pattern') {
+    const n=pick(16),ids=PICTURE_IDS;
+    let seq,answer,choices;
+    if(n%4===0){const a=ids[n],b=ids[(n+1)%ids.length];seq=[a,b,a,b,a];answer=b;choices=[a,b,ids[(n+2)%ids.length]];}
+    else if(n%4===1){const a=ids[n],b=ids[(n+1)%ids.length],c=ids[(n+2)%ids.length];seq=[a,b,c,a,b];answer=c;choices=[a,b,c];}
+    else if(n%4===2){const a=ids[n],b=ids[(n+1)%ids.length];seq=[a,a,b,a,a];answer=b;choices=[a,b,ids[(n+2)%ids.length]];}
+    else {const a=ids[n],b=ids[(n+1)%ids.length];seq=[a,b,b,a,b];answer=b;choices=[a,b,ids[(n+2)%ids.length]];}
+    const options=shuffle(choices);return {index:n,prompt:'أي صورة تكمّل النمط؟',visual:'pattern',sequence:seq,options,correct:options.indexOf(answer),optionVisual:'pictures'};
+  }
+  if(which==='animals') {
+    const n=pick(ANIMAL_QUESTIONS.length),[prompt,answer,choices]=ANIMAL_QUESTIONS[n];
+    const options=shuffle(choices);return {index:n,prompt,options,correct:options.indexOf(answer),visual:'scenes'};
+  }
+  if(which==='colors') {
+    const n=pick(COLOR_QUESTIONS.length),[prompt,answer,choices]=COLOR_QUESTIONS[n];
+    const options=shuffle(choices);return {index:n,prompt,options,correct:options.indexOf(answer)};
+  }
+  if(which==='treasure') {
+    const n=pick(TREASURE_IDS.length),answer=TREASURE_IDS[n];
+    const otherOptions=shuffle(TREASURE_IDS.filter(id=>id!==answer)).slice(0,2),options=shuffle([answer,...otherOptions]);
+    return {index:n,prompt:`اقرئي الكلمة واختاري صورتها: ${PICTURE_AR[answer]}`,options,correct:options.indexOf(answer),visual:'pictures'};
+  }
+  if(which==='read') {
+    const n=pick(READ_BANK.length),answer=READ_BANK[n].id;
+    const wrong=shuffle(PICTURE_IDS.filter(id=>id!==answer)).slice(0,2),options=shuffle([answer,...wrong]);
+    return {index:n,prompt:`اقرئي الكلمة واختاري الصورة: ${READ_BANK[n].word}`,options,correct:options.indexOf(answer),visual:'pictures'};
+  }
+  if(which==='english') {
+    const n=pick(ENGLISH_BANK.length),[en,ar,w1,w2]=ENGLISH_BANK[n],options=shuffle([ar,w1,w2]);
+    return {index:n,prompt:`ما معنى كلمة ${en} بالعربي؟`,options,correct:options.indexOf(ar)};
+  }
+  if(which==='compare') {
+    const n=pick(12),size=[21,32,43],target=n%2===0?'الكبير':'الصغير';
+    const options=shuffle(size.map((s,i)=>`size:${s}:${i}`));
+    return {index:n,prompt:`اختاري الشكل ${target} في الحجم`,visual:'sizes',options,correct:options.findIndex(v=>v.startsWith('size:'+(target==='الكبير'?43:21)+':'))};
+  }
+  if(which==='numberline') {
+    const n=pick(13),start=n+1,missing=start+1,options=shuffle([String(missing),String(missing+1),String(start)]);
+    return {index:n,prompt:'ما الرقم الناقص في السلسلة؟',display:`${start}  ←  ❓  ←  ${start+2}`,options,correct:options.indexOf(String(missing))};
+  }
+  const a=1+Math.floor(Math.random()*8),b=1+Math.floor(Math.random()*7),sum=a+b;
+  const options=shuffle([String(sum),String(sum+1),String(sum-1)]);
+  return {index:a*10+b,prompt:'كم ناتج الجمع؟',display:`${a} + ${b} = ❓`,options,correct:options.indexOf(String(sum))};
+}
 let memoryPreference = 'random';
 let soundEnabled = true;
 let audioContext = null;
@@ -123,36 +291,6 @@ function feedbackSignal(old,next) {
   sound(next.feedback.type);
 }
 function addFeedback(old,type) { return {seq:(old.feedback?.seq||0)+1,type}; }
-function newQuestion(which,previousIndex=-1) {
-  const pick=(length)=>{let n=Math.floor(Math.random()*length);if(length>1 && n===previousIndex)n=(n+1)%length;return n;};
-  if(which==='odd') {
-    const n=pick(ODD_GROUPS.length), items=ODD_GROUPS[n];
-    const options=shuffle(items);
-    return {index:n,prompt:'مين الصورة المختلفة عن التلاتة الباقيين؟',display:'',options,correct:options.indexOf(items[3])};
-  }
-  if(which==='count') {
-    const n=2+Math.floor(Math.random()*7);
-    const emoji=['🍎','🐱','⭐','🎈','🐠'][Math.floor(Math.random()*5)];
-    const alternatives=shuffle([String(n),String(n===9?n-2:n+1),String(n===2?n+2:n-1)]);
-    return {index:n,prompt:'عدّ الصور… كام واحدة؟',display:Array(n).fill(emoji).join(' '),options:alternatives,correct:alternatives.indexOf(String(n))};
-  }
-  if(which==='pattern') {
-    const pairs=[['🔴','🔵','🟢'],['🐱','🐶','🐰'],['⭐','🌙','☀️'],['🍎','🍌','🍇'],['💜','💛','💚']];
-    const n=pick(pairs.length),[a,b,c]=pairs[n];
-    const options=shuffle([a,b,c]);
-    return {index:n,prompt:'إيه الصورة اللي هتيجي مكان علامة السؤال؟',display:`${a} ${b} ${a} ${b} ❓`,options,correct:options.indexOf(a)};
-  }
-  const bank=which==='animals'?ANIMAL_QUESTIONS:which==='colors'?COLOR_QUESTIONS:TREASURE_QUESTIONS;
-  if(which==='animals'||which==='colors'||which==='treasure') {
-    const n=pick(bank.length),[prompt,correct,choices]=bank[n];
-    const options=shuffle(choices);
-    return {index:n,prompt,display:'',options,correct:options.indexOf(correct)};
-  }
-  const a=1+Math.floor(Math.random()*5),b=1+Math.floor(Math.random()*5),sum=a+b;
-  const options=shuffle([String(sum),String(sum+1),String(sum-1)]);
-  return {index:a*10+b,prompt:'كام نتيجة الجمع؟',display:`${a} + ${b} = ❓`,options,correct:options.indexOf(String(sum))};
-}
-
 const WIN_LINES = [[0,1,2],[3,4,5],[6,7,8],[0,3,6],[1,4,7],[2,5,8],[0,4,8],[2,4,6]];
 let auth, db, uid, roomCode = '', role = '', meta = null, state = null, presence = {}, strokes = {};
 let connected = false, unsubs = [], presenceBound = false, hideKey = '', pointerIsDown = false;
@@ -197,7 +335,7 @@ function scorePanel() {
 function renderHome() {
   const invitation = /^#room=([A-Z2-9]{8})$/.exec(location.hash)?.[1] || '';
   screen.innerHTML = `<div class="panel center">
-    <div class="hero"><div class="big-emoji">🎡 🎠 🎈</div><h2>أهلًا بيكم في عالم رقية!</h2><p>10 ألعاب مسلّية لبابا ورقية من أي مكان 💜</p></div>
+    <div class="hero"><div class="big-emoji">🎡 🎠 🎈</div><h2>أهلًا بيكم في عالم رقية!</h2><p>14 لعبة مسلّية لبابا ورقية من أي مكان 💜</p></div>
     <div class="btn-row"><button class="btn primary full" data-action="create">🎟️ بابا: اعمل غرفة جديدة</button></div>
     <p class="rule">أو ادخلي غرفة بابا بالكود:</p>
     <label for="room-input" class="tiny">رمز الغرفة • 8 حروف أو أرقام</label>
@@ -308,11 +446,11 @@ function renderQuiz() {
   if (!quiz?.question) return;
   const q=quiz.question;
   const canAnswer=state.phase==='playing' && quiz.turn===role;
-  const buttons=q.options.map((option,i)=>`<button class="quiz-choice" data-quiz="${i}" ${!canAnswer?'disabled':''}>${option}</button>`).join('');
-  const result=state.phase==='finished' ? `<div class="finish"><strong>${state.result==='correct'?'🎉 برافو! إجابة صح':'💜 محاولة حلوة! الإجابة الصحيحة:'}</strong><p class="answer-reveal">${q.options[q.correct]}</p></div>` : '';
+  const buttons=q.options.map((option,i)=>`<button class="quiz-choice ${q.visual?'visual-choice':''}" data-quiz="${i}" ${!canAnswer?'disabled':''}>${renderOption(option,q.optionVisual?{visual:q.optionVisual}:q)}</button>`).join('');
+  const result=state.phase==='finished' ? `<div class="finish"><strong>${state.result==='correct'?'🎉 برافو! إجابة صح':'💜 محاولة حلوة! الإجابة الصحيحة:'}</strong><p class="answer-reveal">${renderOption(q.options[q.correct],q.optionVisual?{visual:q.optionVisual}:q)}</p></div>` : '';
   screen.innerHTML=`<div class="panel">${gameHeading(...GAME_LABELS[key].slice(0,2))}
     <h2 class="game-title center">${q.prompt}</h2>
-    ${q.display?`<div class="quiz-display" aria-label="صور السؤال">${q.display}</div>`:''}
+    ${renderQuestionDisplay(q)}
     <p class="status">${state.phase==='finished'?'الجولة خلصت 🎉':canAnswer?'دورك دلوقتي! ✨':`دور ${nameOf(quiz.turn)} ⏳`}</p>
     <div class="quiz-options">${buttons}</div>
     ${result}
@@ -325,7 +463,7 @@ function renderTreasure() {
   if(!treasure?.question)return;
   const q=treasure.question;
   const canAnswer=state.phase==='playing'&&treasure.turn===role;
-  const buttons=q.options.map((option,i)=>`<button class="quiz-choice" data-treasure="${i}" ${!canAnswer||treasure.wrong?.includes(i)?'disabled':''}>${option}</button>`).join('');
+  const buttons=q.options.map((option,i)=>`<button class="quiz-choice visual-choice" data-treasure="${i}" ${!canAnswer||treasure.wrong?.includes(i)?'disabled':''}>${renderOption(option,q)}</button>`).join('');
   screen.innerHTML=`<div class="panel">${gameHeading('🗝️','رحلة الكنز')}
     <h2 class="game-title center">افتحوا صندوق الكنز سوا! 🧰</h2>
     <div class="treasure-progress">${Array.from({length:4},(_,i)=>`<span>${i<treasure.stage?'🔑':'🔒'}</span>`).join('')}</div>
@@ -625,6 +763,7 @@ screen.addEventListener('keydown',e=>{
 });
 async function initialize() {
   soundControl();
+  document.querySelector('.brand p')?.append(` • V${APP_VERSION}`);
   if (!firebaseConfig.apiKey || firebaseConfig.apiKey.startsWith('PASTE_') || firebaseConfig.databaseURL.includes('PASTE_')) {
     connection.textContent='⚙️ محتاجة إعداد';
     screen.innerHTML='<div class="panel center"><div class="big-emoji">🔧</div><h2>قبل أول لعبة</h2><p>بابا لازم يضيف إعدادات Firebase الحقيقية في ملف <b>firebase-config.js</b>، ويشغّل Anonymous Authentication ويضبط قواعد Realtime Database.</p><p class="hint">افتح ملف README-AR.md المرفق واتبع الخطوات من الموبايل.</p></div>';
