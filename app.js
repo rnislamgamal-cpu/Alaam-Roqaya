@@ -182,8 +182,10 @@ async function mutateState(transform) {
   if (!roomCode || !role) return;
   try {
     return await runTransaction(ref(db, `rooms/${roomCode}/state`), current => {
-      if (!current) return;
-      return transform(current);
+      // Firebase may invoke the updater with null before the server value is cached.
+      const latest = current ?? state;
+      if (!latest) return;
+      return transform(latest);
     }, { applyLocally:false });
   } catch (e) { info(humanError(e)); }
 }
@@ -375,8 +377,11 @@ async function joinRoom() {
     if (current.hostUid===uid || current.guestUid===uid) {subscribeRoom(code);return;}
     if (current.guestUid) {info('الغرفة مكتملة؛ فيها بابا ورقية بالفعل.');return;}
     const joined=await runTransaction(target,old=>{
-      if (!old || old.guestUid || old.hostUid===uid) return;
-      return {...old,guestUid:uid};
+      // The first local transaction attempt can receive null for an existing room.
+      // Use the room we just read; Firebase will retry with server data on conflict.
+      const room = old ?? current;
+      if (!room || room.guestUid || room.hostUid!==current.hostUid || room.hostUid===uid) return;
+      return {...room,guestUid:uid};
     },{applyLocally:false});
     if (!joined.committed) {info('الغرفة اتملت أو حد دخل قبلك. جرّب غرفة جديدة.');return;}
     subscribeRoom(code);
