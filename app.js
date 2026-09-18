@@ -22,7 +22,137 @@ const DRAW_ITEMS = [
   { name:'موزة', emoji:'🍌', choices:['🍌','🍎','🍐'] },
   { name:'نجمة', emoji:'⭐', choices:['⭐','☀️','🌙'] }
 ];
-const MEMORY_EMOJI = ['🐱','🐶','🐸','🦊','🐼','🐻','🐰','🦁','🍓','🍌','🍉','🍇'];
+const MEMORY_EMOJI = [
+  '🐱','🐶','🐸','🦊','🐼','🐻','🐰','🦁','🐯','🐨','🐵','🐮','🐷','🐧','🐢',
+  '🦋','🐝','🐞','🐬','🐳','🐙','🦀','🦄','🦖','🐘','🦒','🦓','🐿️','🦉','🐥',
+  '🍎','🍌','🍉','🍇','🍓','🍒','🍍','🥝','🥕','🌽','🍋','🥑','🍄','🌻','🌈',
+  '🚗','🚀','🚂','🚲','✈️','⚽','🎈','🎁','🎠','🎡','⭐','☀️','🌙','💎','🏀'
+];
+const MEMORY_SIZES = [8,12,16,20,24,30];
+const QUIZ_GAMES = ['odd','count','pattern','animals','colors','math'];
+const GAMES = ['draw','memory','ttt',...QUIZ_GAMES,'treasure'];
+const GAME_LABELS = {
+  draw:['🎨','ارسم وخمّن','واحد يرسم والتاني يخمّن'],
+  memory:['🃏','كروت الذاكرة','8–30 كارت أو عدد متغيّر'],
+  ttt:['❌⭕','إكس أو','3 نقاط للفائز'],
+  odd:['🔍','مين المختلف؟','اكتشف الصورة الغريبة'],
+  count:['🔢','عدّ الصور','احسب عدد الرموز'],
+  pattern:['🧩','كمّل النمط','خمن الصورة الجاية'],
+  animals:['🐾','بيوت الحيوانات','اختار مكان الحيوان'],
+  colors:['🌈','ألوان وأشكال','اختار اللون المطلوب'],
+  math:['➕','حساب الملاهي','جمع بسيط وممتع'],
+  treasure:['🗝️','رحلة الكنز','4 مفاتيح بالتناوب']
+};
+const ODD_GROUPS = [
+  ['🐱','🐶','🐰','🚗'], ['🍎','🍌','🍓','🐢'],
+  ['🚗','🚲','🚂','🌻'], ['☀️','⭐','🌙','🍇'],
+  ['⚽','🏀','🎾','🐝'], ['🦁','🐯','🐼','🎈'],
+  ['🍉','🍒','🥝','✈️'], ['🐬','🐳','🐙','🚀']
+];
+const ANIMAL_QUESTIONS = [
+  ['أين يعيش السمك؟ 🐟','🌊 في الماء',['🌊 في الماء','🌳 على الشجرة','🏜️ في الصحراء']],
+  ['أين يعيش الجمل؟ 🐪','🏜️ في الصحراء',['🏜️ في الصحراء','🌊 في البحر','❄️ وسط الثلج']],
+  ['أين تعيش الأسماك الملونة؟ 🐠','🌊 في الماء',['🌊 في الماء','🌳 على الشجرة','☁️ في السحاب']],
+  ['أين تعيش النحلة؟ 🐝','🌸 قرب الزهور',['🌸 قرب الزهور','🌊 تحت البحر','🏠 داخل الثلاجة']],
+  ['أين ينام الطائر عادة؟ 🐦','🪺 في العش',['🪺 في العش','🛁 في البانيو','🚗 في السيارة']],
+  ['ما الذي يأكله الأرنب غالبًا؟ 🐰','🥕 الجزر',['🥕 الجزر','🔩 المسامير','🧱 الطوب']]
+];
+const COLOR_QUESTIONS = [
+  ['اختار اللون الأحمر ❤️','🔴',['🔴','🔵','🟢']],
+  ['اختار اللون الأزرق 💙','🔵',['🟡','🔵','🟣']],
+  ['اختار اللون الأخضر 💚','🟢',['🟠','🟢','🔴']],
+  ['اختار اللون الأصفر 💛','🟡',['🟣','🔵','🟡']],
+  ['اختار اللون البرتقالي 🧡','🟠',['🟠','🔴','🟢']],
+  ['اختار اللون البنفسجي 💜','🟣',['🔵','🟣','🟡']]
+];
+const TREASURE_QUESTIONS = [
+  ['اختار مفتاح الشمس ☀️','☀️',['☀️','🌙','⭐']],
+  ['اختار مفتاح القلب ❤️','❤️',['🌻','❤️','🍎']],
+  ['اختار مفتاح القمر 🌙','🌙',['🪐','⭐','🌙']],
+  ['اختار مفتاح النجمة ⭐','⭐',['⭐','☀️','💎']],
+  ['اختار مفتاح السمكة 🐠','🐠',['🐠','🐱','🐝']],
+  ['اختار مفتاح الوردة 🌹','🌹',['🌷','🌹','🌈']]
+];
+let memoryPreference = 'random';
+let soundEnabled = true;
+let audioContext = null;
+let lastAudioFeedback = null;
+try { soundEnabled = localStorage.getItem('roqaya-sound') !== 'off'; memoryPreference = localStorage.getItem('roqaya-memory') || 'random'; } catch (_) {}
+function sound(type='tap') {
+  if (!soundEnabled) return;
+  try {
+    const Audio = window.AudioContext || window.webkitAudioContext;
+    if (!Audio) return;
+    audioContext ||= new Audio();
+    if (audioContext.state === 'suspended') audioContext.resume().catch(()=>{});
+    const notes = type === 'good' ? [[523,0,.11],[659,.12,.12],[784,.24,.18]]
+      : type === 'bad' ? [[330,0,.14],[247,.15,.20]]
+      : type === 'win' ? [[523,0,.10],[659,.1,.10],[784,.2,.12],[1047,.34,.22]]
+      : [[520,0,.035]];
+    const start = audioContext.currentTime;
+    for (const [frequency,offset,duration] of notes) {
+      const oscillator=audioContext.createOscillator();
+      const volume=audioContext.createGain();
+      oscillator.type=type==='bad'?'triangle':'sine';
+      oscillator.frequency.value=frequency;
+      volume.gain.setValueAtTime(.0001,start+offset);
+      volume.gain.exponentialRampToValueAtTime(type==='tap'?.027:.075,start+offset+.012);
+      volume.gain.exponentialRampToValueAtTime(.0001,start+offset+duration);
+      oscillator.connect(volume).connect(audioContext.destination);
+      oscillator.start(start+offset);oscillator.stop(start+offset+duration+.015);
+    }
+  } catch (_) { /* Sound is optional on browsers that block audio. */ }
+}
+function soundControl() {
+  let control=document.querySelector('#sound-toggle');
+  if (!control) {
+    control=document.createElement('button');
+    control.type='button';control.id='sound-toggle';control.className='sound-toggle';
+    control.addEventListener('click',()=>{
+      soundEnabled=!soundEnabled;
+      try { localStorage.setItem('roqaya-sound',soundEnabled?'on':'off'); } catch (_) {}
+      soundControl();if(soundEnabled)sound('good');
+    });
+    document.querySelector('.header')?.append(control);
+  }
+  control.textContent=soundEnabled?'🔊 الصوت شغال':'🔇 الصوت مقفول';
+  control.setAttribute('aria-label',soundEnabled?'إيقاف الأصوات':'تشغيل الأصوات');
+}
+function feedbackSignal(old,next) {
+  if (!old || !next?.feedback || old.feedback?.seq === next.feedback.seq) return;
+  sound(next.feedback.type);
+}
+function addFeedback(old,type) { return {seq:(old.feedback?.seq||0)+1,type}; }
+function newQuestion(which,previousIndex=-1) {
+  const pick=(length)=>{let n=Math.floor(Math.random()*length);if(length>1 && n===previousIndex)n=(n+1)%length;return n;};
+  if(which==='odd') {
+    const n=pick(ODD_GROUPS.length), items=ODD_GROUPS[n];
+    const options=shuffle(items);
+    return {index:n,prompt:'مين الصورة المختلفة عن التلاتة الباقيين؟',display:'',options,correct:options.indexOf(items[3])};
+  }
+  if(which==='count') {
+    const n=2+Math.floor(Math.random()*7);
+    const emoji=['🍎','🐱','⭐','🎈','🐠'][Math.floor(Math.random()*5)];
+    const alternatives=shuffle([String(n),String(n===9?n-2:n+1),String(n===2?n+2:n-1)]);
+    return {index:n,prompt:'عدّ الصور… كام واحدة؟',display:Array(n).fill(emoji).join(' '),options:alternatives,correct:alternatives.indexOf(String(n))};
+  }
+  if(which==='pattern') {
+    const pairs=[['🔴','🔵','🟢'],['🐱','🐶','🐰'],['⭐','🌙','☀️'],['🍎','🍌','🍇'],['💜','💛','💚']];
+    const n=pick(pairs.length),[a,b,c]=pairs[n];
+    const options=shuffle([a,b,c]);
+    return {index:n,prompt:'إيه الصورة اللي هتيجي مكان علامة السؤال؟',display:`${a} ${b} ${a} ${b} ❓`,options,correct:options.indexOf(a)};
+  }
+  const bank=which==='animals'?ANIMAL_QUESTIONS:which==='colors'?COLOR_QUESTIONS:TREASURE_QUESTIONS;
+  if(which==='animals'||which==='colors'||which==='treasure') {
+    const n=pick(bank.length),[prompt,correct,choices]=bank[n];
+    const options=shuffle(choices);
+    return {index:n,prompt,display:'',options,correct:options.indexOf(correct)};
+  }
+  const a=1+Math.floor(Math.random()*5),b=1+Math.floor(Math.random()*5),sum=a+b;
+  const options=shuffle([String(sum),String(sum+1),String(sum-1)]);
+  return {index:a*10+b,prompt:'كام نتيجة الجمع؟',display:`${a} + ${b} = ❓`,options,correct:options.indexOf(String(sum))};
+}
+
 const WIN_LINES = [[0,1,2],[3,4,5],[6,7,8],[0,3,6],[1,4,7],[2,5,8],[0,4,8],[2,4,6]];
 let auth, db, uid, roomCode = '', role = '', meta = null, state = null, presence = {}, strokes = {};
 let connected = false, unsubs = [], presenceBound = false, hideKey = '', pointerIsDown = false;
@@ -67,7 +197,7 @@ function scorePanel() {
 function renderHome() {
   const invitation = /^#room=([A-Z2-9]{8})$/.exec(location.hash)?.[1] || '';
   screen.innerHTML = `<div class="panel center">
-    <div class="hero"><div class="big-emoji">🎡 🎠 🎈</div><h2>أهلًا بيكم في عالم رقية!</h2><p>3 ألعاب مسلّية لبابا ورقية من أي مكان 💜</p></div>
+    <div class="hero"><div class="big-emoji">🎡 🎠 🎈</div><h2>أهلًا بيكم في عالم رقية!</h2><p>10 ألعاب مسلّية لبابا ورقية من أي مكان 💜</p></div>
     <div class="btn-row"><button class="btn primary full" data-action="create">🎟️ بابا: اعمل غرفة جديدة</button></div>
     <p class="rule">أو ادخلي غرفة بابا بالكود:</p>
     <label for="room-input" class="tiny">رمز الغرفة • 8 حروف أو أرقام</label>
@@ -85,10 +215,15 @@ function renderLobby() {
     ${scorePanel()}
     ${waiting ? '<p class="hint">ابعث الرابط لرقية، وتفتح اللعبة من موبايلها وتضغط دخول الغرفة.</p>' : '<p class="hint">بابا يختار اللعبة؛ ورقية هتشوف نفس اللعبة فورًا.</p>'}
     <h3 class="game-title">🎮 اختاروا لعبة الملاهي</h3>
+    <div class="memory-settings"><label for="memory-size">🃏 حجم لعبة الذاكرة (بابا يختار):</label>
+      <select id="memory-size" class="input" ${role !== 'host'?'disabled':''}>
+        <option value="random" ${memoryPreference==='random'?'selected':''}>🎲 عدد مختلف كل جولة (8–30 كارت)</option>
+        ${MEMORY_SIZES.map(n=>`<option value="${n}" ${memoryPreference===String(n)?'selected':''}>${n} كارت (${n/2} أزواج)</option>`).join('')}
+      </select>
+      <p class="hint">الاختيار بيتطبق لما بابا يبدأ جولة ذاكرة جديدة.</p>
+    </div>
     <div class="game-grid">
-      <button class="game-choice" data-game="draw" ${role !== 'host' || waiting ? 'disabled':''}><span class="emoji">🎨</span>ارسم وخمّن<small>2 نقاط للإجابة من أول مرة</small></button>
-      <button class="game-choice" data-game="memory" ${role !== 'host' || waiting ? 'disabled':''}><span class="emoji">🃏</span>كروت الذاكرة<small>نقطة لكل زوج متشابه</small></button>
-      <button class="game-choice" data-game="ttt" ${role !== 'host' || waiting ? 'disabled':''}><span class="emoji">❌⭕</span>إكس أو<small>3 نقاط للفائز</small></button>
+      ${GAMES.map(key=>`<button class="game-choice" data-game="${key}" ${role !== 'host' || waiting ? 'disabled':''}><span class="emoji">${GAME_LABELS[key][0]}</span>${GAME_LABELS[key][1]}<small>${GAME_LABELS[key][2]}</small></button>`).join('')}
     </div>
     ${role === 'guest' ? '<p class="hint">استني بابا يختار اللعبة 🎠</p>' : ''}
   </div>`;
@@ -113,9 +248,9 @@ function renderMemory() {
     return `<button class="memory-card ${css}" data-memory="${i}" aria-label="كارت ${i+1}${open?' '+emoji:''}" ${disabled?'disabled':''}>${open?emoji:'؟'}</button>`;
   }).join('');
   screen.innerHTML = `<div class="panel">${gameHeading('🃏','كروت الذاكرة')}
-    <h2 class="game-title center">افتح كارتين شبه بعض</h2>
+    <h2 class="game-title center">افتح كارتين شبه بعض • ${game.cards.length} كارت</h2>
     <p class="status">${state.phase === 'finished' ? 'كل الكروت اتكشفت! 🎊' : game.waiting ? 'بنبص على الكروت... 👀' : game.turn === role ? 'دورك دلوقتي! ✨' : `دور ${nameOf(game.turn)} ⏳`}</p>
-    <div class="memory-grid">${cards}</div>
+    <div class="memory-grid ${game.cards.length>=24?'very-dense':game.cards.length>=16?'dense':''}">${cards}</div>
     ${finishBox()}
     ${role === 'host' && state.phase === 'finished' ? '<div class="btn-row"><button class="btn primary" data-action="restart">🔁 جولة جديدة</button></div>' : ''}
     <p class="rule center">كل زوج متطابق = ⭐ واحدة • صاحب الزوج يلعب مرة كمان</p>
@@ -168,6 +303,38 @@ function renderDraw() {
   redrawCanvas();
   bindCanvas(drawer && state.phase === 'playing');
 }
+function renderQuiz() {
+  const key=state.game, quiz=state.quiz;
+  if (!quiz?.question) return;
+  const q=quiz.question;
+  const canAnswer=state.phase==='playing' && quiz.turn===role;
+  const buttons=q.options.map((option,i)=>`<button class="quiz-choice" data-quiz="${i}" ${!canAnswer?'disabled':''}>${option}</button>`).join('');
+  const result=state.phase==='finished' ? `<div class="finish"><strong>${state.result==='correct'?'🎉 برافو! إجابة صح':'💜 محاولة حلوة! الإجابة الصحيحة:'}</strong><p class="answer-reveal">${q.options[q.correct]}</p></div>` : '';
+  screen.innerHTML=`<div class="panel">${gameHeading(...GAME_LABELS[key].slice(0,2))}
+    <h2 class="game-title center">${q.prompt}</h2>
+    ${q.display?`<div class="quiz-display" aria-label="صور السؤال">${q.display}</div>`:''}
+    <p class="status">${state.phase==='finished'?'الجولة خلصت 🎉':canAnswer?'دورك دلوقتي! ✨':`دور ${nameOf(quiz.turn)} ⏳`}</p>
+    <div class="quiz-options">${buttons}</div>
+    ${result}
+    ${role==='host'&&state.phase==='finished'?'<div class="btn-row"><button class="btn primary" data-action="restart">🔁 سؤال جديد</button></div>':''}
+    <p class="rule center">إجابة صحيحة = ⭐ نقطتين • الدور بيتبدّل كل سؤال</p>
+  </div>`;
+}
+function renderTreasure() {
+  const treasure=state.treasure;
+  if(!treasure?.question)return;
+  const q=treasure.question;
+  const canAnswer=state.phase==='playing'&&treasure.turn===role;
+  const buttons=q.options.map((option,i)=>`<button class="quiz-choice" data-treasure="${i}" ${!canAnswer||treasure.wrong?.includes(i)?'disabled':''}>${option}</button>`).join('');
+  screen.innerHTML=`<div class="panel">${gameHeading('🗝️','رحلة الكنز')}
+    <h2 class="game-title center">افتحوا صندوق الكنز سوا! 🧰</h2>
+    <div class="treasure-progress">${Array.from({length:4},(_,i)=>`<span>${i<treasure.stage?'🔑':'🔒'}</span>`).join('')}</div>
+    ${state.phase==='finished'?`<div class="finish"><div class="big-emoji">🎁</div><strong>فتحتوا صندوق الكنز! 🎉</strong><p>بابا: ${treasure.roundScores.host} ⭐ • رقية: ${treasure.roundScores.guest} ⭐</p></div>`:
+    `<h3 class="game-title center">${q.prompt}</h3><p class="status">${canAnswer?'دورك تختار المفتاح ✨':`دور ${nameOf(treasure.turn)} ⏳`}</p><div class="quiz-options">${buttons}</div>`}
+    ${role==='host'&&state.phase==='finished'?'<div class="btn-row"><button class="btn primary" data-action="restart">🎁 كنز جديد</button></div>':''}
+    <p class="rule center">كل مفتاح صح = ⭐ لصاحبه • الغلط يسلّم الدور للتاني</p>
+  </div>`;
+}
 function render() {
   connection.textContent = !uid ? '⏳ جاري الاتصال' : connected ? '🟢 الإنترنت متصل' : '🟠 الاتصال مقطوع';
   if (!roomCode) { renderHome(); return; }
@@ -176,6 +343,8 @@ function render() {
   if (state.game === 'memory') return renderMemory();
   if (state.game === 'ttt') return renderTtt();
   if (state.game === 'draw') return renderDraw();
+  if (QUIZ_GAMES.includes(state.game)) return renderQuiz();
+  if (state.game === 'treasure') return renderTreasure();
   screen.innerHTML = '<div class="panel"><p>اللعبة غير معروفة. اطلب من بابا يرجع للمدينة.</p></div>';
 }
 async function mutateState(transform) {
@@ -193,10 +362,15 @@ function newGame(which, old, previousDraw) {
   const scores = {...(old?.scores || { host:0,guest:0 })};
   const round = (old?.round || 0) + 1;
   if (which === 'memory') {
-    const picks = shuffle(MEMORY_EMOJI).slice(0,4);
-    return { game:which,phase:'playing',scores,round,memory:{cards:shuffle([...picks,...picks]),matched:[],revealed:[],roundScores:{host:0,guest:0},waiting:false,turn:'host'} };
+    const requested=memoryPreference==='random'?null:Number(memoryPreference);
+    const eligible=MEMORY_SIZES.filter(n=>n!==old?.memory?.cards?.length);
+    const size=MEMORY_SIZES.includes(requested)?requested:eligible[Math.floor(Math.random()*eligible.length)];
+    const picks=shuffle(MEMORY_EMOJI).slice(0,size/2);
+    return { game:which,phase:'playing',scores,round,memory:{cards:shuffle([...picks,...picks]),matched:[],revealed:[],roundScores:{host:0,guest:0},waiting:false,turn:round%2===0?'guest':'host'} };
   }
   if (which === 'ttt') return {game:which,phase:'playing',scores,round,ttt:{board:'.........',turn:round%2===0?'guest':'host'}};
+  if (QUIZ_GAMES.includes(which)) return {game:which,phase:'playing',scores,round,quiz:{turn:round%2===0?'guest':'host',question:newQuestion(which,old?.quiz?.question?.index)}};
+  if (which === 'treasure') return {game:which,phase:'playing',scores,round,treasure:{stage:0,turn:round%2===0?'guest':'host',wrong:[],roundScores:{host:0,guest:0},question:newQuestion('treasure')}};
   const lastIndex = previousDraw?.promptIndex ?? -1;
   let promptIndex = Math.floor(Math.random()*DRAW_ITEMS.length);
   if (DRAW_ITEMS.length>1 && promptIndex===lastIndex) promptIndex=(promptIndex+1)%DRAW_ITEMS.length;
@@ -204,7 +378,7 @@ function newGame(which, old, previousDraw) {
   return {game:'draw',phase:'playing',scores,round,draw:{drawer:previousDraw?other(previousDraw.drawer):'host',promptIndex,options:shuffle(item.choices),guesses:[]}};
 }
 async function startGame(which) {
-  if (role !== 'host' || !canPlay() || !['draw','memory','ttt'].includes(which)) return;
+  if (role !== 'host' || !canPlay() || !GAMES.includes(which)) return;
   if (which === 'draw') await remove(ref(db,`rooms/${roomCode}/strokes`)).catch(e=>info(humanError(e)));
   const base = newGame(which,state,which==='draw' && state?.game==='draw'?state.draw:null);
   await mutateState(old=>({...base,scores:{...old.scores}}));
@@ -246,9 +420,9 @@ async function chooseCard(i) {
       const roundScores={...(m.roundScores||{host:0,guest:0}),[role]:(m.roundScores?.[role]||0)+1};
       const finished=matched.length===m.cards.length;
       const result=finished ? (roundScores.host===roundScores.guest?'draw':roundScores.host>roundScores.guest?'host':'guest') : undefined;
-      return {...old,scores,phase:finished?'finished':'playing',...(finished?{result}:{}),memory:{...m,revealed:[],matched,roundScores,waiting:false}};
+      return {...old,scores,feedback:addFeedback(old,finished?'win':'good'),phase:finished?'finished':'playing',...(finished?{result}:{}),memory:{...m,revealed:[],matched,roundScores,waiting:false}};
     }
-    return {...old,memory:{...m,revealed,waiting:true}};
+    return {...old,feedback:addFeedback(old,'bad'),memory:{...m,revealed,waiting:true}};
   });
 }
 async function chooseCell(i) {
@@ -260,7 +434,7 @@ async function chooseCell(i) {
     const scores={...old.scores};
     if (result==='draw') { scores.host++;scores.guest++; }
     else if (result) scores[result]+=3;
-    return {...old,ttt:{board,turn:other(role)},scores,phase:result?'finished':'playing',...(result?{result}:{})};
+    return {...old,ttt:{board,turn:other(role)},scores,feedback:addFeedback(old,result?'win':'tap'),phase:result?'finished':'playing',...(result?{result}:{})};
   });
 }
 async function chooseGuess(index) {
@@ -273,7 +447,34 @@ async function chooseGuess(index) {
     const ended=correct||guesses.length>=3;
     const scores={...old.scores};
     if (correct) scores[role]+=guesses.length===1?2:1;
-    return {...old,scores,draw:{...d,guesses},phase:ended?'finished':'playing',...(ended?{result:correct?'correct':'incorrect'}:{})};
+    return {...old,scores,feedback:addFeedback(old,correct?'good':'bad'),draw:{...d,guesses},phase:ended?'finished':'playing',...(ended?{result:correct?'correct':'incorrect'}:{})};
+  });
+}
+async function chooseQuiz(index) {
+  await mutateState(old=>{
+    if(!QUIZ_GAMES.includes(old.game)||old.phase!=='playing'||old.quiz?.turn!==role)return;
+    const q=old.quiz.question;
+    if(!Number.isInteger(index)||index<0||index>=q.options.length)return;
+    const correct=index===q.correct;
+    const scores={...old.scores};
+    if(correct)scores[role]+=2;
+    return {...old,scores,feedback:addFeedback(old,correct?'good':'bad'),phase:'finished',result:correct?'correct':'incorrect'};
+  });
+}
+async function chooseTreasure(index) {
+  await mutateState(old=>{
+    if(old.game!=='treasure'||old.phase!=='playing'||old.treasure?.turn!==role)return;
+    const t=old.treasure,q=t.question;
+    if(!Number.isInteger(index)||index<0||index>=q.options.length||t.wrong?.includes(index))return;
+    const correct=index===q.correct, nextStage=t.stage+(correct?1:0);
+    const scores={...old.scores},roundScores={...t.roundScores};
+    if(correct){scores[role]+=1;roundScores[role]+=1;}
+    const finished=nextStage===4;
+    const result=finished?(roundScores.host===roundScores.guest?'draw':roundScores.host>roundScores.guest?'host':'guest'):undefined;
+    return {...old,scores,feedback:addFeedback(old,finished?'win':correct?'good':'bad'),
+      phase:finished?'finished':'playing',...(finished?{result}:{}),
+      treasure:{...t,stage:nextStage,turn:other(role),roundScores,wrong:correct?[]:[...(t.wrong||[]),index],
+        question:correct&&!finished?newQuestion('treasure',q.index):q}};
   });
 }
 async function nextDraw() {
@@ -328,7 +529,7 @@ function bindCanvas(enabled) {
 }
 function detachRoom() {
   for (const unsub of unsubs) try { unsub(); } catch(e) { console.warn(e); }
-  unsubs=[];presenceBound=false;meta=null;state=null;presence={};strokes={};role='';
+  unsubs=[];presenceBound=false;meta=null;state=null;presence={};strokes={};role='';lastAudioFeedback=null;
 }
 function trackPresence() {
   if (presenceBound || !role || !uid) return;
@@ -351,7 +552,7 @@ function subscribeRoom(code) {
     if (!role) { info('الغرفة مكتملة أو مش مسموح لك تدخلها.'); detachRoom();roomCode='';location.hash='';render();return; }
     trackPresence();render();
   },e=>{info(humanError(e));detachRoom();roomCode='';location.hash='';render();}));
-  unsubs.push(onValue(ref(db,`${base}/state`),snap=>{state=snap.val();render();},e=>info(humanError(e))));
+  unsubs.push(onValue(ref(db,`${base}/state`),snap=>{const oldState=state;state=snap.val();feedbackSignal(oldState,state);render();},e=>info(humanError(e))));
   unsubs.push(onValue(ref(db,`${base}/strokes`),snap=>{strokes=snap.val()||{};redrawCanvas();},e=>info(humanError(e))));
   unsubs.push(onValue(ref(db,`${base}/presence`),snap=>{presence=snap.val()||{};render();},e=>info(humanError(e))));
 }
@@ -392,6 +593,13 @@ async function copyLink() {
   try { await navigator.clipboard.writeText(link);info('اتنسخ رابط الدعوة! ابعته لرقية بشكل خاص 💌'); }
   catch(e) { info(`انسخ الكود وابعت الرابط من شريط العنوان: ${roomCode}`); }
 }
+screen.addEventListener('click',e=>{if(e.target.closest('button:not(:disabled)'))sound('tap');},true);
+screen.addEventListener('change',e=>{
+  if(e.target?.id!=='memory-size'||role!=='host')return;
+  memoryPreference=e.target.value;
+  try {localStorage.setItem('roqaya-memory',memoryPreference);}catch(_){}
+  sound('tap');
+});
 screen.addEventListener('click',async e=>{
   const button=e.target.closest('button');
   if (!button || button.disabled) return;
@@ -409,11 +617,14 @@ screen.addEventListener('click',async e=>{
   if (button.dataset.memory!==undefined) return chooseCard(Number(button.dataset.memory));
   if (button.dataset.cell!==undefined) return chooseCell(Number(button.dataset.cell));
   if (button.dataset.guess!==undefined) return chooseGuess(Number(button.dataset.guess));
+  if (button.dataset.quiz!==undefined) return chooseQuiz(Number(button.dataset.quiz));
+  if (button.dataset.treasure!==undefined) return chooseTreasure(Number(button.dataset.treasure));
 });
 screen.addEventListener('keydown',e=>{
   if (e.key==='Enter'&&e.target?.id==='room-input') {e.preventDefault();joinRoom();}
 });
 async function initialize() {
+  soundControl();
   if (!firebaseConfig.apiKey || firebaseConfig.apiKey.startsWith('PASTE_') || firebaseConfig.databaseURL.includes('PASTE_')) {
     connection.textContent='⚙️ محتاجة إعداد';
     screen.innerHTML='<div class="panel center"><div class="big-emoji">🔧</div><h2>قبل أول لعبة</h2><p>بابا لازم يضيف إعدادات Firebase الحقيقية في ملف <b>firebase-config.js</b>، ويشغّل Anonymous Authentication ويضبط قواعد Realtime Database.</p><p class="hint">افتح ملف README-AR.md المرفق واتبع الخطوات من الموبايل.</p></div>';
