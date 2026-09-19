@@ -1,0 +1,99 @@
+<!doctype html>
+<html lang="ar" dir="rtl">
+<head>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="robots" content="noindex,nofollow">
+<title>تقرير استخدام الألعاب — عالم رقية</title>
+<style>
+:root{font-family:system-ui,Tahoma,sans-serif;background:#f8f6ff;color:#30294f;line-height:1.7}*{box-sizing:border-box}
+body{margin:0;padding:16px}main{max-width:850px;margin:auto}h1{font-size:1.6rem;color:#5840a7}h2{font-size:1.18rem}
+.panel{background:#fff;border:1px solid #e9e2fb;border-radius:19px;padding:17px;margin:13px 0;box-shadow:0 5px 18px #3a257509}
+.note{background:#fff5d8;border-color:#f1d897}.muted{color:#685d80;font-size:.9rem}.grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:9px}
+.stat{background:#f0ebff;border-radius:14px;padding:12px}.stat strong{display:block;font-size:1.6rem;color:#533ba5}
+input{font:inherit;max-width:100%;padding:10px;border:1px solid #d4c9ef;border-radius:10px;background:white}
+input[type=file]{width:100%}label{display:block;margin:10px 0 4px;font-weight:700}.dates{display:flex;gap:10px;flex-wrap:wrap}.dates>div{flex:1;min-width:135px}
+table{width:100%;border-collapse:collapse}th,td{text-align:right;padding:9px 6px;border-bottom:1px solid #ebe5fa}th{color:#62548c}
+.bar{height:12px;border-radius:10px;background:#e8e0fb;min-width:70px;overflow:hidden}.bar>span{display:block;height:100%;background:#775de1;border-radius:10px}
+#error{color:#9e2525;font-weight:700}#results[hidden]{display:none}
+</style>
+</head>
+<body>
+<main>
+<h1>🎡 تقرير استخدام الألعاب</h1>
+<p class="muted">لوحة محلية لحساب عدد الغرف والجولات. تُعالِج ملف Firebase داخل متصفحك فقط؛ لا ترفعه إلى الموقع أو تشاركه مع أحد.</p>
+<section class="panel note"><strong>🔒 مهم للخصوصية:</strong> ملف التصدير الخام من Firebase قد يحتوي أسماء أطفال ومعرّفات ورسومات. اختَر الملف هنا فقط، ولا تنشره على GitHub أو ترسله بالمحادثة. اللوحة تعرض المجاميع فقط، ولا تحفظ الملف أو تبعثه إلى أي خادم. لا تستخدم أي إضافات متصفح غير موثوقة أثناء فتح بياناتك.</section>
+<section class="panel">
+<h2>١. اختَر فترة التقرير وملف التصدير</h2>
+<div class="dates"><div><label for="from">من تاريخ (بتوقيت الإمارات)</label><input id="from" type="date" value="2026-09-19"></div><div><label for="to">إلى تاريخ شامل</label><input id="to" type="date" value="2026-10-18"></div></div>
+<label for="file">ملف JSON المصدَّر من Realtime Database</label><input id="file" type="file" accept=".json,application/json">
+<p class="muted">من Firebase Console ← Realtime Database ← Data ← Export JSON. اختر تصدير جذر البيانات. لا تضع الملف في مستودع GitHub العام. ابدأ فترة قياس الألعاب من تاريخ نشر V6؛ زيارات الموقع الأقدم موجودة في Cloudflare فقط.</p>
+<p id="error" role="alert"></p>
+</section>
+<div id="results" hidden>
+<section class="panel"><h2>٢. ملخص الفترة</h2><div class="grid" id="summary"></div><p class="muted">«الغرف» ليست أسرًا فريدة، و«الأيام النشطة» أيام ظهر فيها نشاط في غرفة واحدة على الأقل. الغرف التي وُجدت قبل V6 ليست جزءًا من إجمالي الغرف الجديدة.</p></section>
+<section class="panel"><h2>٣. الألعاب الأكثر استخدامًا (بدون ترتيب تقييمي)</h2><table><thead><tr><th>اللعبة</th><th>بدأت</th><th>اكتملت</th><th>التكرار</th></tr></thead><tbody id="games"></tbody></table></section>
+<section class="panel"><h2>٤. النشاط اليومي</h2><table><thead><tr><th>اليوم</th><th>الجولات بدأت</th><th>الجولات اكتملت</th></tr></thead><tbody id="daily"></tbody></table></section>
+<section class="panel note"><strong>حدود القياس:</strong> لا يحدد هذا التقرير عدد الأسر الفريدة أو عودة الأسرة في أيام متفرقة، ولا يحصي جلسات منفصلة بدقة. إنه يقيس بدايات الجولات ونهاياتها داخل الغرف فقط. يمكن التلاعب ببيانات اللعبة، لذا هذه مؤشرات تجريبية وليست سجلات مالية مُدقَّقة.</section>
+</div>
+</main>
+<script>
+'use strict';
+const LABELS={draw:'ارسم وخمّن',memory:'كروت الذاكرة',ttt:'إكس أو',odd:'مين المختلف؟',count:'عدّ الصور',pattern:'كمّل النمط',animals:'بيوت الحيوانات',colors:'ألوان وأشكال',math:'حساب الملاهي',treasure:'رحلة الكنز',read:'اقرئي واختاري',english:'عربي وإنجليزي',compare:'مين الأكبر؟',numberline:'الرقم الناقص'};
+const games=Object.keys(LABELS);
+const $=id=>document.getElementById(id);
+const safeCount=value=>Number.isSafeInteger(value)&&value>=0&&value<100000000?value:0;
+const fmt=value=>value.toLocaleString('ar-EG');
+const el=(tag,text)=>{const node=document.createElement(tag);node.textContent=text;return node;};
+const displayDate=stamp=>{const date=new Date(stamp);return Number.isFinite(date.getTime())?new Intl.DateTimeFormat('en-GB',{timeZone:'Asia/Dubai',year:'numeric',month:'2-digit',day:'2-digit'}).format(date).split('/').reverse().join('-'):null;};
+function calculate(root,start,end){
+ const rooms=root && typeof root==='object' && root.rooms && typeof root.rooms==='object'?root.rooms:{};
+ const totals=Object.fromEntries(games.map(id=>[id,{starts:0,completions:0}]));
+ const days={};let newRooms=0,joinedRooms=0,roomsWithActivity=new Set();
+ for(const [roomId,room] of Object.entries(rooms)){
+  if(!room||typeof room!=='object')continue;
+  const metrics=room.state?.metrics;
+  if(metrics?.v!==1 || typeof metrics.days!=='object' || !metrics.days)continue;
+  const createdDay=displayDate(room.meta?.createdAt);
+  if(createdDay && createdDay>=start && createdDay<=end){newRooms++;if(typeof room.meta?.guestUid==='string' && room.meta.guestUid)joinedRooms++;}
+  for(const [day,counts] of Object.entries(metrics.days)){
+   if(!/^\d{4}-\d{2}-\d{2}$/.test(day)||day<start||day>end||!counts||typeof counts!=='object')continue;
+   let active=false;
+   for(const id of games){
+    const started=safeCount(counts.starts?.[id]),completed=safeCount(counts.completions?.[id]);
+    totals[id].starts+=started;totals[id].completions+=completed;
+    if(started||completed){
+     days[day]??={starts:0,completions:0};
+     days[day].starts+=started;days[day].completions+=completed;active=true;
+    }
+   }
+   if(active)roomsWithActivity.add(roomId);
+  }
+ }
+ const started=games.reduce((n,id)=>n+totals[id].starts,0);
+ const completed=games.reduce((n,id)=>n+totals[id].completions,0);
+ return {newRooms,joinedRooms,activeRooms:roomsWithActivity.size,activeDays:Object.keys(days).length,started,completed,totals,days};
+}
+function render(result){
+ const cards=[['غرف جديدة بالإصدار V6',result.newRooms],['الغرف الجديدة التي انضم لها لاعب ثانٍ',result.joinedRooms],['غرف بها نشاط خلال الفترة',result.activeRooms],['أيام بها نشاط',result.activeDays],['جولات بدأت',result.started],['جولات اكتملت',result.completed]];
+ $('summary').replaceChildren(...cards.map(([label,n])=>{const box=el('div','');box.className='stat';box.append(el('strong',fmt(n)),el('span',label));return box;}));
+ const max=Math.max(1,...games.map(id=>result.totals[id].starts));
+ $('games').replaceChildren(...games.map(id=>{
+  const tr=document.createElement('tr');const name=el('td',LABELS[id]);const a=el('td',fmt(result.totals[id].starts));const b=el('td',fmt(result.totals[id].completions));
+  const c=document.createElement('td'),outer=document.createElement('div'),inner=document.createElement('span');outer.className='bar';inner.style.width=Math.min(100,result.totals[id].starts/max*100)+'%';outer.append(inner);c.append(outer);tr.append(name,a,b,c);return tr;
+ }));
+ $('daily').replaceChildren(...Object.keys(result.days).sort().map(day=>{const tr=document.createElement('tr');tr.append(el('td',day),el('td',fmt(result.days[day].starts)),el('td',fmt(result.days[day].completions)));return tr;}));
+ $('results').hidden=false;
+}
+let parsed=null;
+function refresh(){if(!parsed)return;const from=$('from').value,to=$('to').value;if(!from||!to||from>to){$('error').textContent='تأكد من اختيار فترة صحيحة.';$('results').hidden=true;return;}$('error').textContent='';render(calculate(parsed,from,to));}
+$('from').addEventListener('change',refresh);$('to').addEventListener('change',refresh);
+$('file').addEventListener('change',async()=>{
+ $('error').textContent='';$('results').hidden=true;parsed=null;
+ const file=$('file').files?.[0];if(!file)return;
+ if(file.size>30*1024*1024){$('error').textContent='حجم الملف أكبر من 30 ميجابايت. محتاجين طريقة تصدير أصغر؛ لا ترسله هنا.';return;}
+ try{const data=JSON.parse(await file.text());if(!data || typeof data!=='object'||!data.rooms){throw new Error('missing rooms');}parsed=data;refresh();}
+ catch(_){$('error').textContent='تعذّر قراءة الملف. اختَر ملف Export JSON من جذر قاعدة بيانات Firebase.';}
+});
+</script>
+</body>
+</html>

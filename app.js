@@ -8,7 +8,7 @@ const screen = $('#screen');
 const message = $('#message');
 const connection = $('#connection');
 const LETTERS = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789';
-const APP_VERSION = '5.0';
+const APP_VERSION = '6.0';
 const DRAW_ITEMS = [
   { name:'قطة', emoji:'🐱', choices:['🐱','🐶','🐰'] },
   { name:'شمس', emoji:'☀️', choices:['☀️','🌙','⭐'] },
@@ -586,6 +586,41 @@ function render() {
   if (state.game === 'treasure') return renderTreasure();
   screen.innerHTML = '<div class="panel"><p>اللعبة غير معروفة. اطلب من بابا يرجع للمدينة.</p></div>';
 }
+// Counts only game starts and completed rounds, not child names, answers, drawings or device IDs.
+// Kept inside each room's existing state so no extra Firebase permissions are needed.
+const STATS_KEEP_DAYS = 45;
+function statisticsDay(date = new Date()) {
+  // One reporting timezone for all families; do not use the device's local timezone.
+  try {
+    const parts = new Intl.DateTimeFormat('en-GB', {
+      timeZone: 'Asia/Dubai', year: 'numeric', month: '2-digit', day: '2-digit'
+    }).formatToParts(date);
+    const part = kind => parts.find(x => x.type === kind)?.value;
+    return `${part('year')}-${part('month')}-${part('day')}`;
+  } catch (_) { return date.toISOString().slice(0, 10); }
+}
+function recordAggregateMetrics(previous, next, day = statisticsDay()) {
+  if (!next || typeof next !== 'object') return next;
+  const validGame = game => GAMES.includes(game);
+  const started = validGame(next.game) && next.phase === 'playing' &&
+    Number.isInteger(next.round) && next.round > 0 && next.round !== previous.round;
+  const completed = validGame(next.game) && next.game === previous.game &&
+    next.round === previous.round && previous.phase === 'playing' && next.phase === 'finished';
+  if (!started && !completed) return next;
+  const prior = previous.metrics?.v === 1 ? previous.metrics : {v:1, days:{}};
+  const days = {...(prior.days || {})};
+  // Retain a bounded reporting window, including the whole 30-day trial.
+  const cutoff = statisticsDay(new Date(Date.parse(`${day}T00:00:00Z`) - (STATS_KEEP_DAYS - 1) * 86400000));
+  for (const key of Object.keys(days)) {
+    if (!/^\d{4}-\d{2}-\d{2}$/.test(key) || key < cutoff || key > day) delete days[key];
+  }
+  const today = days[day] || {};
+  const metric = started ? 'starts' : 'completions';
+  const gameCounts = {...(today[metric] || {})};
+  gameCounts[next.game] = (Number(gameCounts[next.game]) || 0) + 1;
+  days[day] = {...today, [metric]:gameCounts};
+  return {...next, metrics:{v:1,days}};
+}
 async function mutateState(transform) {
   if (!roomCode || !role) return;
   try {
@@ -593,7 +628,8 @@ async function mutateState(transform) {
       // Firebase may invoke the updater with null before the server value is cached.
       const latest = current ?? state;
       if (!latest) return;
-      return transform(latest);
+      const next = transform(latest);
+      return recordAggregateMetrics(latest, next);
     }, { applyLocally:false });
   } catch (e) { info(humanError(e)); }
 }
@@ -810,7 +846,7 @@ async function createRoom() {
     childNamePreference=enteredName;
     try {localStorage.setItem('roqaya-child-name',enteredName);} catch (_) {}
     await set(ref(db,`rooms/${code}/meta`),{hostUid:uid,createdAt:serverTimestamp()});
-    await set(ref(db,`rooms/${code}/state`),{game:'lobby',phase:'lobby',scores:{host:0,guest:0},round:0,childAge:agePreference,childName:enteredName});
+    await set(ref(db,`rooms/${code}/state`),{game:'lobby',phase:'lobby',scores:{host:0,guest:0},round:0,childAge:agePreference,childName:enteredName,metrics:{v:1,days:{}}});
     subscribeRoom(code);
   } catch(e) { info(humanError(e)); }
 }
