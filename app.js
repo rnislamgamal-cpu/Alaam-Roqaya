@@ -8,7 +8,7 @@ const screen = $('#screen');
 const message = $('#message');
 const connection = $('#connection');
 const LETTERS = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789';
-const APP_VERSION = '4.0';
+const APP_VERSION = '5.0';
 const DRAW_ITEMS = [
   { name:'قطة', emoji:'🐱', choices:['🐱','🐶','🐰'] },
   { name:'شمس', emoji:'☀️', choices:['☀️','🌙','⭐'] },
@@ -297,10 +297,37 @@ function newQuestion(which,previousIndex=-1,age=6) {
 }
 let memoryPreference = 'random';
 let agePreference = 6;
+let childNamePreference = 'رقية';
+// The adult chooses a first name or nickname; no names are sent to analytics.
+function normalizeChildName(value) {
+  const candidate=String(value??'').normalize('NFC').trim().replace(/\s+/gu,' ');
+  if (!candidate || candidate.length>24 || !/^[\p{L}\p{M}]+(?:[ -][\p{L}\p{M}]+)*$/u.test(candidate)) return '';
+  return candidate;
+}
+function childName() {
+  return roomCode ? (normalizeChildName(state?.childName) || 'رقية') : childNamePreference;
+}
+// Change only original interface text, never quiz answers or children of canvas.
+// Text nodes are updated in place, preserving canvas, focus, and button listeners.
+const originalUiText = new WeakMap();
+function personalizeUi() {
+  const root=document.querySelector('.shell');
+  if (!root) return;
+  const iterator=document.createTreeWalker(root,NodeFilter.SHOW_TEXT);
+  for (let node=iterator.nextNode();node;node=iterator.nextNode()) {
+    const original=originalUiText.get(node)??node.nodeValue;
+    if (!original.includes('رقية')) continue;
+    originalUiText.set(node,original);
+    const desired=original.replace(/رقية/g,childName());
+    if(node.nodeValue!==desired) node.nodeValue=desired;
+  }
+  document.title=`عالم ${childName()} 🎡`;
+}
+new MutationObserver(personalizeUi).observe(document.querySelector('.shell'),{childList:true,subtree:true});
 let soundEnabled = true;
 let audioContext = null;
 let lastAudioFeedback = null;
-try { soundEnabled = localStorage.getItem('roqaya-sound') !== 'off'; memoryPreference = localStorage.getItem('roqaya-memory') || 'random'; agePreference=normalizeAge(localStorage.getItem('roqaya-child-age')); } catch (_) {}
+try { soundEnabled = localStorage.getItem('roqaya-sound') !== 'off'; memoryPreference = localStorage.getItem('roqaya-memory') || 'random'; agePreference=normalizeAge(localStorage.getItem('roqaya-child-age')); childNamePreference=normalizeChildName(localStorage.getItem('roqaya-child-name'))||'رقية'; } catch (_) {}
 function sound(type='tap') {
   if (!soundEnabled) return;
   try {
@@ -375,7 +402,7 @@ function randomCode() {
   return [...bytes].map(n=>LETTERS[n % LETTERS.length]).join('');
 }
 function other(player) { return player === 'host' ? 'guest' : 'host'; }
-function nameOf(player) { return player === 'host' ? 'بابا' : 'رقية'; }
+function nameOf(player) { return player === 'host' ? 'بابا' : childName(); }
 function canPlay() { return Boolean(meta?.guestUid); }
 function isTurn(player) { return player === role; }
 function scorePanel() {
@@ -391,6 +418,10 @@ function renderHome() {
   const invitation = /^#room=([A-Z2-9]{8})$/.exec(location.hash)?.[1] || '';
   screen.innerHTML = `<div class="panel center">
     <div class="hero"><div class="big-emoji">🎡 🎠 🎈</div><h2>أهلًا بيكم في عالم رقية!</h2><p>ألعاب بتكبر مع عمر طفلك من سنتين لحد 10 سنوات 💜</p></div>
+    <div class="age-settings"><label for="child-name-home">✏️ ولي الأمر: اكتب اسم الطفل</label>
+      <input id="child-name-home" class="input" type="text" maxlength="24" autocomplete="off" spellcheck="false" value="${childNamePreference}" placeholder="مثلاً: سلمى" aria-label="اسم الطفل" />
+      <p class="hint">الأفضل تكتب الاسم الأول أو اسم مستعار، من غير الاسم الكامل.</p>
+    </div>
     <div class="age-settings"><label for="child-age-home">🎂 ولي الأمر: اختار عمر الطفل</label>
       <select id="child-age-home" class="input">${ageOptions(agePreference)}</select>
       <p class="hint">هنضبط الألعاب وصعوبتها تلقائيًا. للصغيرين، محتاجين حد كبير يقرأ التعليمات معاهم.</p>
@@ -409,11 +440,15 @@ function renderLobby() {
   const available=gamesForAge(childAge), sizes=memorySizesForAge(childAge);
   const chosenMemory=effectiveMemoryPreference(childAge);
   screen.innerHTML = `<div class="panel center">
-    <div class="big-emoji">🎪</div><h2>${waiting ? 'مستنيين رقية تدخل 💌' : 'يلا نلعب سوا! 🎉'}</h2>
+    <div class="big-emoji">🎪</div><h2>${waiting ? 'في انتظار دخول رقية 💌' : 'يلا نلعب سوا! 🎉'}</h2>
     <p>رمز الغرفة</p><div class="room-code" aria-label="رمز الغرفة">${roomCode}</div>
     <div class="btn-row"><button class="btn soft" data-action="copy">🔗 نسخ رابط الدعوة</button></div>
     ${scorePanel()}
     ${waiting ? '<p class="hint">ابعث الرابط لرقية، وتفتح اللعبة من موبايلها وتضغط دخول الغرفة.</p>' : '<p class="hint">بابا يختار اللعبة؛ ورقية هتشوف نفس اللعبة فورًا.</p>'}
+    <div class="age-settings"><label for="child-name-lobby">✏️ اسم الطفل في الغرفة</label>
+      ${role==='host'?`<input id="child-name-lobby" class="input" type="text" maxlength="24" autocomplete="off" spellcheck="false" value="${childName()}" aria-label="اسم الطفل في الغرفة" />`:`<div class="age-view">${childName()}</div>`}
+      <p class="hint">ولي الأمر يقدر يغيّر الاسم هنا، وهيوصل للجهازين فورًا.</p>
+    </div>
     <div class="age-settings"><label for="child-age-lobby">🎂 عمر الطفل • مستوى الألعاب</label>
       ${role==='host'?`<select id="child-age-lobby" class="input">${ageOptions(childAge)}</select>`:`<div class="age-view">${childAge} سنوات • بابا يقدر يغيّر المستوى</div>`}
       <p class="hint">المتاح دلوقتي ${available.length} ألعاب مناسبة للعمر. المستوى بيتغير مع الجولات الجديدة.</p>
@@ -438,7 +473,7 @@ function gameHeading(icon, title) {
 function finishBox() {
   if (state.phase !== 'finished') return '';
   const result = state.result;
-  const title = result === 'draw' ? 'تعادل جميل! 🤝' : result === 'host' ? 'بابا كسب الجولة! 🎉' : result === 'guest' ? 'رقية كسبت الجولة! 🎉' : 'خلصت الجولة! 🎉';
+  const title = result === 'draw' ? 'تعادل جميل! 🤝' : result === 'host' ? 'بابا كسب الجولة! 🎉' : result === 'guest' ? 'الفوز لـرقية! 🎉' : 'خلصت الجولة! 🎉';
   return `<div class="finish"><div class="big-emoji">🏆</div><strong>${title}</strong><p class="hint">النقاط متجمعة بين الألعاب.</p></div>`;
 }
 function renderMemory() {
@@ -564,7 +599,7 @@ async function mutateState(transform) {
 }
 function newGame(which, old, previousDraw) {
   const childAge=normalizeAge(old?.childAge);
-  const common={childAge};
+  const common={childAge,childName:normalizeChildName(old?.childName)||'رقية'};
   const scores = {...(old?.scores || { host:0,guest:0 })};
   const round = (old?.round || 0) + 1;
   if (which === 'memory') {
@@ -770,8 +805,12 @@ async function createRoom() {
   try {
     const code=randomCode();
     agePreference=normalizeAge($('#child-age-home')?.value??agePreference);
+    const enteredName=normalizeChildName($('#child-name-home')?.value);
+    if (!enteredName) {info('اكتب اسمًا أول أو اسمًا مستعارًا من حروف فقط، بحد أقصى 24 حرفًا.');return;}
+    childNamePreference=enteredName;
+    try {localStorage.setItem('roqaya-child-name',enteredName);} catch (_) {}
     await set(ref(db,`rooms/${code}/meta`),{hostUid:uid,createdAt:serverTimestamp()});
-    await set(ref(db,`rooms/${code}/state`),{game:'lobby',phase:'lobby',scores:{host:0,guest:0},round:0,childAge:agePreference});
+    await set(ref(db,`rooms/${code}/state`),{game:'lobby',phase:'lobby',scores:{host:0,guest:0},round:0,childAge:agePreference,childName:enteredName});
     subscribeRoom(code);
   } catch(e) { info(humanError(e)); }
 }
@@ -803,7 +842,28 @@ async function copyLink() {
   catch(e) { info(`انسخ الكود وابعت الرابط من شريط العنوان: ${roomCode}`); }
 }
 screen.addEventListener('click',e=>{if(e.target.closest('button:not(:disabled)'))sound('tap');},true);
+screen.addEventListener('input',e=>{
+  if(e.target?.id!=='child-name-home') return;
+  const candidate=normalizeChildName(e.target.value);
+  if (candidate) { childNamePreference=candidate; personalizeUi(); }
+});
 screen.addEventListener('change',async e=>{
+  if(e.target?.id==='child-name-home') {
+    const candidate=normalizeChildName(e.target.value);
+    if(!candidate){info('اكتب اسمًا أول أو اسمًا مستعارًا من حروف فقط، بحد أقصى 24 حرفًا.');return;}
+    childNamePreference=candidate;
+    try{localStorage.setItem('roqaya-child-name',candidate);}catch(_){}
+    info('');personalizeUi();return;
+  }
+  if(e.target?.id==='child-name-lobby' && role==='host' && state?.game==='lobby') {
+    const candidate=normalizeChildName(e.target.value);
+    if(!candidate){info('اكتب اسمًا أول أو اسمًا مستعارًا من حروف فقط، بحد أقصى 24 حرفًا.');return;}
+    if(candidate===childName()) return;
+    const result=await mutateState(old=>old.game==='lobby'?{...old,childName:candidate}:undefined);
+    if(result?.committed){childNamePreference=candidate;try{localStorage.setItem('roqaya-child-name',candidate);}catch(_){}info('');sound('tap');}
+    else if(result) info('مقدرناش نغيّر الاسم. جرّب مرة تانية.');
+    return;
+  }
   if(e.target?.id==='child-age-home') {
     agePreference=normalizeAge(e.target.value);
     try{localStorage.setItem('roqaya-child-age',String(agePreference));}catch(_){}
@@ -847,6 +907,7 @@ screen.addEventListener('keydown',e=>{
 async function initialize() {
   soundControl();
   document.querySelector('.brand p')?.append(` • V${APP_VERSION}`);
+  personalizeUi();
   if (!firebaseConfig.apiKey || firebaseConfig.apiKey.startsWith('PASTE_') || firebaseConfig.databaseURL.includes('PASTE_')) {
     connection.textContent='⚙️ محتاجة إعداد';
     screen.innerHTML='<div class="panel center"><div class="big-emoji">🔧</div><h2>قبل أول لعبة</h2><p>بابا لازم يضيف إعدادات Firebase الحقيقية في ملف <b>firebase-config.js</b>، ويشغّل Anonymous Authentication ويضبط قواعد Realtime Database.</p><p class="hint">افتح ملف README-AR.md المرفق واتبع الخطوات من الموبايل.</p></div>';
