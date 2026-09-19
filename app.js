@@ -8,7 +8,7 @@ const screen = $('#screen');
 const message = $('#message');
 const connection = $('#connection');
 const LETTERS = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789';
-const APP_VERSION = '6.0';
+const APP_VERSION = '8.0';
 const DRAW_ITEMS = [
   { name:'قطة', emoji:'🐱', choices:['🐱','🐶','🐰'] },
   { name:'شمس', emoji:'☀️', choices:['☀️','🌙','⭐'] },
@@ -79,7 +79,7 @@ const GAME_LABELS = {
   draw:['🎨','ارسم وخمّن','واحد يرسم والتاني يخمّن'],
   memory:['🃏','كروت الذاكرة','8–30 كارت أو عدد متغيّر'],
   ttt:['❌⭕','إكس أو','3 نقاط للفائز'],
-  odd:['🔍','مين المختلف؟','اكتشف الصورة الغريبة'],
+  odd:['🔍','مين المختلف؟','صور فوتوغرافية حقيقية للمقارنة'],
   count:['🔢','عدّ الصور','احسب عدد الرموز'],
   pattern:['🧩','كمّل النمط','خمن الصورة الجاية'],
   animals:['🐾','بيوت الحيوانات','اختار مكان الحيوان'],
@@ -88,7 +88,7 @@ const GAME_LABELS = {
   treasure:['🗝️','رحلة الكنز','4 مفاتيح بالتناوب'],
   read:['📖','اقرئي واختاري','اقرئي كلمة عربية واختاري صورتها'],
   english:['🔤','عربي وإنجليزي','معاني كلمات بسيطة'],
-  compare:['📐','مين الأكبر؟','مقارنة أحجام مرسومة'],
+  compare:['📐','الأحجام والترتيب','اختار الحجم أو رتّب الصور حسب العمر'],
   numberline:['🔢','الرقم الناقص','كمّلي تسلسل الأرقام']
 };
 // All illustration assets below are original inline SVG drawings, not third-party photographs.
@@ -141,6 +141,28 @@ const COLOR_QUESTIONS = [
  ['اختاري اللون البرتقالي','🟠',['🟠','🔴','🟢']],
  ['اختاري اللون البنفسجي','🟣',['🔵','🟣','🟡']]
 ];
+// Public-domain / CC0 photographs on Wikimedia Commons. Small previews load over HTTPS.
+// A local SVG illustration is shown automatically if Wikimedia is unreachable.
+// See «مصادر-الصور-V8.txt» for the exact source pages and licenses.
+const PHOTO_BANK = {
+  apple: {name:'تفاحة',file:'Beautiful_red_apple.jpg',fallback:'apple'},
+  banana:{name:'موز',file:'Banana_pic.jpg',fallback:'apple'},
+  orange:{name:'برتقالة',file:'Orange-fruit.jpg',fallback:'apple'},
+  strawberry:{name:'فراولة',file:'Strawberry_fruit_in_studio.jpg',fallback:'flower'},
+  cat:{name:'قطة',file:'Domestic_Cat_White.JPG',fallback:'house'},
+  dog:{name:'كلب',file:'Photo_of_a_dog.jpg',fallback:'house'},
+  rabbit:{name:'أرنب',file:'Rabbit_face.jpg',fallback:'house'},
+  horse:{name:'حصان',file:'Horse_007.jpg',fallback:'house'}
+};
+const PHOTO_FRUITS=['apple','banana','orange','strawberry'];
+const PHOTO_ANIMALS=['cat','dog','rabbit','horse'];
+function photoPicture(id) {
+  const photo=PHOTO_BANK[id];
+  if(!photo) return '';
+  const url=`https://commons.wikimedia.org/wiki/Special:Redirect/file/${encodeURIComponent(photo.file)}?width=320`;
+  const fallback=`data:image/svg+xml,${encodeURIComponent(artSvg(photo.fallback))}`;
+  return `<img class="art-image real-photo" src="${url}" alt="${photo.name}" loading="eager" decoding="async" onerror="this.onerror=null;this.src='${fallback}'">`;
+}
 const TREASURE_IDS = ['heart','star','sun','moon','flower','tree','house','fish','car','boat','balloon','apple','butterfly','key','cloud','umbrella'];
 const VECTOR_COLORS = ['#f36d96','#6f80e9','#30b898','#f9b44d','#8f6ad9','#36a8da'];
 function artSvg(id,scene=false) {
@@ -195,10 +217,19 @@ function artPicture(id,scene=false) {
   return `<img class="art-image" alt="${scene?SCENE_LABELS[id]:PICTURE_AR[id]}" src="data:image/svg+xml,${encodeURIComponent(artSvg(id,scene))}">`;
 }
 function renderOption(option,q) {
-  if(q?.visual==='sizes'){
-    const size=Number(option.split(':')[1]);return `<span class="size-illustration"><span style="width:${size*2}px;height:${size*2}px"></span></span>`;
+  if(q?.visual==='sizes' || q?.visual==='size-order') {
+    const [,sizeRaw,objectId]=option.split(':');
+    const size=Number(sizeRaw);
+    if(![54,82,110].includes(size) || !['apple','fish','house','balloon','tree','car','flower','butterfly'].includes(objectId)) return '';
+    return `<span class="size-illustration" style="--object-size:${size}px">${artPicture(objectId)}</span>`;
   }
+  if(q?.visual==='photos') return photoPicture(option);
   return q?.visual==='scenes'?artPicture(option,true):q?.visual==='pictures'?artPicture(option):q?.visual==='shapes'?artPicture(option):option;
+}
+// Show the selected answer and the correct answer only after a quiz round ends.
+// Use the existing question option renderer so images, emojis and numbers stay readable.
+function answerFeedback(label,option,q,correct=false) {
+  return `<div class="answer-feedback ${correct?'is-correct':'is-wrong'}"><strong>${correct?'✅':'❌'} ${label}</strong><div class="feedback-answer">${renderOption(option,q.optionVisual?{visual:q.optionVisual}:q)}</div></div>`;
 }
 function renderQuestionDisplay(q) {
   if (q.visual==='pattern' && Array.isArray(q.sequence)) return `<div class="picture-sequence">${q.sequence.map(x=>artPicture(x)).join('')}<span class="missing-mark">؟</span></div>`;
@@ -210,18 +241,15 @@ function newQuestion(which,previousIndex=-1,age=6) {
   age=normalizeAge(age);
   const pick=(length)=>{let n=Math.floor(Math.random()*length);if(length>1 && n===previousIndex)n=(n+1)%length;return n;};
   if(which==='odd') {
-    const n=pick(age<=5?6:15);
-    if(n<6) {
-      const cats=[['🐱','🐶','🐰','🚗'],['🍎','🍌','🍓','🐢'],['🚗','🚲','🚂','🌻'],['☀️','⭐','🌙','🍇'],['⚽','🏀','🎾','🐝'],['🦁','🐯','🐼','🎈']];
-      const options=shuffle(cats[n]);return {index:n,prompt:'مين المختلف عن الثلاثة الباقيين؟',display:'',options,correct:options.indexOf(cats[n][3])};
-    }
-    if(n<11) {
-      const shape=['circle','triangle','square','diamond'][n%4];const different=['circle','triangle','square','diamond'][(n+1)%4];
-      const colors=[0,1,2,3];const targets=colors.slice(0,3).map(c=>`shape:${shape}:${c}`),odd=`shape:${different}:4`;
-      const options=shuffle([...targets,odd]);return {index:n,prompt:'اختاري الشكل المختلف عن الباقيين',options,correct:options.indexOf(odd),visual:'shapes'};
-    }
-    const catSets=[['forest','jungle','meadow','sea'],['sea','river','pond','desert'],['desert','mountain','snow','farm'],['garden','meadow','forest','sea']];
-    const items=catSets[n-11],options=shuffle(items);return {index:n,prompt:'اختاري المكان المختلف عن بقية الصور',options,correct:options.indexOf(items[3]),visual:'scenes'};
+    // Three real photographs from the same category and one from a different category.
+    // The outlier is never identified by size, colour, or a special frame.
+    const total=age<=5?16:32;
+    const n=pick(total);
+    const majority=n<16?PHOTO_FRUITS:PHOTO_ANIMALS;
+    const otherGroup=n<16?PHOTO_ANIMALS:PHOTO_FRUITS;
+    const omitted=Math.floor((n%16)/4), odd=otherGroup[n%4];
+    const options=shuffle([...majority.filter((_,i)=>i!==omitted),odd]);
+    return {index:n,prompt:'اختاري الصورة المختلفة عن الصور الثلاث الأخرى',visual:'photos',options,correct:options.indexOf(odd)};
   }
   if(which==='count') {
     const [min,max]=age<=3?[1,3]:age<=5?[2,6]:age<=7?[3,10]:[8,20];
@@ -278,9 +306,16 @@ function newQuestion(which,previousIndex=-1,age=6) {
     return {index:n,prompt:`ما معنى كلمة ${en} بالعربي؟`,options,correct:options.indexOf(ar)};
   }
   if(which==='compare') {
-    const n=pick(12),size=age<=3?[21,43]:[21,32,43],target=n%2===0?'الكبير':'الصغير';
-    const options=shuffle(size.map((s,i)=>`size:${s}:${i}`));
-    return {index:n,prompt:`اختاري الشكل ${target} في الحجم`,visual:'sizes',options,correct:options.findIndex(v=>v.startsWith('size:'+(target==='الكبير'?43:21)+':'))};
+    const objects=['apple','fish','house','balloon','tree','car','flower','butterfly'];
+    const n=pick(objects.length*3),objectId=objects[n%objects.length];
+    const sizes=age<=3?[54,110]:[54,82,110];
+    const options=shuffle(sizes.map(size=>`size:${size}:${objectId}`));
+    if(age>=8){
+      const expectedOrder=options.map((_,i)=>i).sort((a,b)=>Number(options[a].split(':')[1])-Number(options[b].split(':')[1]));
+      return {index:n,prompt:'رتّبي الصور من الأصغر إلى الأكبر: اضغطي على الصور بالترتيب',visual:'size-order',options,correct:-1,expectedOrder};
+    }
+    const target=n%2===0?'الكبير':'الصغير',wanted=target==='الكبير'?110:54;
+    return {index:n,prompt:`اختاري ${objectId==='house'?'البيت':objectId==='apple'?'التفاحة':'الصورة'} ${target} في الحجم`,visual:'sizes',options,correct:options.findIndex(v=>v.startsWith('size:'+wanted+':'))};
   }
   if(which==='numberline') {
     const n=pick(13),start=n+1,step=age>=8?(n%2?2:3):1,missing=start+step;
@@ -307,18 +342,21 @@ function normalizeChildName(value) {
 function childName() {
   return roomCode ? (normalizeChildName(state?.childName) || 'رقية') : childNamePreference;
 }
-// Change only original interface text, never quiz answers or children of canvas.
-// Text nodes are updated in place, preserving canvas, focus, and button listeners.
+// The underlying scores, room codes, Firebase data and input values remain ASCII.
+// Only visible text is converted to Eastern Arabic numerals (٠١٢٣٤٥٦٧٨٩).
+const EASTERN_DIGITS='٠١٢٣٤٥٦٧٨٩';
+function arabicDigits(value){return String(value).replace(/[0-9]/g,d=>EASTERN_DIGITS[d.charCodeAt(0)-48]);}
 const originalUiText = new WeakMap();
 function personalizeUi() {
   const root=document.querySelector('.shell');
   if (!root) return;
   const iterator=document.createTreeWalker(root,NodeFilter.SHOW_TEXT);
   for (let node=iterator.nextNode();node;node=iterator.nextNode()) {
+    if(node.parentElement?.closest('.room-code,.code-input,[data-keep-ascii]')) continue;
     const original=originalUiText.get(node)??node.nodeValue;
-    if (!original.includes('رقية')) continue;
+    if (!original.includes('رقية') && !/[0-9]/.test(original)) continue;
     originalUiText.set(node,original);
-    const desired=original.replace(/رقية/g,childName());
+    const desired=arabicDigits(original.replace(/رقية/g,childName()));
     if(node.nodeValue!==desired) node.nodeValue=desired;
   }
   document.title=`عالم ${childName()} 🎡`;
@@ -353,6 +391,35 @@ function sound(type='tap') {
     }
   } catch (_) { /* Sound is optional on browsers that block audio. */ }
 }
+// Native Arabic speech runs on-device when supported; never sends a child name to analytics.
+const VOICE_GAME_NAMES={draw:'الرَّسْمَ وَالتَّخْمِينَ',memory:'كُرُوتَ الذَّاكِرَةِ',ttt:'إِكْس أَوْ',odd:'اخْتِيَارَ الصُّورَةِ الْمُخْتَلِفَةِ',count:'عَدَّ الصُّوَرِ',pattern:'إِكْمَالَ النَّمَطِ',animals:'بُيُوتَ الْحَيَوَانَاتِ',colors:'الأَلْوَانَ وَالأَشْكَالَ',math:'الْحِسَابَ',treasure:'رِحْلَةَ الْكَنْزِ',read:'الْقِرَاءَةَ',english:'الْعَرَبِيَّةَ وَالْإِنْجِلِيزِيَّةَ',compare:'مُقَارَنَةَ الأَحْجَامِ',numberline:'الرَّقْمَ النَّاقِصَ'};
+let lastWelcomeKey='';
+function chooseArabicVoice(){
+  const voices=window.speechSynthesis?.getVoices()||[];
+  const ar=voices.filter(v=>/^ar(?:-|$)/i.test(v.lang));
+  return ar.find(v=>/^ar-(SA|001)$/i.test(v.lang)&&v.localService)
+      ||ar.find(v=>/^ar-(SA|001)$/i.test(v.lang))
+      ||ar.find(v=>v.localService)||ar[0]||null;
+}
+function welcomeToGame(which,name=childName(),key=''){
+  if(!soundEnabled || !VOICE_GAME_NAMES[which] || !('speechSynthesis' in window) || !('SpeechSynthesisUtterance' in window))return false;
+  if(key && lastWelcomeKey===key)return false;
+  const voice=chooseArabicVoice();
+  // Avoid an English-default voice: Arabic TTS isn't available on every device.
+  if(!voice)return false;
+  const safeName=normalizeChildName(name)||'رقية';
+  const spokenName=safeName==='رقية'?'رُقَيَّة':safeName;
+  const say=new SpeechSynthesisUtterance(`مَرْحَبًا! هَذَا عَالَمُ ${spokenName}. هَيَّا نَلْعَبُ ${VOICE_GAME_NAMES[which]}.`);
+  say.lang=voice.lang;say.voice=voice;say.rate=0.88;say.pitch=1;say.volume=0.95;
+  try{window.speechSynthesis.cancel();window.speechSynthesis.speak(say);lastWelcomeKey=key;return true;}
+  catch(_){return false;}
+}
+function maybeWelcomeOnSync(before,after){
+  if(!before || !after || after.game==='lobby' || after.phase!=='playing')return;
+  // A new question in the same game must not repeat the introduction.
+  if(before.game!==after.game)
+    welcomeToGame(after.game,after.childName,`${roomCode}:${after.round}`);
+}
 function soundControl() {
   let control=document.querySelector('#sound-toggle');
   if (!control) {
@@ -361,7 +428,10 @@ function soundControl() {
     control.addEventListener('click',()=>{
       soundEnabled=!soundEnabled;
       try { localStorage.setItem('roqaya-sound',soundEnabled?'on':'off'); } catch (_) {}
-      soundControl();if(soundEnabled)sound('good');
+      if(!soundEnabled)try{window.speechSynthesis?.cancel();}catch(_){}
+      soundControl();
+      document.querySelectorAll('.voice-replay').forEach(btn=>{btn.disabled=!soundEnabled;});
+      if(soundEnabled)sound('good');
     });
     document.querySelector('.header')?.append(control);
   }
@@ -468,7 +538,7 @@ function renderLobby() {
   </div>`;
 }
 function gameHeading(icon, title) {
-  return `<div class="topline"><span class="tag">${icon} ${title}</span>${role === 'host' ? '<button class="btn soft" data-action="lobby">🎡 المدينة</button>' : '<span class="tag green">غرفة خاصة 🔒</span>'}</div>${scorePanel()}`;
+  return `<div class="topline"><span class="tag">${icon} ${title}</span><div class="topline-actions"><button class="btn soft voice-replay" data-action="welcome" ${!soundEnabled?'disabled':''}>🔊 اسمع الترحيب</button>${role === 'host' ? '<button class="btn soft" data-action="lobby">🎡 المدينة</button>' : '<span class="tag green">غرفة خاصة 🔒</span>'}</div></div>${scorePanel()}`;
 }
 function finishBox() {
   if (state.phase !== 'finished') return '';
@@ -523,18 +593,22 @@ function renderDraw() {
   const drawer = game.drawer === role;
   const options = (game.options || []).map((emoji,i) => {
     const chosen = (game.guesses || []).includes(emoji);
-    return `<button class="choice ${chosen?'chosen':''}" data-guess="${i}" ${drawer || chosen || state.phase !== 'playing' ? 'disabled':''} aria-label="${emoji}">${emoji}</button>`;
+    const correct=chosen && emoji===item.emoji;
+    return `<button class="choice ${chosen?(correct?'is-correct':'is-wrong'):''}" data-guess="${i}" ${drawer || chosen || state.phase !== 'playing' ? 'disabled':''} aria-label="${emoji}${chosen?(correct?'، إجابة صحيحة':'، إجابة غلط'):''}">${emoji}${chosen?`<span class="choice-result-tag">${correct?'✅ صح':'❌ غلط'}</span>`:''}</button>`;
   }).join('');
   let caption;
   if (state.phase === 'finished') caption = `الإجابة: ${item.emoji} ${item.name} — ${state.result === 'correct' ? 'برافو! 👏' : 'حاولوا تاني الجولة الجاية 💕'}`;
   else caption = drawer ? `ارسم ${item.name} ${item.emoji} من غير ما تقول الإجابة!` : `شوف الرسمة واختار الصورة الصح! ${game.guesses?.length ? 'جرب اختيار تاني 💪' : ''}`;
+  const wrongGuesses=(game.guesses||[]).filter(emoji=>emoji!==item.emoji);
+  const wrongAnswer=wrongGuesses.length?`<div class="answer-feedback is-wrong" role="status"><strong>❌ ${wrongGuesses.length>1?'الاختيارات دي غلط':'الإجابة دي غلط'}:</strong><div class="feedback-answer">${wrongGuesses.join('، ')}</div>${state.phase==='playing'?'<p>جرّب اختيار تاني 💪</p>':''}</div>`:'';
   screen.innerHTML = `<div class="panel">${gameHeading('🎨','ارسم وخمّن')}
     <h2 class="game-title center">${drawer?'🖍️ دورك ترسم':'👀 دورك تخمّن'}</h2>
     <p class="status">${caption}</p>
     <div class="drawing-wrap ${drawer && state.phase==='playing'?'':'readonly'}"><canvas id="drawing" width="800" height="600" aria-label="لوحة الرسم المشتركة"></canvas></div>
     ${drawer && state.phase==='playing' ? '<p class="hint center">استخدم صباعك للرسم على اللوحة ✏️</p>' : ''}
     ${!drawer && state.phase==='playing' ? `<div class="choices">${options}</div>` : ''}
-    ${state.phase==='finished'?`<div class="finish"><strong>${state.result==='correct'?'🎉 إجابة صحيحة!':'💜 خلصت المحاولات'}</strong><p>رسّام الجولة الجاية: ${nameOf(other(game.drawer))}</p></div>`:''}
+    ${wrongAnswer}
+    ${state.phase==='finished'?`<div class="finish"><strong>${state.result==='correct'?'🎉 إجابة صحيحة!':'💜 خلصت المحاولات'}</strong><p>✅ الإجابة الصحيحة: ${item.emoji} ${item.name}</p><p>رسّام الجولة الجاية: ${nameOf(other(game.drawer))}</p></div>`:''}
     ${role==='host' && state.phase==='finished' ? '<div class="btn-row"><button class="btn primary" data-action="next-draw">🎨 الرسمة اللي بعدها</button></div>' : ''}
     ${drawer && state.phase==='playing' ? '<div class="btn-row"><button class="btn soft" data-action="clear-draw">🧽 امسح الرسمة وابدأ تاني</button></div>' : ''}
     <p class="rule center">الصح من أول اختيار = 2 ⭐ • من المحاولة التانية أو التالتة = 1 ⭐</p>
@@ -542,18 +616,37 @@ function renderDraw() {
   redrawCanvas();
   bindCanvas(drawer && state.phase === 'playing');
 }
+function renderSizeOrder(){
+  const q=state.quiz.question,order=state.quiz.order||[],done=state.phase==='finished';
+  const canAnswer=!done&&state.quiz.turn===role;
+  const buttons=q.options.map((option,i)=>{
+    const selectedAt=order.indexOf(i),selected=selectedAt!==-1;
+    const correct=done && q.expectedOrder[selectedAt]===i;
+    return `<button class="quiz-choice visual-choice size-order-choice ${selected?(correct?'is-correct':'is-picked'):''}" data-quiz="${i}" ${!canAnswer||selected?'disabled':''}>${renderOption(option,q)}${selected?`<span class="choice-result-tag">${arabicDigits(selectedAt+1)} ${done?(correct?'✅':'❌'):'✓'}</span>`:''}</button>`;
+  }).join('');
+  const sequence=(indices)=>`<div class="order-preview">${indices.map(i=>renderOption(q.options[i],q)).join('<span class="order-arrow">←</span>')}</div>`;
+  const result=done?`<div class="finish" role="status"><strong>${state.result==='correct'?'🎉 ترتيب صحيح!':'💜 نتعلّم سوا!'}</strong>${state.result==='incorrect'?`<div class="answer-feedback is-wrong"><strong>❌ ترتيبك:</strong>${sequence(order)}</div>`:''}<div class="answer-feedback is-correct"><strong>✅ الترتيب الصحيح من الأصغر للأكبر:</strong>${sequence(q.expectedOrder)}</div></div>`:'';
+  screen.innerHTML=`<div class="panel">${gameHeading('📐','الأحجام والترتيب')}<h2 class="game-title center">${q.prompt}</h2><p class="status">${done?'الجولة خلصت 🎉':canAnswer?`اختاري الصورة رقم ${arabicDigits(order.length+1)} في الترتيب`: `دور ${nameOf(state.quiz.turn)} ⏳`}</p><div class="quiz-options size-order-options">${buttons}</div>${result}${role==='host'&&done?'<div class="btn-row"><button class="btn primary" data-action="restart">🔁 سؤال جديد</button></div>':''}<p class="rule center">رتّبي الصور الثلاث لتكسبي ⭐ نقطتين</p></div>`;
+}
 function renderQuiz() {
   const key=state.game, quiz=state.quiz;
   if (!quiz?.question) return;
   const q=quiz.question;
+  if(q.visual==='size-order')return renderSizeOrder();
   const canAnswer=state.phase==='playing' && quiz.turn===role;
-  const buttons=q.options.map((option,i)=>`<button class="quiz-choice ${q.visual?'visual-choice':''}" data-quiz="${i}" ${!canAnswer?'disabled':''}>${renderOption(option,q.optionVisual?{visual:q.optionVisual}:q)}</button>`).join('');
-  const result=state.phase==='finished' ? `<div class="finish"><strong>${state.result==='correct'?'🎉 برافو! إجابة صح':'💜 محاولة حلوة! الإجابة الصحيحة:'}</strong><p class="answer-reveal">${renderOption(q.options[q.correct],q.optionVisual?{visual:q.optionVisual}:q)}</p></div>` : '';
+  const answered=state.phase==='finished';
+  const selected=Number.isInteger(quiz.selected)?quiz.selected:null;
+  const buttons=q.options.map((option,i)=>{
+    const isWrong=answered&&selected===i&&i!==q.correct;
+    const isCorrect=answered&&i===q.correct;
+    return `<button class="quiz-choice ${q.visual?'visual-choice':''} ${isWrong?'is-wrong':''} ${isCorrect?'is-correct':''}" data-quiz="${i}" ${!canAnswer?'disabled':''}>${renderOption(option,q.optionVisual?{visual:q.optionVisual}:q)}${isWrong?'<span class="choice-result-tag">❌ غلط</span>':isCorrect?'<span class="choice-result-tag">✅ صح</span>':''}</button>`;
+  }).join('');
+  const result=answered ? `<div class="finish" role="status"><strong>${state.result==='correct'?'🎉 برافو! إجابة صح':'💜 نتعلّم سوا!'}</strong>${state.result==='incorrect'&&selected!==null&&q.options[selected]!==undefined?answerFeedback('إجابتك غلط:',q.options[selected],q):''}${answerFeedback('الإجابة الصحيحة:',q.options[q.correct],q,true)}</div>` : '';
   screen.innerHTML=`<div class="panel">${gameHeading(...GAME_LABELS[key].slice(0,2))}
     <h2 class="game-title center">${q.prompt}</h2>
     ${renderQuestionDisplay(q)}
     <p class="status">${state.phase==='finished'?'الجولة خلصت 🎉':canAnswer?'دورك دلوقتي! ✨':`دور ${nameOf(quiz.turn)} ⏳`}</p>
-    <div class="quiz-options">${buttons}</div>
+    <div class="quiz-options ${q.visual==='photos'?'photo-options':q.visual==='sizes'&&q.options.length===2?'two-size-options':''}">${buttons}</div>
     ${result}
     ${role==='host'&&state.phase==='finished'?'<div class="btn-row"><button class="btn primary" data-action="restart">🔁 سؤال جديد</button></div>':''}
     <p class="rule center">إجابة صحيحة = ⭐ نقطتين • الدور بيتبدّل كل سؤال</p>
@@ -564,12 +657,18 @@ function renderTreasure() {
   if(!treasure?.question)return;
   const q=treasure.question;
   const canAnswer=state.phase==='playing'&&treasure.turn===role;
-  const buttons=q.options.map((option,i)=>`<button class="quiz-choice visual-choice" data-treasure="${i}" ${!canAnswer||treasure.wrong?.includes(i)?'disabled':''}>${renderOption(option,q)}</button>`).join('');
+  const buttons=q.options.map((option,i)=>{
+    const isWrong=treasure.wrong?.includes(i);
+    return `<button class="quiz-choice visual-choice ${isWrong?'is-wrong':''}" data-treasure="${i}" ${!canAnswer||isWrong?'disabled':''}>${renderOption(option,q)}${isWrong?'<span class="choice-result-tag">❌ غلط</span>':''}</button>`;
+  }).join('');
+  const lastWrong=treasure.wrong?.at(-1);
+  // Keep the correct key hidden while the same treasure question is still in play.
+  const wrongAnswer=lastWrong!==undefined&&state.phase==='playing'?answerFeedback('الإجابة دي غلط، جرّبوا مفتاح تاني:',q.options[lastWrong],q):'';
   screen.innerHTML=`<div class="panel">${gameHeading('🗝️','رحلة الكنز')}
     <h2 class="game-title center">افتحوا صندوق الكنز سوا! 🧰</h2>
     <div class="treasure-progress">${Array.from({length:treasure.goal||4},(_,i)=>`<span>${i<treasure.stage?'🔑':'🔒'}</span>`).join('')}</div>
     ${state.phase==='finished'?`<div class="finish"><div class="big-emoji">🎁</div><strong>فتحتوا صندوق الكنز! 🎉</strong><p>بابا: ${treasure.roundScores.host} ⭐ • رقية: ${treasure.roundScores.guest} ⭐</p></div>`:
-    `<h3 class="game-title center">${q.prompt}</h3><p class="status">${canAnswer?'دورك تختار المفتاح ✨':`دور ${nameOf(treasure.turn)} ⏳`}</p><div class="quiz-options">${buttons}</div>`}
+    `<h3 class="game-title center">${q.prompt}</h3><p class="status">${canAnswer?'دورك تختار المفتاح ✨':`دور ${nameOf(treasure.turn)} ⏳`}</p><div class="quiz-options">${buttons}</div>${wrongAnswer}`}
     ${role==='host'&&state.phase==='finished'?'<div class="btn-row"><button class="btn primary" data-action="restart">🎁 كنز جديد</button></div>':''}
     <p class="rule center">كل مفتاح صح = ⭐ لصاحبه • الغلط يسلّم الدور للتاني</p>
   </div>`;
@@ -660,6 +759,7 @@ async function startGame(which) {
   if (role !== 'host' || !canPlay() || !gamesForAge(state?.childAge).includes(which)) return;
   if (which === 'draw') await remove(ref(db,`rooms/${roomCode}/strokes`)).catch(e=>info(humanError(e)));
   const base = newGame(which,state,which==='draw' && state?.game==='draw'?state.draw:null);
+  welcomeToGame(which,base.childName,`${roomCode}:${base.round}`);
   await mutateState(old=>({...base,scores:{...old.scores}}));
 }
 async function restart() {
@@ -734,10 +834,20 @@ async function chooseQuiz(index) {
     if(!QUIZ_GAMES.includes(old.game)||old.phase!=='playing'||old.quiz?.turn!==role)return;
     const q=old.quiz.question;
     if(!Number.isInteger(index)||index<0||index>=q.options.length)return;
+    if(q.visual==='size-order'){
+      const order=old.quiz.order||[];
+      if(order.includes(index))return;
+      const nextOrder=[...order,index];
+      if(nextOrder.length<q.options.length)return {...old,quiz:{...old.quiz,order:nextOrder}};
+      const correct=nextOrder.every((item,i)=>item===q.expectedOrder[i]);
+      const scores={...old.scores};
+      if(correct)scores[role]+=2;
+      return {...old,scores,feedback:addFeedback(old,correct?'good':'bad'),phase:'finished',result:correct?'correct':'incorrect',quiz:{...old.quiz,order:nextOrder}};
+    }
     const correct=index===q.correct;
     const scores={...old.scores};
     if(correct)scores[role]+=2;
-    return {...old,scores,feedback:addFeedback(old,correct?'good':'bad'),phase:'finished',result:correct?'correct':'incorrect'};
+    return {...old,scores,feedback:addFeedback(old,correct?'good':'bad'),phase:'finished',result:correct?'correct':'incorrect',quiz:{...old.quiz,selected:index}};
   });
 }
 async function chooseTreasure(index) {
@@ -831,7 +941,7 @@ function subscribeRoom(code) {
     if (!role) { info('الغرفة مكتملة أو مش مسموح لك تدخلها.'); detachRoom();roomCode='';location.hash='';render();return; }
     trackPresence();render();
   },e=>{info(humanError(e));detachRoom();roomCode='';location.hash='';render();}));
-  unsubs.push(onValue(ref(db,`${base}/state`),snap=>{const oldState=state;state=snap.val();feedbackSignal(oldState,state);render();},e=>info(humanError(e))));
+  unsubs.push(onValue(ref(db,`${base}/state`),snap=>{const oldState=state;state=snap.val();feedbackSignal(oldState,state);maybeWelcomeOnSync(oldState,state);render();},e=>info(humanError(e))));
   unsubs.push(onValue(ref(db,`${base}/strokes`),snap=>{strokes=snap.val()||{};redrawCanvas();},e=>info(humanError(e))));
   unsubs.push(onValue(ref(db,`${base}/presence`),snap=>{presence=snap.val()||{};render();},e=>info(humanError(e))));
 }
@@ -921,6 +1031,10 @@ screen.addEventListener('click',async e=>{
   const button=e.target.closest('button');
   if (!button || button.disabled) return;
   const action=button.dataset.action;
+  if (action==='welcome') {
+    if(!welcomeToGame(state?.game,state?.childName)) info(soundEnabled?'لا يوجد صوت عربي متاح حاليًا. فعّل صوت اللغة العربية في إعدادات النطق على جهازك.':'شغّل الصوت من الزر العلوي أولًا.');
+    return;
+  }
   if (action==='create') return createRoom();
   if (action==='join') return joinRoom();
   if (action==='copy') return copyLink();
