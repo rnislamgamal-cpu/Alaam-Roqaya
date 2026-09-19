@@ -37,3 +37,12 @@
 .memory-card{transition:transform .12s;background:linear-gradient(140deg,#725ad5,#a586f8)}
 .memory-card:active:not(:disabled){transform:scale(.95)}
 @media(max-width:420px){.quiz-options{gap:7px}.quiz-choice.visual-choice{min-height:92px;padding:4px}.art-image{height:83px}.picture-sequence .art-image{width:49px;height:49px}.quiz-choice{font-size:1.2rem;padding:8px 4px}.game-grid{gap:8px}.game-choice{min-height:122px}}
+
+/* V4: adult-controlled, age-adapted games */
+.age-settings{background:linear-gradient(145deg,#f4edff,#eaf6ff);border:1px solid #e5d9fb;border-radius:19px;padding:14px;margin:14px 0;text-align:start}
+.age-settings label{display:block;font-weight:850;color:#503a99;margin-bottom:8px}
+.age-settings .hint{margin:8px 0 0}.age-view{padding:10px 12px;border-radius:12px;background:white;font-weight:800;color:#6047ad}
+.memory-grid.few{grid-template-columns:repeat(2,minmax(0,1fr));max-width:320px;gap:11px}
+.memory-grid.few.six{grid-template-columns:repeat(3,minmax(0,1fr));max-width:430px}
+.memory-grid.few .memory-card{font-size:clamp(2.4rem,11vw,3.4rem)}
+@media(max-width:420px){.memory-grid.few{max-width:260px}.memory-grid.few.six{max-width:350px}}

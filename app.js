@@ -8,7 +8,7 @@ const screen = $('#screen');
 const message = $('#message');
 const connection = $('#connection');
 const LETTERS = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789';
-const APP_VERSION = '3.0';
+const APP_VERSION = '4.0';
 const DRAW_ITEMS = [
   { name:'قطة', emoji:'🐱', choices:['🐱','🐶','🐰'] },
   { name:'شمس', emoji:'☀️', choices:['☀️','🌙','⭐'] },
@@ -52,7 +52,27 @@ const MEMORY_EMOJI = [
   '🍎','🍌','🍉','🍇','🍓','🍒','🍍','🥝','🥕','🌽','🍋','🥑','🍄','🌻','🌈',
   '🚗','🚀','🚂','🚲','✈️','⚽','🎈','🎁','🎠','🎡','⭐','☀️','🌙','💎','🏀'
 ];
-const MEMORY_SIZES = [8,12,16,20,24,30];
+const MEMORY_SIZES = [4,6,8,12,16,20,24,30];
+// The age is a gameplay setting chosen by the adult, not a date of birth.
+const AGE_GAME_LEVELS = [
+  {max:3,games:['memory','count','colors','compare'],memory:[4,6]},
+  {max:5,games:['draw','memory','odd','count','pattern','animals','colors','compare'],memory:[6,8,12]},
+  {max:7,games:['draw','memory','ttt','odd','count','pattern','animals','colors','math','treasure','read','english','compare','numberline'],memory:[8,12,16,20]},
+  {max:10,games:['draw','memory','ttt','odd','count','pattern','animals','colors','math','treasure','read','english','compare','numberline'],memory:[12,16,20,24,30]}
+];
+function normalizeAge(value) {
+  const age=Number(value);
+  return Number.isInteger(age) && age>=2 && age<=10 ? age : 6;
+}
+function ageLevel(age) { return AGE_GAME_LEVELS.find(group=>normalizeAge(age)<=group.max); }
+function gamesForAge(age) { return ageLevel(age).games; }
+function memorySizesForAge(age) { return ageLevel(age).memory; }
+function ageOptions(chosen) {
+  return Array.from({length:9},(_,i)=>i+2).map(age=>`<option value="${age}" ${age===chosen?'selected':''}>${age} ${age===2?'سنتين':'سنوات'}</option>`).join('');
+}
+function effectiveMemoryPreference(age) {
+  return memorySizesForAge(age).includes(Number(memoryPreference)) ? memoryPreference : 'random';
+}
 const QUIZ_GAMES = ['odd','count','pattern','animals','colors','math','read','english','compare','numberline'];
 const GAMES = ['draw','memory','ttt',...QUIZ_GAMES,'treasure'];
 const GAME_LABELS = {
@@ -84,7 +104,11 @@ const ENGLISH_BANK = [
  ['FISH','سمكة','عصفور','قطة'],['HOUSE','بيت','سيارة','قارب'],['CAR','سيارة','طائرة','دراجة'],
  ['APPLE','تفاحة','موزة','برتقالة'],['BOOK','كتاب','قلم','مكتب'],['BIRD','عصفور','سمكة','كلب'],
  ['RED','أحمر','أزرق','أخضر'],['BLUE','أزرق','أصفر','أحمر'],['GREEN','أخضر','أبيض','أسود'],
- ['WATER','ماء','رمل','ثلج'],['FLOWER','وردة','شجرة','حجر'],['HAND','يد','رجل','عين']
+ ['WATER','ماء','رمل','ثلج'],['FLOWER','وردة','شجرة','حجر'],['HAND','يد','رجل','عين'],
+ ['UMBRELLA','مظلة','حقيبة','كرة'],['BUTTERFLY','فراشة','نحلة','نملة'],
+ ['MOUNTAIN','جبل','نهر','بحر'],['RIVER','نهر','صحراء','غابة'],
+ ['ELEPHANT','فيل','جمل','أسد'],['BICYCLE','دراجة','سيارة','قطار'],
+ ['WINTER','شتاء','صيف','ربيع'],['TRIANGLE','مثلث','دائرة','مربع']
 ];
 // Do not place an animal emoji beside its name: that would give away the answer.
 const ANIMAL_QUESTIONS = [
@@ -101,7 +125,13 @@ const ANIMAL_QUESTIONS = [
  ['أين تقف الضفادع قرب الماء؟','pond',['pond','mountain','desert']],
  ['أين تنمو أشجار كثيرة متجاورة؟','forest',['forest','sea','snow']],
  ['أين يسبح البط غالبًا؟','pond',['pond','desert','mountain']],
- ['أين ترعى الأغنام عادةً؟','meadow',['meadow','sea','snow']]
+ ['أين ترعى الأغنام عادةً؟','meadow',['meadow','sea','snow']],
+ // Additional habitat reasoning for the 8–10 age level.
+ ['أي بيئة تناسب نبات الصبّار؟','desert',['desert','river','snow']],
+ ['أين تعيش أسماك المياه العذبة؟','river',['river','desert','nest']],
+ ['أي مكان مناسب لحيوان يحتاج إلى ثلج كثير؟','snow',['snow','desert','garden']],
+ ['أين تبني بعض السناجب بيوتها بين الأشجار؟','forest',['forest','sea','desert']],
+ ['أين تزرع بعض النباتات والخضراوات؟','farm',['farm','sea','snow']]
 ];
 const COLOR_QUESTIONS = [
  ['اختاري اللون الأحمر','🔴',['🔴','🔵','🟢']],
@@ -176,10 +206,11 @@ function renderQuestionDisplay(q) {
   if (q.visual==='compare' && Array.isArray(q.sequence)) return `<div class="picture-sequence">${q.sequence.map(x=>artPicture(x)).join('')}</div>`;
   return q.display?`<div class="quiz-display" aria-label="صور السؤال">${q.display}</div>`:'';
 }
-function newQuestion(which,previousIndex=-1) {
+function newQuestion(which,previousIndex=-1,age=6) {
+  age=normalizeAge(age);
   const pick=(length)=>{let n=Math.floor(Math.random()*length);if(length>1 && n===previousIndex)n=(n+1)%length;return n;};
   if(which==='odd') {
-    const n=pick(15);
+    const n=pick(age<=5?6:15);
     if(n<6) {
       const cats=[['🐱','🐶','🐰','🚗'],['🍎','🍌','🍓','🐢'],['🚗','🚲','🚂','🌻'],['☀️','⭐','🌙','🍇'],['⚽','🏀','🎾','🐝'],['🦁','🐯','🐼','🎈']];
       const options=shuffle(cats[n]);return {index:n,prompt:'مين المختلف عن الثلاثة الباقيين؟',display:'',options,correct:options.indexOf(cats[n][3])};
@@ -193,8 +224,11 @@ function newQuestion(which,previousIndex=-1) {
     const items=catSets[n-11],options=shuffle(items);return {index:n,prompt:'اختاري المكان المختلف عن بقية الصور',options,correct:options.indexOf(items[3]),visual:'scenes'};
   }
   if(which==='count') {
-    const n=3+Math.floor(Math.random()*8),emoji=['🍎','🐱','⭐','🎈','🐠','🧸'][Math.floor(Math.random()*6)];
-    const alternatives=shuffle([String(n),String(n===10?n-2:n+1),String(n===3?n+2:n-1)]);
+    const [min,max]=age<=3?[1,3]:age<=5?[2,6]:age<=7?[3,10]:[8,20];
+    const n=min+Math.floor(Math.random()*(max-min+1));
+    const emoji=['🍎','🐱','⭐','🎈','🐠','🧸'][Math.floor(Math.random()*6)];
+    const wrong1=n+1,wrong2=n===min?n+2:n-1;
+    const alternatives=shuffle([String(n),String(wrong1),String(wrong2)]);
     return {index:n,prompt:'عدّي الصور… كام واحدة؟',visual:'count',sequence:Array(n).fill(emoji),options:alternatives,correct:alternatives.indexOf(String(n))};
   }
   if(which==='pattern') {
@@ -204,48 +238,69 @@ function newQuestion(which,previousIndex=-1) {
     else if(n%4===1){const a=ids[n],b=ids[(n+1)%ids.length],c=ids[(n+2)%ids.length];seq=[a,b,c,a,b];answer=c;choices=[a,b,c];}
     else if(n%4===2){const a=ids[n],b=ids[(n+1)%ids.length];seq=[a,a,b,a,a];answer=b;choices=[a,b,ids[(n+2)%ids.length]];}
     else {const a=ids[n],b=ids[(n+1)%ids.length];seq=[a,b,b,a,b];answer=b;choices=[a,b,ids[(n+2)%ids.length]];}
+    if(age<=5){const a=ids[n],b=ids[(n+1)%ids.length];seq=[a,b,a,b];answer=a;choices=[a,b,ids[(n+2)%ids.length]];}
+    if(age>=8 && n%3===0){const a=ids[n],b=ids[(n+1)%ids.length],c=ids[(n+2)%ids.length];seq=[a,a,b,a,a,b,a,a];answer=b;choices=[a,b,c];}
     const options=shuffle(choices);return {index:n,prompt:'أي صورة تكمّل النمط؟',visual:'pattern',sequence:seq,options,correct:options.indexOf(answer),optionVisual:'pictures'};
   }
   if(which==='animals') {
-    const n=pick(ANIMAL_QUESTIONS.length),[prompt,answer,choices]=ANIMAL_QUESTIONS[n];
-    const options=shuffle(choices);return {index:n,prompt,options,correct:options.indexOf(answer),visual:'scenes'};
+    const bank=age>=8?ANIMAL_QUESTIONS:ANIMAL_QUESTIONS.slice(0,age<=5?8:14);
+    const n=pick(bank.length),[prompt,answer,choices]=bank[n];
+    const extras=age>=8?shuffle(SCENE_IDS.filter(id=>!choices.includes(id))).slice(0,1):[];
+    const options=shuffle([...choices,...extras]);return {index:n,prompt,options,correct:options.indexOf(answer),visual:'scenes'};
   }
   if(which==='colors') {
+    if(age>=8){
+      const colors=[[1,'الأزرق'],[2,'الأخضر'],[4,'البنفسجي']];
+      const shapes=[['circle','الدائرة'],['triangle','المثلث'],['square','المربع']];
+      const n=pick(9),[shape,shapeName]=shapes[n%3],[color,colorName]=colors[Math.floor(n/3)];
+      const answer=`shape:${shape}:${color}`;
+      const otherShape=shapes[(n%3+1)%3][0],otherColor=colors[(Math.floor(n/3)+1)%3][0];
+      const options=shuffle([answer,`shape:${shape}:${otherColor}`,`shape:${otherShape}:${color}`,`shape:${otherShape}:${otherColor}`]);
+      return {index:n,prompt:`اختاري ${shapeName} باللون ${colorName}`,options,correct:options.indexOf(answer),visual:'shapes'};
+    }
     const n=pick(COLOR_QUESTIONS.length),[prompt,answer,choices]=COLOR_QUESTIONS[n];
     const options=shuffle(choices);return {index:n,prompt,options,correct:options.indexOf(answer)};
   }
   if(which==='treasure') {
     const n=pick(TREASURE_IDS.length),answer=TREASURE_IDS[n];
-    const otherOptions=shuffle(TREASURE_IDS.filter(id=>id!==answer)).slice(0,2),options=shuffle([answer,...otherOptions]);
+    const otherOptions=shuffle(TREASURE_IDS.filter(id=>id!==answer)).slice(0,age>=8?3:2),options=shuffle([answer,...otherOptions]);
     return {index:n,prompt:`اقرئي الكلمة واختاري صورتها: ${PICTURE_AR[answer]}`,options,correct:options.indexOf(answer),visual:'pictures'};
   }
   if(which==='read') {
     const n=pick(READ_BANK.length),answer=READ_BANK[n].id;
-    const wrong=shuffle(PICTURE_IDS.filter(id=>id!==answer)).slice(0,2),options=shuffle([answer,...wrong]);
+    const wrong=shuffle(PICTURE_IDS.filter(id=>id!==answer)).slice(0,age>=8?3:2),options=shuffle([answer,...wrong]);
     return {index:n,prompt:`اقرئي الكلمة واختاري الصورة: ${READ_BANK[n].word}`,options,correct:options.indexOf(answer),visual:'pictures'};
   }
   if(which==='english') {
-    const n=pick(ENGLISH_BANK.length),[en,ar,w1,w2]=ENGLISH_BANK[n],options=shuffle([ar,w1,w2]);
+    const bank=age>=8?ENGLISH_BANK:ENGLISH_BANK.slice(0,18);
+    const n=pick(bank.length),[en,ar,w1,w2]=bank[n];
+    const options=shuffle([ar,w1,w2,...(age>=8?shuffle(bank.map(item=>item[1]).filter(word=>![ar,w1,w2].includes(word))).slice(0,1):[])]);
     return {index:n,prompt:`ما معنى كلمة ${en} بالعربي؟`,options,correct:options.indexOf(ar)};
   }
   if(which==='compare') {
-    const n=pick(12),size=[21,32,43],target=n%2===0?'الكبير':'الصغير';
+    const n=pick(12),size=age<=3?[21,43]:[21,32,43],target=n%2===0?'الكبير':'الصغير';
     const options=shuffle(size.map((s,i)=>`size:${s}:${i}`));
     return {index:n,prompt:`اختاري الشكل ${target} في الحجم`,visual:'sizes',options,correct:options.findIndex(v=>v.startsWith('size:'+(target==='الكبير'?43:21)+':'))};
   }
   if(which==='numberline') {
-    const n=pick(13),start=n+1,missing=start+1,options=shuffle([String(missing),String(missing+1),String(start)]);
-    return {index:n,prompt:'ما الرقم الناقص في السلسلة؟',display:`${start}  ←  ❓  ←  ${start+2}`,options,correct:options.indexOf(String(missing))};
+    const n=pick(13),start=n+1,step=age>=8?(n%2?2:3):1,missing=start+step;
+    const options=shuffle([String(missing),String(missing+step),String(start)]);
+    return {index:n,prompt:'ما الرقم الناقص في السلسلة؟',display:`${start}  ←  ❓  ←  ${start+step*2}`,options,correct:options.indexOf(String(missing))};
   }
-  const a=1+Math.floor(Math.random()*8),b=1+Math.floor(Math.random()*7),sum=a+b;
-  const options=shuffle([String(sum),String(sum+1),String(sum-1)]);
-  return {index:a*10+b,prompt:'كم ناتج الجمع؟',display:`${a} + ${b} = ❓`,options,correct:options.indexOf(String(sum))};
+  const max=age<=5?4:age<=7?8:20;
+  const a=1+Math.floor(Math.random()*max),b=1+Math.floor(Math.random()*max);
+  const subtract=age>=8 && Math.random()<.5;
+  const first=subtract?Math.max(a,b):a,second=subtract?Math.min(a,b):b;
+  const result=subtract?first-second:first+second;
+  const options=shuffle([String(result),String(result+1),String(result===0?2:result-1)]);
+  return {index:a*100+b+(subtract?10000:0),prompt:subtract?'كم ناتج الطرح؟':'كم ناتج الجمع؟',display:`${first} ${subtract?'−':'+'} ${second} = ❓`,options,correct:options.indexOf(String(result))};
 }
 let memoryPreference = 'random';
+let agePreference = 6;
 let soundEnabled = true;
 let audioContext = null;
 let lastAudioFeedback = null;
-try { soundEnabled = localStorage.getItem('roqaya-sound') !== 'off'; memoryPreference = localStorage.getItem('roqaya-memory') || 'random'; } catch (_) {}
+try { soundEnabled = localStorage.getItem('roqaya-sound') !== 'off'; memoryPreference = localStorage.getItem('roqaya-memory') || 'random'; agePreference=normalizeAge(localStorage.getItem('roqaya-child-age')); } catch (_) {}
 function sound(type='tap') {
   if (!soundEnabled) return;
   try {
@@ -335,7 +390,11 @@ function scorePanel() {
 function renderHome() {
   const invitation = /^#room=([A-Z2-9]{8})$/.exec(location.hash)?.[1] || '';
   screen.innerHTML = `<div class="panel center">
-    <div class="hero"><div class="big-emoji">🎡 🎠 🎈</div><h2>أهلًا بيكم في عالم رقية!</h2><p>14 لعبة مسلّية لبابا ورقية من أي مكان 💜</p></div>
+    <div class="hero"><div class="big-emoji">🎡 🎠 🎈</div><h2>أهلًا بيكم في عالم رقية!</h2><p>ألعاب بتكبر مع عمر طفلك من سنتين لحد 10 سنوات 💜</p></div>
+    <div class="age-settings"><label for="child-age-home">🎂 ولي الأمر: اختار عمر الطفل</label>
+      <select id="child-age-home" class="input">${ageOptions(agePreference)}</select>
+      <p class="hint">هنضبط الألعاب وصعوبتها تلقائيًا. للصغيرين، محتاجين حد كبير يقرأ التعليمات معاهم.</p>
+    </div>
     <div class="btn-row"><button class="btn primary full" data-action="create">🎟️ بابا: اعمل غرفة جديدة</button></div>
     <p class="rule">أو ادخلي غرفة بابا بالكود:</p>
     <label for="room-input" class="tiny">رمز الغرفة • 8 حروف أو أرقام</label>
@@ -346,22 +405,29 @@ function renderHome() {
 }
 function renderLobby() {
   const waiting = !canPlay();
+  const childAge=normalizeAge(state?.childAge);
+  const available=gamesForAge(childAge), sizes=memorySizesForAge(childAge);
+  const chosenMemory=effectiveMemoryPreference(childAge);
   screen.innerHTML = `<div class="panel center">
     <div class="big-emoji">🎪</div><h2>${waiting ? 'مستنيين رقية تدخل 💌' : 'يلا نلعب سوا! 🎉'}</h2>
     <p>رمز الغرفة</p><div class="room-code" aria-label="رمز الغرفة">${roomCode}</div>
     <div class="btn-row"><button class="btn soft" data-action="copy">🔗 نسخ رابط الدعوة</button></div>
     ${scorePanel()}
     ${waiting ? '<p class="hint">ابعث الرابط لرقية، وتفتح اللعبة من موبايلها وتضغط دخول الغرفة.</p>' : '<p class="hint">بابا يختار اللعبة؛ ورقية هتشوف نفس اللعبة فورًا.</p>'}
-    <h3 class="game-title">🎮 اختاروا لعبة الملاهي</h3>
+    <div class="age-settings"><label for="child-age-lobby">🎂 عمر الطفل • مستوى الألعاب</label>
+      ${role==='host'?`<select id="child-age-lobby" class="input">${ageOptions(childAge)}</select>`:`<div class="age-view">${childAge} سنوات • بابا يقدر يغيّر المستوى</div>`}
+      <p class="hint">المتاح دلوقتي ${available.length} ألعاب مناسبة للعمر. المستوى بيتغير مع الجولات الجديدة.</p>
+    </div>
+    <h3 class="game-title">🎮 اختاروا لعبة الملاهي (${available.length})</h3>
     <div class="memory-settings"><label for="memory-size">🃏 حجم لعبة الذاكرة (بابا يختار):</label>
       <select id="memory-size" class="input" ${role !== 'host'?'disabled':''}>
-        <option value="random" ${memoryPreference==='random'?'selected':''}>🎲 عدد مختلف كل جولة (8–30 كارت)</option>
-        ${MEMORY_SIZES.map(n=>`<option value="${n}" ${memoryPreference===String(n)?'selected':''}>${n} كارت (${n/2} أزواج)</option>`).join('')}
+        <option value="random" ${chosenMemory==='random'?'selected':''}>🎲 عدد مختلف كل جولة (${sizes[0]}–${sizes.at(-1)} كارت)</option>
+        ${sizes.map(n=>`<option value="${n}" ${chosenMemory===String(n)?'selected':''}>${n} كارت (${n/2} أزواج)</option>`).join('')}
       </select>
       <p class="hint">الاختيار بيتطبق لما بابا يبدأ جولة ذاكرة جديدة.</p>
     </div>
     <div class="game-grid">
-      ${GAMES.map(key=>`<button class="game-choice" data-game="${key}" ${role !== 'host' || waiting ? 'disabled':''}><span class="emoji">${GAME_LABELS[key][0]}</span>${GAME_LABELS[key][1]}<small>${GAME_LABELS[key][2]}</small></button>`).join('')}
+      ${available.map(key=>`<button class="game-choice" data-game="${key}" ${role !== 'host' || waiting ? 'disabled':''}><span class="emoji">${GAME_LABELS[key][0]}</span>${GAME_LABELS[key][1]}<small>${GAME_LABELS[key][2]}</small></button>`).join('')}
     </div>
     ${role === 'guest' ? '<p class="hint">استني بابا يختار اللعبة 🎠</p>' : ''}
   </div>`;
@@ -388,7 +454,7 @@ function renderMemory() {
   screen.innerHTML = `<div class="panel">${gameHeading('🃏','كروت الذاكرة')}
     <h2 class="game-title center">افتح كارتين شبه بعض • ${game.cards.length} كارت</h2>
     <p class="status">${state.phase === 'finished' ? 'كل الكروت اتكشفت! 🎊' : game.waiting ? 'بنبص على الكروت... 👀' : game.turn === role ? 'دورك دلوقتي! ✨' : `دور ${nameOf(game.turn)} ⏳`}</p>
-    <div class="memory-grid ${game.cards.length>=24?'very-dense':game.cards.length>=16?'dense':''}">${cards}</div>
+    <div class="memory-grid ${game.cards.length<=6?'few':game.cards.length>=24?'very-dense':game.cards.length>=16?'dense':''} ${game.cards.length===6?'six':''}">${cards}</div>
     ${finishBox()}
     ${role === 'host' && state.phase === 'finished' ? '<div class="btn-row"><button class="btn primary" data-action="restart">🔁 جولة جديدة</button></div>' : ''}
     <p class="rule center">كل زوج متطابق = ⭐ واحدة • صاحب الزوج يلعب مرة كمان</p>
@@ -466,7 +532,7 @@ function renderTreasure() {
   const buttons=q.options.map((option,i)=>`<button class="quiz-choice visual-choice" data-treasure="${i}" ${!canAnswer||treasure.wrong?.includes(i)?'disabled':''}>${renderOption(option,q)}</button>`).join('');
   screen.innerHTML=`<div class="panel">${gameHeading('🗝️','رحلة الكنز')}
     <h2 class="game-title center">افتحوا صندوق الكنز سوا! 🧰</h2>
-    <div class="treasure-progress">${Array.from({length:4},(_,i)=>`<span>${i<treasure.stage?'🔑':'🔒'}</span>`).join('')}</div>
+    <div class="treasure-progress">${Array.from({length:treasure.goal||4},(_,i)=>`<span>${i<treasure.stage?'🔑':'🔒'}</span>`).join('')}</div>
     ${state.phase==='finished'?`<div class="finish"><div class="big-emoji">🎁</div><strong>فتحتوا صندوق الكنز! 🎉</strong><p>بابا: ${treasure.roundScores.host} ⭐ • رقية: ${treasure.roundScores.guest} ⭐</p></div>`:
     `<h3 class="game-title center">${q.prompt}</h3><p class="status">${canAnswer?'دورك تختار المفتاح ✨':`دور ${nameOf(treasure.turn)} ⏳`}</p><div class="quiz-options">${buttons}</div>`}
     ${role==='host'&&state.phase==='finished'?'<div class="btn-row"><button class="btn primary" data-action="restart">🎁 كنز جديد</button></div>':''}
@@ -497,26 +563,30 @@ async function mutateState(transform) {
   } catch (e) { info(humanError(e)); }
 }
 function newGame(which, old, previousDraw) {
+  const childAge=normalizeAge(old?.childAge);
+  const common={childAge};
   const scores = {...(old?.scores || { host:0,guest:0 })};
   const round = (old?.round || 0) + 1;
   if (which === 'memory') {
+    const sizes=memorySizesForAge(childAge);
     const requested=memoryPreference==='random'?null:Number(memoryPreference);
-    const eligible=MEMORY_SIZES.filter(n=>n!==old?.memory?.cards?.length);
-    const size=MEMORY_SIZES.includes(requested)?requested:eligible[Math.floor(Math.random()*eligible.length)];
+    const eligible=sizes.filter(n=>n!==old?.memory?.cards?.length);
+    const size=sizes.includes(requested)?requested:(eligible.length?eligible:sizes)[Math.floor(Math.random()*(eligible.length||sizes.length))];
     const picks=shuffle(MEMORY_EMOJI).slice(0,size/2);
-    return { game:which,phase:'playing',scores,round,memory:{cards:shuffle([...picks,...picks]),matched:[],revealed:[],roundScores:{host:0,guest:0},waiting:false,turn:round%2===0?'guest':'host'} };
+    return { ...common,game:which,phase:'playing',scores,round,memory:{cards:shuffle([...picks,...picks]),matched:[],revealed:[],roundScores:{host:0,guest:0},waiting:false,turn:round%2===0?'guest':'host'} };
   }
-  if (which === 'ttt') return {game:which,phase:'playing',scores,round,ttt:{board:'.........',turn:round%2===0?'guest':'host'}};
-  if (QUIZ_GAMES.includes(which)) return {game:which,phase:'playing',scores,round,quiz:{turn:round%2===0?'guest':'host',question:newQuestion(which,old?.quiz?.question?.index)}};
-  if (which === 'treasure') return {game:which,phase:'playing',scores,round,treasure:{stage:0,turn:round%2===0?'guest':'host',wrong:[],roundScores:{host:0,guest:0},question:newQuestion('treasure')}};
+  if (which === 'ttt') return {...common,game:which,phase:'playing',scores,round,ttt:{board:'.........',turn:round%2===0?'guest':'host'}};
+  if (QUIZ_GAMES.includes(which)) return {...common,game:which,phase:'playing',scores,round,quiz:{turn:round%2===0?'guest':'host',question:newQuestion(which,old?.quiz?.question?.index,childAge)}};
+  if (which === 'treasure') return {...common,game:which,phase:'playing',scores,round,treasure:{stage:0,goal:childAge>=8?6:4,turn:round%2===0?'guest':'host',wrong:[],roundScores:{host:0,guest:0},question:newQuestion('treasure',-1,childAge)}};
   const lastIndex = previousDraw?.promptIndex ?? -1;
-  let promptIndex = Math.floor(Math.random()*DRAW_ITEMS.length);
-  if (DRAW_ITEMS.length>1 && promptIndex===lastIndex) promptIndex=(promptIndex+1)%DRAW_ITEMS.length;
+  const drawLimit=childAge<=5?12:childAge<=7?25:DRAW_ITEMS.length;
+  let promptIndex = Math.floor(Math.random()*drawLimit);
+  if (drawLimit>1 && promptIndex===lastIndex) promptIndex=(promptIndex+1)%drawLimit;
   const item = DRAW_ITEMS[promptIndex];
-  return {game:'draw',phase:'playing',scores,round,draw:{drawer:previousDraw?other(previousDraw.drawer):'host',promptIndex,options:shuffle(item.choices),guesses:[]}};
+  return {...common,game:'draw',phase:'playing',scores,round,draw:{drawer:previousDraw?other(previousDraw.drawer):'host',promptIndex,options:shuffle(item.choices),guesses:[]}};
 }
 async function startGame(which) {
-  if (role !== 'host' || !canPlay() || !GAMES.includes(which)) return;
+  if (role !== 'host' || !canPlay() || !gamesForAge(state?.childAge).includes(which)) return;
   if (which === 'draw') await remove(ref(db,`rooms/${roomCode}/strokes`)).catch(e=>info(humanError(e)));
   const base = newGame(which,state,which==='draw' && state?.game==='draw'?state.draw:null);
   await mutateState(old=>({...base,scores:{...old.scores}}));
@@ -607,12 +677,12 @@ async function chooseTreasure(index) {
     const correct=index===q.correct, nextStage=t.stage+(correct?1:0);
     const scores={...old.scores},roundScores={...t.roundScores};
     if(correct){scores[role]+=1;roundScores[role]+=1;}
-    const finished=nextStage===4;
+    const finished=nextStage===(t.goal||4);
     const result=finished?(roundScores.host===roundScores.guest?'draw':roundScores.host>roundScores.guest?'host':'guest'):undefined;
     return {...old,scores,feedback:addFeedback(old,finished?'win':correct?'good':'bad'),
       phase:finished?'finished':'playing',...(finished?{result}:{}),
       treasure:{...t,stage:nextStage,turn:other(role),roundScores,wrong:correct?[]:[...(t.wrong||[]),index],
-        question:correct&&!finished?newQuestion('treasure',q.index):q}};
+        question:correct&&!finished?newQuestion('treasure',q.index,old.childAge):q}};
   });
 }
 async function nextDraw() {
@@ -699,8 +769,9 @@ async function createRoom() {
   info('');
   try {
     const code=randomCode();
+    agePreference=normalizeAge($('#child-age-home')?.value??agePreference);
     await set(ref(db,`rooms/${code}/meta`),{hostUid:uid,createdAt:serverTimestamp()});
-    await set(ref(db,`rooms/${code}/state`),{game:'lobby',phase:'lobby',scores:{host:0,guest:0},round:0});
+    await set(ref(db,`rooms/${code}/state`),{game:'lobby',phase:'lobby',scores:{host:0,guest:0},round:0,childAge:agePreference});
     subscribeRoom(code);
   } catch(e) { info(humanError(e)); }
 }
@@ -732,9 +803,21 @@ async function copyLink() {
   catch(e) { info(`انسخ الكود وابعت الرابط من شريط العنوان: ${roomCode}`); }
 }
 screen.addEventListener('click',e=>{if(e.target.closest('button:not(:disabled)'))sound('tap');},true);
-screen.addEventListener('change',e=>{
+screen.addEventListener('change',async e=>{
+  if(e.target?.id==='child-age-home') {
+    agePreference=normalizeAge(e.target.value);
+    try{localStorage.setItem('roqaya-child-age',String(agePreference));}catch(_){}
+    return;
+  }
+  if(e.target?.id==='child-age-lobby' && role==='host' && state?.game==='lobby') {
+    const age=normalizeAge(e.target.value);
+    const result=await mutateState(old=>old.game==='lobby'?{...old,childAge:age}:undefined);
+    if(result?.committed){agePreference=age;try{localStorage.setItem('roqaya-child-age',String(age));}catch(_){}sound('tap');}
+    else if(result) info('مقدرناش نغيّر العمر. جرّب مرة تانية.');
+    return;
+  }
   if(e.target?.id!=='memory-size'||role!=='host')return;
-  memoryPreference=e.target.value;
+  memoryPreference=memorySizesForAge(state?.childAge).includes(Number(e.target.value))?e.target.value:'random';
   try {localStorage.setItem('roqaya-memory',memoryPreference);}catch(_){}
   sound('tap');
 });
