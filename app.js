@@ -8,7 +8,7 @@ const screen = $('#screen');
 const message = $('#message');
 const connection = $('#connection');
 const LETTERS = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789';
-const APP_VERSION = '10.0';
+const APP_VERSION = '11.0';
 const DRAW_ITEMS = [
   { name:'قطة', emoji:'🐱', choices:['🐱','🐶','🐰'] },
   { name:'شمس', emoji:'☀️', choices:['☀️','🌙','⭐'] },
@@ -657,9 +657,7 @@ function renderHome() {
 function renderLobby() {
   const waiting = !canPlay();
   const childAge=normalizeAge(state?.childAge);
-  const available=gamesForAge(childAge), sizes=memorySizesForAge(childAge);
-  const chosenMemory=effectiveMemoryPreference(childAge);
-  const numberTraining=currentNumberTraining();
+  const available=gamesForAge(childAge);
   screen.innerHTML = `<div class="panel center">
     <div class="big-emoji">🎪</div><h2>${waiting ? 'في انتظار دخول رقية 💌' : 'يلا نلعب سوا! 🎉'}</h2>
     <p>رمز الغرفة</p><div class="room-code" aria-label="رمز الغرفة">${roomCode}</div>
@@ -675,17 +673,7 @@ function renderLobby() {
       <p class="hint">المتاح دلوقتي ${available.length} ألعاب مناسبة للعمر. المستوى بيتغير مع الجولات الجديدة.</p>
     </div>
     <h3 class="game-title">🎮 اختاروا لعبة الملاهي (${available.length})</h3>
-    <div class="memory-settings"><label for="memory-size">🃏 حجم لعبة الذاكرة (بابا يختار):</label>
-      <select id="memory-size" class="input" ${role !== 'host'?'disabled':''}>
-        <option value="random" ${chosenMemory==='random'?'selected':''}>🎲 عدد مختلف كل جولة (${sizes[0]}–${sizes.at(-1)} كارت)</option>
-        ${sizes.map(n=>`<option value="${n}" ${chosenMemory===String(n)?'selected':''}>${n} كارت (${n/2} أزواج)</option>`).join('')}
-      </select>
-      <p class="hint">الاختيار بيتطبق لما بابا يبدأ جولة ذاكرة جديدة.</p>
-    </div>
-    <div class="number-settings"><label>🔢 تدريب الأرقام</label>
-      ${role==='host'?`<div class="number-range-row"><label>من <input id="number-min" class="input number-input" type="text" inputmode="numeric" maxlength="2" value="${arabicDigits(numberTraining.min)}" aria-label="أول رقم في التدريب"></label><label>إلى <input id="number-max" class="input number-input" type="text" inputmode="numeric" maxlength="2" value="${arabicDigits(numberTraining.max)}" aria-label="آخر رقم في التدريب"></label></div><label for="math-mode">نوع مسائل الحساب</label><select id="math-mode" class="input"><option value="addition" ${numberTraining.mode==='addition'?'selected':''}>➕ جمع عادي</option><option value="doubles" ${numberTraining.mode==='doubles'?'selected':''}>🟰 جمع المتماثلات فقط (١+١، ٢+٢…)</option><option value="mixed" ${numberTraining.mode==='mixed'?'selected':''}>➕➖ جمع وطرح</option></select>`:`<div class="age-view">بابا يحدد مدى الأرقام ونوع الحساب.</div>`}
-      <p class="hint">المدى يطبّق على «عدّ الصور»، «حساب الملاهي» و«الرقم الناقص». الحد الحالي من ١ إلى ٢٠.</p>
-    </div>
+    <p class="hint">إعدادات كل لعبة هتظهر جواها وقت اللعب، عشان الصفحة تفضل بسيطة.</p>
     <div class="game-grid">
       ${available.map(key=>`<button class="game-choice" data-game="${key}" ${role !== 'host' || waiting ? 'disabled':''}><span class="emoji">${GAME_LABELS[key][0]}</span>${GAME_LABELS[key][1]}<small>${GAME_LABELS[key][2]}</small></button>`).join('')}
     </div>
@@ -694,6 +682,30 @@ function renderLobby() {
 }
 function gameHeading(icon, title) {
   return `<div class="topline"><span class="tag">${icon} ${title}</span><div class="topline-actions"><button class="btn soft voice-replay" data-action="welcome" ${!soundEnabled?'disabled':''}>🔊 اسمع الترحيب</button>${role === 'host' ? '<button class="btn soft" data-action="lobby">🎡 المدينة</button>' : '<span class="tag green">غرفة خاصة 🔒</span>'}</div></div>${scorePanel()}`;
+}
+function memorySettingsInsideGame() {
+  if (role !== 'host') return '';
+  const age=normalizeAge(state?.childAge),sizes=memorySizesForAge(age),chosen=effectiveMemoryPreference(age);
+  return `<div class="in-game-settings memory-settings compact-settings">
+    <label for="memory-size-game">🃏 حجم لعبة الذاكرة</label>
+    <div class="settings-action-row"><select id="memory-size-game" class="input">
+      <option value="random" ${chosen==='random'?'selected':''}>🎲 متغيّر (${sizes[0]}–${sizes.at(-1)} كارت)</option>
+      ${sizes.map(n=>`<option value="${n}" ${chosen===String(n)?'selected':''}>${n} كارت (${n/2} أزواج)</option>`).join('')}
+    </select><button class="btn soft settings-apply" data-action="apply-memory-settings">ابدأ بالحجم ده</button></div>
+    <p class="hint">التطبيق يبدأ جولة ذاكرة جديدة فورًا.</p>
+  </div>`;
+}
+function numberSettingsInsideGame(gameKey) {
+  if (role !== 'host' || !['count','math','numberline'].includes(gameKey)) return '';
+  const cfg=currentNumberTraining();
+  const mathMode=gameKey==='math'?`<label for="math-mode-game">نوع مسائل الحساب</label><select id="math-mode-game" class="input"><option value="addition" ${cfg.mode==='addition'?'selected':''}>➕ جمع عادي</option><option value="doubles" ${cfg.mode==='doubles'?'selected':''}>🟰 جمع المتماثلات فقط (١+١، ٢+٢…)</option><option value="mixed" ${cfg.mode==='mixed'?'selected':''}>➕➖ جمع وطرح</option></select>`:'';
+  return `<div class="in-game-settings number-settings compact-settings">
+    <label>🔢 اختار الأرقام اللي هنتدرّب عليها</label>
+    <div class="number-range-row"><label>من <input id="number-min-game" class="input number-input" type="text" inputmode="numeric" maxlength="2" value="${arabicDigits(cfg.min)}" aria-label="أول رقم في التدريب"></label><label>إلى <input id="number-max-game" class="input number-input" type="text" inputmode="numeric" maxlength="2" value="${arabicDigits(cfg.max)}" aria-label="آخر رقم في التدريب"></label></div>
+    ${mathMode}
+    <button class="btn soft settings-apply" data-action="apply-number-settings">طبّق وابدأ سؤال جديد</button>
+    <p class="hint">اختار أي مدى من ١ إلى ٢٠. الإعداد يفضل محفوظ على جهاز بابا.</p>
+  </div>`;
 }
 function finishBox() {
   if (state.phase !== 'finished') return '';
@@ -712,6 +724,7 @@ function renderMemory() {
     return `<button class="memory-card ${css}" data-memory="${i}" aria-label="كارت ${i+1}${open?' '+emoji:''}" ${disabled?'disabled':''}>${open?emoji:'؟'}</button>`;
   }).join('');
   screen.innerHTML = `<div class="panel">${gameHeading('🃏','كروت الذاكرة')}
+    ${memorySettingsInsideGame()}
     <h2 class="game-title center">افتح كارتين شبه بعض • ${game.cards.length} كارت</h2>
     <p class="status">${state.phase === 'finished' ? 'كل الكروت اتكشفت! 🎊' : game.waiting ? 'بنبص على الكروت... 👀' : game.turn === role ? 'دورك دلوقتي! ✨' : `دور ${nameOf(game.turn)} ⏳`}</p>
     <div class="memory-grid ${game.cards.length<=6?'few':game.cards.length>=24?'very-dense':game.cards.length>=16?'dense':''} ${game.cards.length===6?'six':''}">${cards}</div>
@@ -799,6 +812,7 @@ function renderQuiz() {
   }).join('');
   const result=answered ? `<div class="finish" role="status"><strong>${state.result==='correct'?'🎉 برافو! إجابة صح':'💜 نتعلّم سوا!'}</strong>${state.result==='incorrect'&&selected!==null&&q.options[selected]!==undefined?answerFeedback('إجابتك غلط:',q.options[selected],q):''}${answerFeedback('الإجابة الصحيحة:',q.options[q.correct],q,true)}</div>` : '';
   screen.innerHTML=`<div class="panel">${gameHeading(...GAME_LABELS[key].slice(0,2))}
+    ${numberSettingsInsideGame(key)}
     <h2 class="game-title center">${q.prompt}</h2>
     ${renderQuestionDisplay(q)}
     <p class="status">${state.phase==='finished'?'الجولة خلصت 🎉':canAnswer?'دورك دلوقتي! ✨':`دور ${nameOf(quiz.turn)} ⏳`}</p>
@@ -1179,19 +1193,6 @@ screen.addEventListener('change',async e=>{
     else if(result) info('مقدرناش نغيّر العمر. جرّب مرة تانية.');
     return;
   }
-  if(['number-min','number-max','math-mode'].includes(e.target?.id) && role==='host' && state?.game==='lobby'){
-    const rawMin=parseTrainingNumber(document.querySelector('#number-min')?.value),rawMax=parseTrainingNumber(document.querySelector('#number-max')?.value);
-    if(!Number.isInteger(rawMin)||!Number.isInteger(rawMax)||rawMin<1||rawMax<1||rawMin>20||rawMax>20){info('اكتب مدى أرقام من ١ إلى ٢٠.');return;}
-    const cfg=normalizeNumberTraining({min:rawMin,max:rawMax,mode:document.querySelector('#math-mode')?.value||mathModePreference});
-    numberMinPreference=cfg.min;numberMaxPreference=cfg.max;mathModePreference=cfg.mode;saveNumberTraining();
-    if(document.querySelector('#number-min'))document.querySelector('#number-min').value=arabicDigits(cfg.min);
-    if(document.querySelector('#number-max'))document.querySelector('#number-max').value=arabicDigits(cfg.max);
-    info('');sound('tap');return;
-  }
-  if(e.target?.id!=='memory-size'||role!=='host')return;
-  memoryPreference=memorySizesForAge(state?.childAge).includes(Number(e.target.value))?e.target.value:'random';
-  try {localStorage.setItem('roqaya-memory',memoryPreference);}catch(_){}
-  sound('tap');
 });
 screen.addEventListener('click',async e=>{
   const button=e.target.closest('button');
@@ -1205,6 +1206,23 @@ screen.addEventListener('click',async e=>{
   if (action==='join') return joinRoom();
   if (action==='copy') return copyLink();
   if (action==='lobby') return goLobby();
+  if (action==='apply-memory-settings') {
+    if(role!=='host'||state?.game!=='memory')return;
+    const value=document.querySelector('#memory-size-game')?.value||'random';
+    memoryPreference=memorySizesForAge(state?.childAge).includes(Number(value))?value:'random';
+    try{localStorage.setItem('roqaya-memory',memoryPreference);}catch(_){}
+    info('');
+    return mutateState(old=>old.game==='memory'?newGame('memory',old):undefined);
+  }
+  if (action==='apply-number-settings') {
+    if(role!=='host'||!['count','math','numberline'].includes(state?.game))return;
+    const rawMin=parseTrainingNumber(document.querySelector('#number-min-game')?.value),rawMax=parseTrainingNumber(document.querySelector('#number-max-game')?.value);
+    if(!Number.isInteger(rawMin)||!Number.isInteger(rawMax)||rawMin<1||rawMax<1||rawMin>20||rawMax>20){info('اكتب مدى أرقام من ١ إلى ٢٠.');return;}
+    const cfg=normalizeNumberTraining({min:rawMin,max:rawMax,mode:document.querySelector('#math-mode-game')?.value||mathModePreference});
+    numberMinPreference=cfg.min;numberMaxPreference=cfg.max;if(state.game==='math')mathModePreference=cfg.mode;saveNumberTraining();info('');
+    const which=state.game;
+    return mutateState(old=>old.game===which?newGame(which,old):undefined);
+  }
   if (action==='restart') return restart();
   if (action==='next-draw') return nextDraw();
   if (action==='clear-draw' && state?.game==='draw' && state.draw.drawer===role) {
