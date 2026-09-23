@@ -81,3 +81,42 @@
 .order-preview .size-illustration .art-image{width:min(var(--object-size),65px);height:min(var(--object-size),65px)}
 .order-arrow{font-size:1.2rem;color:#6c5599}.order-preview .order-arrow:last-child{display:none}
 @media(max-width:420px){.quiz-options.photo-options{gap:8px}.quiz-options.photo-options .visual-choice{height:125px;min-height:125px}.photo-options .art-image.real-photo{height:103px}.quiz-options.photo-options .visual-choice.is-wrong,.quiz-options.photo-options .visual-choice.is-correct{height:143px}.size-illustration{min-height:103px}.size-illustration .art-image{width:min(var(--object-size),100%);height:min(var(--object-size),99px)}.topline-actions{gap:4px}.voice-replay{font-size:.7rem!important}}
+
+
+/* V9: number-range practice, compact game layout, clearer size sorting. */
+.number-settings{background:linear-gradient(145deg,#fff7db,#eef8ff);border:1px solid #eadfae;border-radius:19px;padding:14px;margin:14px 0;text-align:start}
+.number-settings>label{display:block;font-weight:850;color:#654d21;margin-bottom:8px}
+.number-range-row{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:10px}
+.number-range-row label{font-weight:800;color:#5a4a7d}
+.number-input{text-align:center;font-size:1.12rem;font-weight:900}
+.count-objects.compact-count{grid-template-columns:repeat(5,minmax(0,1fr));gap:4px;margin:8px auto}
+.count-objects.compact-count span{font-size:clamp(1.3rem,5.2vw,2rem);padding:1px}
+.size-illustration .art-image{width:min(var(--object-size),100%)!important;height:min(var(--object-size),116px)!important;max-width:116px!important;max-height:116px!important}
+.quiz-next-row{margin:8px 0 4px}
+body.playing-game .shell{padding-top:4px}
+body.playing-game .header{margin:1px 0 6px;gap:5px}
+body.playing-game .brand{gap:6px}
+body.playing-game .brand-icon{font-size:29px}
+body.playing-game .brand h1{font-size:1.12rem}
+body.playing-game .brand p{display:none}
+body.playing-game .connection{font-size:.64rem;padding:4px 7px}
+body.playing-game .sound-toggle{font-size:.67rem;min-height:31px;padding:4px 7px}
+body.playing-game .message{margin:4px 0;padding:7px 10px;font-size:.84rem}
+body.playing-game .panel{margin:4px 0;padding:10px 10px 12px;border-radius:20px}
+body.playing-game .topline{margin:2px 0}
+body.playing-game .topline .tag{padding:4px 7px;font-size:.72rem}
+body.playing-game .voice-replay{padding:5px 7px!important;min-height:36px}
+body.playing-game .scoreboard{margin:5px 0;gap:6px}
+body.playing-game .score{padding:6px 7px}
+body.playing-game .score strong{font-size:1.32rem;line-height:1.2}
+body.playing-game .score span{font-size:.72rem}
+body.playing-game .game-title{font-size:1.18rem;margin:7px 0}
+body.playing-game .quiz-display{margin:7px auto;padding:8px 7px;line-height:1.35}
+body.playing-game .status{margin:6px 0}
+body.playing-game .quiz-options{margin:8px auto;gap:7px}
+body.playing-game .quiz-choice{min-height:74px}
+body.playing-game .finish{margin:8px 0;padding:9px}
+body.playing-game .answer-feedback{margin:6px auto;padding:8px 10px}
+body.playing-game .rule{margin:7px 0;font-size:.8rem}
+body.playing-game footer{margin-top:10px}
+@media(max-width:420px){body.playing-game .shell{padding-left:7px;padding-right:7px}.number-settings{padding:11px}.size-order-options{gap:6px}.size-order-options .visual-choice{min-height:106px}}

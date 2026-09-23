@@ -8,7 +8,7 @@ const screen = $('#screen');
 const message = $('#message');
 const connection = $('#connection');
 const LETTERS = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789';
-const APP_VERSION = '8.0';
+const APP_VERSION = '10.0';
 const DRAW_ITEMS = [
   { name:'قطة', emoji:'🐱', choices:['🐱','🐶','🐰'] },
   { name:'شمس', emoji:'☀️', choices:['☀️','🌙','⭐'] },
@@ -79,7 +79,7 @@ const GAME_LABELS = {
   draw:['🎨','ارسم وخمّن','واحد يرسم والتاني يخمّن'],
   memory:['🃏','كروت الذاكرة','8–30 كارت أو عدد متغيّر'],
   ttt:['❌⭕','إكس أو','3 نقاط للفائز'],
-  odd:['🔍','مين المختلف؟','صور فوتوغرافية حقيقية للمقارنة'],
+  odd:['🔍','مين المختلف؟','رسوم كرتونية ممتعة للمقارنة'],
   count:['🔢','عدّ الصور','احسب عدد الرموز'],
   pattern:['🧩','كمّل النمط','خمن الصورة الجاية'],
   animals:['🐾','بيوت الحيوانات','اختار مكان الحيوان'],
@@ -99,16 +99,116 @@ const PICTURE_IDS = ['heart','star','sun','moon','flower','tree','house','fish',
 const PICTURE_AR = {heart:'قلب',star:'نجمة',sun:'شمس',moon:'قمر',flower:'وردة',tree:'شجرة',house:'بيت',fish:'سمكة',car:'سيارة',boat:'قارب',balloon:'بالونة',apple:'تفاحة',butterfly:'فراشة',key:'مفتاح',cloud:'سحابة',umbrella:'مظلة'};
 const READ_BANK = PICTURE_IDS.map(id=>({id,word:PICTURE_AR[id]}));
 const ENGLISH_BANK = [
- ['CAT','قطة','كلب','حصان'],['DOG','كلب','قطة','سمكة'],['SUN','شمس','قمر','نجمة'],
- ['MOON','قمر','شمس','مطر'],['STAR','نجمة','شجرة','باب'],['TREE','شجرة','وردة','بيت'],
- ['FISH','سمكة','عصفور','قطة'],['HOUSE','بيت','سيارة','قارب'],['CAR','سيارة','طائرة','دراجة'],
- ['APPLE','تفاحة','موزة','برتقالة'],['BOOK','كتاب','قلم','مكتب'],['BIRD','عصفور','سمكة','كلب'],
- ['RED','أحمر','أزرق','أخضر'],['BLUE','أزرق','أصفر','أحمر'],['GREEN','أخضر','أبيض','أسود'],
- ['WATER','ماء','رمل','ثلج'],['FLOWER','وردة','شجرة','حجر'],['HAND','يد','رجل','عين'],
- ['UMBRELLA','مظلة','حقيبة','كرة'],['BUTTERFLY','فراشة','نحلة','نملة'],
- ['MOUNTAIN','جبل','نهر','بحر'],['RIVER','نهر','صحراء','غابة'],
- ['ELEPHANT','فيل','جمل','أسد'],['BICYCLE','دراجة','سيارة','قطار'],
- ['WINTER','شتاء','صيف','ربيع'],['TRIANGLE','مثلث','دائرة','مربع']
+  ['arm','ذراع'],
+  ['ant','نملة'],
+  ['apple','تفاحة'],
+  ['axe','فأس'],
+  ['book','كتاب'],
+  ['ball','كرة'],
+  ['bell','جرس'],
+  ['bag','حقيبة'],
+  ['bee','نحلة'],
+  ['bat','خفاش'],
+  ['bed','سرير'],
+  ['boy','ولد'],
+  ['bus','أتوبيس'],
+  ['bird','طائر'],
+  ['butterfly','فراشة'],
+  ['cat','قطة'],
+  ['car','سيارة'],
+  ['cake','تورتة'],
+  ['carrot','جزرة'],
+  ['cow','بقرة'],
+  ['camel','جمل'],
+  ['dog','كلب'],
+  ['door','باب'],
+  ['doll','عروسة لعبة'],
+  ['donkey','حمار'],
+  ['desk','مكتب'],
+  ['egg','بيضة'],
+  ['ear','أذن'],
+  ['eye','عين'],
+  ['elephant','فيل'],
+  ['fan','مروحة'],
+  ['fat','سمين'],
+  ['fish','سمكة'],
+  ['figs','تين'],
+  ['flag','علم'],
+  ['farmer','فلاح'],
+  ['girl','بنت'],
+  ['goat','معزة'],
+  ['hand','يد'],
+  ['hat','قبعة'],
+  ['hen','دجاجة'],
+  ['horse','حصان'],
+  ['house','منزل'],
+  ['ice','ثلج'],
+  ['ice cream','آيس كريم'],
+  ['ink','حبر'],
+  ['insect','حشرة'],
+  ['jam','مربى'],
+  ['jar','برطمان'],
+  ['jet','طائرة نفاثة'],
+  ['jacket','جاكت'],
+  ['jug','إبريق'],
+  ['jump','يقفز'],
+  ['key','مفتاح'],
+  ['king','ملك'],
+  ['kite','طائرة ورق'],
+  ['lion','أسد'],
+  ['lemon','ليمون'],
+  ['lip','شفاه'],
+  ['leaf','ورقة شجر'],
+  ['lizard','سحلية'],
+  ['man','رجل'],
+  ['mat','سجادة'],
+  ['moon','قمر'],
+  ['milk','لبن'],
+  ['mop','ممسحة'],
+  ['monkey','قرد'],
+  ['mouse','فأر صغير'],
+  ['net','شبكة'],
+  ['nest','عش'],
+  ['nine','تسعة'],
+  ['nose','أنف'],
+  ['ox','ثور'],
+  ['orange','برتقالة'],
+  ['pen','قلم حبر'],
+  ['pencil','قلم رصاص'],
+  ['pot','حلة'],
+  ['pizza','بيتزا'],
+  ['queen','ملكة'],
+  ['rat','فأر كبير'],
+  ['rabbit','أرنب'],
+  ['run','يجري'],
+  ['room','حجرة'],
+  ['sun','شمس'],
+  ['star','نجمة'],
+  ['snake','ثعبان'],
+  ['school','مدرسة'],
+  ['tree','شجرة'],
+  ['ten','عشرة'],
+  ['table','منضدة'],
+  ['umbrella','شمسية'],
+  ['van','شاحنة صغيرة'],
+  ['vase','زهرية'],
+  ['window','شباك'],
+  ['wolf','ذئب'],
+  ['xylophone','إكسيلوفون'],
+  ['yo-yo','لعبة اليويو'],
+  ['yellow','أصفر'],
+  ['zoo','حديقة الحيوان'],
+  ['zebra','حمار وحشي'],
+  ['red','أحمر'],
+  ['blue','أزرق'],
+  ['green','أخضر'],
+  ['water','ماء'],
+  ['flower','وردة'],
+  ['mountain','جبل'],
+  ['river','نهر'],
+  ['bicycle','دراجة'],
+  ['winter','شتاء'],
+  ['triangle','مثلث']
 ];
 // Do not place an animal emoji beside its name: that would give away the answer.
 const ANIMAL_QUESTIONS = [
@@ -220,7 +320,7 @@ function renderOption(option,q) {
   if(q?.visual==='sizes' || q?.visual==='size-order') {
     const [,sizeRaw,objectId]=option.split(':');
     const size=Number(sizeRaw);
-    if(![54,82,110].includes(size) || !['apple','fish','house','balloon','tree','car','flower','butterfly'].includes(objectId)) return '';
+    if(![44,78,116].includes(size) || !['apple','fish','house','balloon','tree','car','flower','butterfly'].includes(objectId)) return '';
     return `<span class="size-illustration" style="--object-size:${size}px">${artPicture(objectId)}</span>`;
   }
   if(q?.visual==='photos') return photoPicture(option);
@@ -233,31 +333,39 @@ function answerFeedback(label,option,q,correct=false) {
 }
 function renderQuestionDisplay(q) {
   if (q.visual==='pattern' && Array.isArray(q.sequence)) return `<div class="picture-sequence">${q.sequence.map(x=>artPicture(x)).join('')}<span class="missing-mark">؟</span></div>`;
-  if (q.visual==='count' && Array.isArray(q.sequence)) return `<div class="count-objects">${q.sequence.map(x=>`<span aria-hidden="true">${x}</span>`).join('')}</div>`;
+  if (q.visual==='count' && Array.isArray(q.sequence)) return `<div class="count-objects ${q.sequence.length>10?'compact-count':''}">${q.sequence.map(x=>`<span aria-hidden="true">${x}</span>`).join('')}</div>`;
   if (q.visual==='compare' && Array.isArray(q.sequence)) return `<div class="picture-sequence">${q.sequence.map(x=>artPicture(x)).join('')}</div>`;
   return q.display?`<div class="quiz-display" aria-label="صور السؤال">${q.display}</div>`:'';
 }
-function newQuestion(which,previousIndex=-1,age=6) {
+function newQuestion(which,previousIndex=-1,age=6,numberSettings={}) {
   age=normalizeAge(age);
+  const training=normalizeNumberTraining(numberSettings);
+  const rangeMin=training.min,rangeMax=training.max;
   const pick=(length)=>{let n=Math.floor(Math.random()*length);if(length>1 && n===previousIndex)n=(n+1)%length;return n;};
+  const pickNumber=(min=rangeMin,max=rangeMax,avoid=null)=>{let n=min+Math.floor(Math.random()*(max-min+1));if(max>min&&n===avoid)n=n===max?min:n+1;return n;};
   if(which==='odd') {
-    // Three real photographs from the same category and one from a different category.
-    // The outlier is never identified by size, colour, or a special frame.
-    const total=age<=5?16:32;
-    const n=pick(total);
-    const majority=n<16?PHOTO_FRUITS:PHOTO_ANIMALS;
-    const otherGroup=n<16?PHOTO_ANIMALS:PHOTO_FRUITS;
-    const omitted=Math.floor((n%16)/4), odd=otherGroup[n%4];
-    const options=shuffle([...majority.filter((_,i)=>i!==omitted),odd]);
-    return {index:n,prompt:'اختاري الصورة المختلفة عن الصور الثلاث الأخرى',visual:'photos',options,correct:options.indexOf(odd)};
+    // Original cartoon-style illustrations: three matching pictures and one different picture.
+    // The pictures change each round to keep the exercise varied.
+    const n=pick(PICTURE_IDS.length*3);
+    const base=PICTURE_IDS[n%PICTURE_IDS.length];
+    let odd=PICTURE_IDS[(n*5+7)%PICTURE_IDS.length];
+    if(odd===base) odd=PICTURE_IDS[(PICTURE_IDS.indexOf(base)+1)%PICTURE_IDS.length];
+    const options=shuffle([base,base,base,odd]);
+    return {index:n,prompt:'اختاري الصورة المختلفة عن الثلاث صور المتشابهة',visual:'pictures',options,correct:options.indexOf(odd)};
   }
   if(which==='count') {
-    const [min,max]=age<=3?[1,3]:age<=5?[2,6]:age<=7?[3,10]:[8,20];
-    const n=min+Math.floor(Math.random()*(max-min+1));
+    const n=pickNumber(rangeMin,rangeMax,previousIndex);
     const emoji=['🍎','🐱','⭐','🎈','🐠','🧸'][Math.floor(Math.random()*6)];
-    const wrong1=n+1,wrong2=n===min?n+2:n-1;
-    const alternatives=shuffle([String(n),String(wrong1),String(wrong2)]);
-    return {index:n,prompt:'عدّي الصور… كام واحدة؟',visual:'count',sequence:Array(n).fill(emoji),options:alternatives,correct:alternatives.indexOf(String(n))};
+    const distractors=[];
+    for(let distance=1;distractors.length<2;distance++){
+      for(const candidate of [n-distance,n+distance]){
+        if(candidate>=1 && candidate<=20 && candidate!==n && !distractors.includes(candidate)) distractors.push(candidate);
+        if(distractors.length===2) break;
+      }
+      if(distance>20) break;
+    }
+    const alternatives=shuffle([String(n),...distractors.slice(0,2).map(String)]);
+    return {index:n,prompt:`عدّي الصور… كام واحدة؟ (تدريب من ${rangeMin} إلى ${rangeMax})`,visual:'count',sequence:Array(n).fill(emoji),options:alternatives,correct:alternatives.indexOf(String(n))};
   }
   if(which==='pattern') {
     const n=pick(16),ids=PICTURE_IDS;
@@ -300,39 +408,80 @@ function newQuestion(which,previousIndex=-1,age=6) {
     return {index:n,prompt:`اقرئي الكلمة واختاري الصورة: ${READ_BANK[n].word}`,options,correct:options.indexOf(answer),visual:'pictures'};
   }
   if(which==='english') {
-    const bank=age>=8?ENGLISH_BANK:ENGLISH_BANK.slice(0,18);
-    const n=pick(bank.length),[en,ar,w1,w2]=bank[n];
-    const options=shuffle([ar,w1,w2,...(age>=8?shuffle(bank.map(item=>item[1]).filter(word=>![ar,w1,w2].includes(word))).slice(0,1):[])]);
+    const limit=age<=5?35:age<=7?75:ENGLISH_BANK.length;
+    const bank=ENGLISH_BANK.slice(0,limit);
+    const n=pick(bank.length),[en,ar]=bank[n];
+    const wrongCount=age>=8?3:2;
+    const wrong=shuffle(ENGLISH_BANK.map(item=>item[1]).filter(word=>word!==ar)).slice(0,wrongCount);
+    const options=shuffle([ar,...wrong]);
     return {index:n,prompt:`ما معنى كلمة ${en} بالعربي؟`,options,correct:options.indexOf(ar)};
   }
   if(which==='compare') {
     const objects=['apple','fish','house','balloon','tree','car','flower','butterfly'];
-    const n=pick(objects.length*3),objectId=objects[n%objects.length];
-    const sizes=age<=3?[54,110]:[54,82,110];
-    const options=shuffle(sizes.map(size=>`size:${size}:${objectId}`));
-    if(age>=8){
-      const expectedOrder=options.map((_,i)=>i).sort((a,b)=>Number(options[a].split(':')[1])-Number(options[b].split(':')[1]));
-      return {index:n,prompt:'رتّبي الصور من الأصغر إلى الأكبر: اضغطي على الصور بالترتيب',visual:'size-order',options,correct:-1,expectedOrder};
+    const n=pick(objects.length*4),objectId=objects[n%objects.length];
+    if(age<=3){
+      const sizes=[44,116],options=shuffle(sizes.map(size=>`size:${size}:${objectId}`));
+      const target=n%2===0?'الكبير':'الصغير',wanted=target==='الكبير'?116:44;
+      return {index:n,prompt:`اختاري ${objectId==='house'?'البيت':objectId==='apple'?'التفاحة':'الصورة'} ${target} في الحجم`,visual:'sizes',options,correct:options.findIndex(v=>v.startsWith('size:'+wanted+':'))};
     }
-    const target=n%2===0?'الكبير':'الصغير',wanted=target==='الكبير'?110:54;
-    return {index:n,prompt:`اختاري ${objectId==='house'?'البيت':objectId==='apple'?'التفاحة':'الصورة'} ${target} في الحجم`,visual:'sizes',options,correct:options.findIndex(v=>v.startsWith('size:'+wanted+':'))};
+    const sizes=[44,78,116],options=shuffle(sizes.map(size=>`size:${size}:${objectId}`));
+    const descending=n%2===1;
+    const expectedOrder=options.map((_,i)=>i).sort((a,b)=>descending?Number(options[b].split(':')[1])-Number(options[a].split(':')[1]):Number(options[a].split(':')[1])-Number(options[b].split(':')[1]));
+    return {index:n,prompt:descending?'رتّبي الصور من الأكبر إلى الأصغر: اضغطي على الصور بالترتيب':'رتّبي الصور من الأصغر إلى الأكبر: اضغطي على الصور بالترتيب',visual:'size-order',options,correct:-1,expectedOrder,orderDirection:descending?'desc':'asc'};
   }
   if(which==='numberline') {
-    const n=pick(13),start=n+1,step=age>=8?(n%2?2:3):1,missing=start+step;
-    const options=shuffle([String(missing),String(missing+step),String(start)]);
-    return {index:n,prompt:'ما الرقم الناقص في السلسلة؟',display:`${start}  ←  ❓  ←  ${start+step*2}`,options,correct:options.indexOf(String(missing))};
+    const span=rangeMax-rangeMin;
+    let step=1;
+    if(age>=8 && span>=6) step=span>=9?(Math.random()<.5?2:3):2;
+    if(span<step*2) step=1;
+    const latestStart=Math.max(rangeMin,rangeMax-step*2);
+    const start=pickNumber(rangeMin,latestStart);
+    const missing=start+step;
+    const choices=new Set([missing]);
+    for(let distance=step;choices.size<3;distance+=step){
+      if(missing+distance<=rangeMax) choices.add(missing+distance);
+      if(missing-distance>=rangeMin) choices.add(missing-distance);
+      if(distance>20) break;
+    }
+    for(let candidate=1;choices.size<3&&candidate<=20;candidate++) if(candidate!==missing) choices.add(candidate);
+    const options=shuffle([...choices].slice(0,3).map(String));
+    return {index:start*10+step,prompt:`ما الرقم الناقص؟ (من ${rangeMin} إلى ${rangeMax})`,display:`${start}  ←  ❓  ←  ${start+step*2}`,options,correct:options.indexOf(String(missing))};
   }
-  const max=age<=5?4:age<=7?8:20;
-  const a=1+Math.floor(Math.random()*max),b=1+Math.floor(Math.random()*max);
-  const subtract=age>=8 && Math.random()<.5;
+  const doubles=training.mode==='doubles';
+  const allowSubtract=training.mode==='mixed' && age>=8;
+  const previousA=Number.isInteger(previousIndex)?Math.floor((previousIndex%10000)/100):null;
+  // Doubles move through the chosen range in order: ١+١، ٢+٢، ٣+٣… then start again.
+  const a=doubles?(Number.isInteger(previousA)&&previousA>=rangeMin&&previousA<rangeMax?previousA+1:rangeMin):pickNumber(rangeMin,rangeMax,previousA);
+  const b=doubles?a:pickNumber(rangeMin,rangeMax);
+  const subtract=!doubles && allowSubtract && Math.random()<.5;
   const first=subtract?Math.max(a,b):a,second=subtract?Math.min(a,b):b;
   const result=subtract?first-second:first+second;
-  const options=shuffle([String(result),String(result+1),String(result===0?2:result-1)]);
-  return {index:a*100+b+(subtract?10000:0),prompt:subtract?'كم ناتج الطرح؟':'كم ناتج الجمع؟',display:`${first} ${subtract?'−':'+'} ${second} = ❓`,options,correct:options.indexOf(String(result))};
+  const distractors=[];
+  for(let distance=1;distractors.length<2;distance++) for(const candidate of [result-distance,result+distance]) if(candidate>=0&&candidate!==result&&!distractors.includes(candidate)){distractors.push(candidate);if(distractors.length===2)break;}
+  const options=shuffle([String(result),...distractors.slice(0,2).map(String)]);
+  return {index:a*100+b+(subtract?10000:0),prompt:doubles?'كم ناتج جمع العددين المتماثلين؟':subtract?'كم ناتج الطرح؟':'كم ناتج الجمع؟',display:`${first} ${subtract?'−':'+'} ${second} = ❓`,options,correct:options.indexOf(String(result))};
 }
 let memoryPreference = 'random';
 let agePreference = 6;
 let childNamePreference = 'رقية';
+let numberMinPreference = 1;
+let numberMaxPreference = 10;
+let mathModePreference = 'addition';
+function parseTrainingNumber(value){
+  const normalized=String(value??'').replace(/[٠-٩]/g,d=>String('٠١٢٣٤٥٦٧٨٩'.indexOf(d))).replace(/[۰-۹]/g,d=>String('۰۱۲۳۴۵۶۷۸۹'.indexOf(d))).trim();
+  if(!/^\d{1,2}$/.test(normalized)) return NaN;
+  return Number(normalized);
+}
+function normalizeNumberTraining(settings={}){
+  let min=parseTrainingNumber(settings.min??numberMinPreference),max=parseTrainingNumber(settings.max??numberMaxPreference);
+  if(!Number.isInteger(min)) min=1;if(!Number.isInteger(max)) max=10;
+  min=Math.max(1,Math.min(20,min));max=Math.max(1,Math.min(20,max));
+  if(min>max)[min,max]=[max,min];
+  const mode=['addition','doubles','mixed'].includes(settings.mode)?settings.mode:'addition';
+  return {min,max,mode};
+}
+function currentNumberTraining(){return normalizeNumberTraining({min:numberMinPreference,max:numberMaxPreference,mode:mathModePreference});}
+function saveNumberTraining(){try{localStorage.setItem('roqaya-number-min',String(numberMinPreference));localStorage.setItem('roqaya-number-max',String(numberMaxPreference));localStorage.setItem('roqaya-math-mode',mathModePreference);}catch(_){}}
 // The adult chooses a first name or nickname; no names are sent to analytics.
 function normalizeChildName(value) {
   const candidate=String(value??'').normalize('NFC').trim().replace(/\s+/gu,' ');
@@ -365,7 +514,7 @@ new MutationObserver(personalizeUi).observe(document.querySelector('.shell'),{ch
 let soundEnabled = true;
 let audioContext = null;
 let lastAudioFeedback = null;
-try { soundEnabled = localStorage.getItem('roqaya-sound') !== 'off'; memoryPreference = localStorage.getItem('roqaya-memory') || 'random'; agePreference=normalizeAge(localStorage.getItem('roqaya-child-age')); childNamePreference=normalizeChildName(localStorage.getItem('roqaya-child-name'))||'رقية'; } catch (_) {}
+try { soundEnabled = localStorage.getItem('roqaya-sound') !== 'off'; memoryPreference = localStorage.getItem('roqaya-memory') || 'random'; agePreference=normalizeAge(localStorage.getItem('roqaya-child-age')); childNamePreference=normalizeChildName(localStorage.getItem('roqaya-child-name'))||'رقية'; const savedTraining=normalizeNumberTraining({min:localStorage.getItem('roqaya-number-min')??1,max:localStorage.getItem('roqaya-number-max')??10,mode:localStorage.getItem('roqaya-math-mode')||'addition'}); numberMinPreference=savedTraining.min;numberMaxPreference=savedTraining.max;mathModePreference=savedTraining.mode; } catch (_) {}
 function sound(type='tap') {
   if (!soundEnabled) return;
   try {
@@ -399,19 +548,20 @@ function chooseArabicVoice(){
   const ar=voices.filter(v=>/^ar(?:-|$)/i.test(v.lang));
   return ar.find(v=>/^ar-(SA|001)$/i.test(v.lang)&&v.localService)
       ||ar.find(v=>/^ar-(SA|001)$/i.test(v.lang))
+      ||ar.find(v=>/^ar-EG$/i.test(v.lang)&&v.localService)
       ||ar.find(v=>v.localService)||ar[0]||null;
 }
 function welcomeToGame(which,name=childName(),key=''){
   if(!soundEnabled || !VOICE_GAME_NAMES[which] || !('speechSynthesis' in window) || !('SpeechSynthesisUtterance' in window))return false;
   if(key && lastWelcomeKey===key)return false;
   const voice=chooseArabicVoice();
-  // Avoid an English-default voice: Arabic TTS isn't available on every device.
-  if(!voice)return false;
   const safeName=normalizeChildName(name)||'رقية';
   const spokenName=safeName==='رقية'?'رُقَيَّة':safeName;
   const say=new SpeechSynthesisUtterance(`مَرْحَبًا! هَذَا عَالَمُ ${spokenName}. هَيَّا نَلْعَبُ ${VOICE_GAME_NAMES[which]}.`);
-  say.lang=voice.lang;say.voice=voice;say.rate=0.88;say.pitch=1;say.volume=0.95;
-  try{window.speechSynthesis.cancel();window.speechSynthesis.speak(say);lastWelcomeKey=key;return true;}
+  // Android browsers can expose an empty voice list even when Arabic system TTS is installed.
+  // ar-SA lets the browser hand the utterance to the installed Arabic engine without forcing a listed voice.
+  say.lang=voice?.lang||'ar-SA';if(voice)say.voice=voice;say.rate=0.86;say.pitch=1;say.volume=1;
+  try{window.speechSynthesis.cancel();window.speechSynthesis.resume?.();window.speechSynthesis.speak(say);lastWelcomeKey=key;info('');return true;}
   catch(_){return false;}
 }
 function maybeWelcomeOnSync(before,after){
@@ -509,6 +659,7 @@ function renderLobby() {
   const childAge=normalizeAge(state?.childAge);
   const available=gamesForAge(childAge), sizes=memorySizesForAge(childAge);
   const chosenMemory=effectiveMemoryPreference(childAge);
+  const numberTraining=currentNumberTraining();
   screen.innerHTML = `<div class="panel center">
     <div class="big-emoji">🎪</div><h2>${waiting ? 'في انتظار دخول رقية 💌' : 'يلا نلعب سوا! 🎉'}</h2>
     <p>رمز الغرفة</p><div class="room-code" aria-label="رمز الغرفة">${roomCode}</div>
@@ -530,6 +681,10 @@ function renderLobby() {
         ${sizes.map(n=>`<option value="${n}" ${chosenMemory===String(n)?'selected':''}>${n} كارت (${n/2} أزواج)</option>`).join('')}
       </select>
       <p class="hint">الاختيار بيتطبق لما بابا يبدأ جولة ذاكرة جديدة.</p>
+    </div>
+    <div class="number-settings"><label>🔢 تدريب الأرقام</label>
+      ${role==='host'?`<div class="number-range-row"><label>من <input id="number-min" class="input number-input" type="text" inputmode="numeric" maxlength="2" value="${arabicDigits(numberTraining.min)}" aria-label="أول رقم في التدريب"></label><label>إلى <input id="number-max" class="input number-input" type="text" inputmode="numeric" maxlength="2" value="${arabicDigits(numberTraining.max)}" aria-label="آخر رقم في التدريب"></label></div><label for="math-mode">نوع مسائل الحساب</label><select id="math-mode" class="input"><option value="addition" ${numberTraining.mode==='addition'?'selected':''}>➕ جمع عادي</option><option value="doubles" ${numberTraining.mode==='doubles'?'selected':''}>🟰 جمع المتماثلات فقط (١+١، ٢+٢…)</option><option value="mixed" ${numberTraining.mode==='mixed'?'selected':''}>➕➖ جمع وطرح</option></select>`:`<div class="age-view">بابا يحدد مدى الأرقام ونوع الحساب.</div>`}
+      <p class="hint">المدى يطبّق على «عدّ الصور»، «حساب الملاهي» و«الرقم الناقص». الحد الحالي من ١ إلى ٢٠.</p>
     </div>
     <div class="game-grid">
       ${available.map(key=>`<button class="game-choice" data-game="${key}" ${role !== 'host' || waiting ? 'disabled':''}><span class="emoji">${GAME_LABELS[key][0]}</span>${GAME_LABELS[key][1]}<small>${GAME_LABELS[key][2]}</small></button>`).join('')}
@@ -625,8 +780,9 @@ function renderSizeOrder(){
     return `<button class="quiz-choice visual-choice size-order-choice ${selected?(correct?'is-correct':'is-picked'):''}" data-quiz="${i}" ${!canAnswer||selected?'disabled':''}>${renderOption(option,q)}${selected?`<span class="choice-result-tag">${arabicDigits(selectedAt+1)} ${done?(correct?'✅':'❌'):'✓'}</span>`:''}</button>`;
   }).join('');
   const sequence=(indices)=>`<div class="order-preview">${indices.map(i=>renderOption(q.options[i],q)).join('<span class="order-arrow">←</span>')}</div>`;
-  const result=done?`<div class="finish" role="status"><strong>${state.result==='correct'?'🎉 ترتيب صحيح!':'💜 نتعلّم سوا!'}</strong>${state.result==='incorrect'?`<div class="answer-feedback is-wrong"><strong>❌ ترتيبك:</strong>${sequence(order)}</div>`:''}<div class="answer-feedback is-correct"><strong>✅ الترتيب الصحيح من الأصغر للأكبر:</strong>${sequence(q.expectedOrder)}</div></div>`:'';
-  screen.innerHTML=`<div class="panel">${gameHeading('📐','الأحجام والترتيب')}<h2 class="game-title center">${q.prompt}</h2><p class="status">${done?'الجولة خلصت 🎉':canAnswer?`اختاري الصورة رقم ${arabicDigits(order.length+1)} في الترتيب`: `دور ${nameOf(state.quiz.turn)} ⏳`}</p><div class="quiz-options size-order-options">${buttons}</div>${result}${role==='host'&&done?'<div class="btn-row"><button class="btn primary" data-action="restart">🔁 سؤال جديد</button></div>':''}<p class="rule center">رتّبي الصور الثلاث لتكسبي ⭐ نقطتين</p></div>`;
+  const directionLabel=q.orderDirection==='desc'?'من الأكبر للأصغر':'من الأصغر للأكبر';
+  const result=done?`<div class="finish" role="status"><strong>${state.result==='correct'?'🎉 ترتيب صحيح!':'💜 نتعلّم سوا!'}</strong>${state.result==='incorrect'?`<div class="answer-feedback is-wrong"><strong>❌ ترتيبك:</strong>${sequence(order)}</div>`:''}<div class="answer-feedback is-correct"><strong>✅ الترتيب الصحيح ${directionLabel}:</strong>${sequence(q.expectedOrder)}</div></div>`:'';
+  screen.innerHTML=`<div class="panel">${gameHeading('📐','الأحجام والترتيب')}<h2 class="game-title center">${q.prompt}</h2><p class="status">${done?'الجولة خلصت 🎉':canAnswer?`اختاري الصورة رقم ${arabicDigits(order.length+1)} في الترتيب`: `دور ${nameOf(state.quiz.turn)} ⏳`}</p><div class="quiz-options size-order-options">${buttons}</div>${role==='host'&&done?'<div class="btn-row quiz-next-row"><button class="btn primary" data-action="restart">🔁 سؤال جديد</button></div>':''}${result}<p class="rule center">رتّبي الصور الثلاث لتكسبي ⭐ نقطتين</p></div>`;
 }
 function renderQuiz() {
   const key=state.game, quiz=state.quiz;
@@ -647,8 +803,8 @@ function renderQuiz() {
     ${renderQuestionDisplay(q)}
     <p class="status">${state.phase==='finished'?'الجولة خلصت 🎉':canAnswer?'دورك دلوقتي! ✨':`دور ${nameOf(quiz.turn)} ⏳`}</p>
     <div class="quiz-options ${q.visual==='photos'?'photo-options':q.visual==='sizes'&&q.options.length===2?'two-size-options':''}">${buttons}</div>
+    ${role==='host'&&state.phase==='finished'?'<div class="btn-row quiz-next-row"><button class="btn primary" data-action="restart">🔁 سؤال جديد</button></div>':''}
     ${result}
-    ${role==='host'&&state.phase==='finished'?'<div class="btn-row"><button class="btn primary" data-action="restart">🔁 سؤال جديد</button></div>':''}
     <p class="rule center">إجابة صحيحة = ⭐ نقطتين • الدور بيتبدّل كل سؤال</p>
   </div>`;
 }
@@ -675,6 +831,7 @@ function renderTreasure() {
 }
 function render() {
   connection.textContent = !uid ? '⏳ جاري الاتصال' : connected ? '🟢 الإنترنت متصل' : '🟠 الاتصال مقطوع';
+  document.body.classList.toggle('playing-game',Boolean(roomCode&&state&&state.game!=='lobby'));
   if (!roomCode) { renderHome(); return; }
   if (!meta || !state) { screen.innerHTML = '<div class="panel center"><div class="big-emoji">🎠</div><h2>جاري دخول الملاهي…</h2></div>'; return; }
   if (state.game === 'lobby') return renderLobby();
@@ -746,7 +903,7 @@ function newGame(which, old, previousDraw) {
     return { ...common,game:which,phase:'playing',scores,round,memory:{cards:shuffle([...picks,...picks]),matched:[],revealed:[],roundScores:{host:0,guest:0},waiting:false,turn:round%2===0?'guest':'host'} };
   }
   if (which === 'ttt') return {...common,game:which,phase:'playing',scores,round,ttt:{board:'.........',turn:round%2===0?'guest':'host'}};
-  if (QUIZ_GAMES.includes(which)) return {...common,game:which,phase:'playing',scores,round,quiz:{turn:round%2===0?'guest':'host',question:newQuestion(which,old?.quiz?.question?.index,childAge)}};
+  if (QUIZ_GAMES.includes(which)) return {...common,game:which,phase:'playing',scores,round,quiz:{turn:round%2===0?'guest':'host',question:newQuestion(which,old?.game===which?old?.quiz?.question?.index:-1,childAge,currentNumberTraining())}};
   if (which === 'treasure') return {...common,game:which,phase:'playing',scores,round,treasure:{stage:0,goal:childAge>=8?6:4,turn:round%2===0?'guest':'host',wrong:[],roundScores:{host:0,guest:0},question:newQuestion('treasure',-1,childAge)}};
   const lastIndex = previousDraw?.promptIndex ?? -1;
   const drawLimit=childAge<=5?12:childAge<=7?25:DRAW_ITEMS.length;
@@ -1022,6 +1179,15 @@ screen.addEventListener('change',async e=>{
     else if(result) info('مقدرناش نغيّر العمر. جرّب مرة تانية.');
     return;
   }
+  if(['number-min','number-max','math-mode'].includes(e.target?.id) && role==='host' && state?.game==='lobby'){
+    const rawMin=parseTrainingNumber(document.querySelector('#number-min')?.value),rawMax=parseTrainingNumber(document.querySelector('#number-max')?.value);
+    if(!Number.isInteger(rawMin)||!Number.isInteger(rawMax)||rawMin<1||rawMax<1||rawMin>20||rawMax>20){info('اكتب مدى أرقام من ١ إلى ٢٠.');return;}
+    const cfg=normalizeNumberTraining({min:rawMin,max:rawMax,mode:document.querySelector('#math-mode')?.value||mathModePreference});
+    numberMinPreference=cfg.min;numberMaxPreference=cfg.max;mathModePreference=cfg.mode;saveNumberTraining();
+    if(document.querySelector('#number-min'))document.querySelector('#number-min').value=arabicDigits(cfg.min);
+    if(document.querySelector('#number-max'))document.querySelector('#number-max').value=arabicDigits(cfg.max);
+    info('');sound('tap');return;
+  }
   if(e.target?.id!=='memory-size'||role!=='host')return;
   memoryPreference=memorySizesForAge(state?.childAge).includes(Number(e.target.value))?e.target.value:'random';
   try {localStorage.setItem('roqaya-memory',memoryPreference);}catch(_){}
@@ -1032,7 +1198,7 @@ screen.addEventListener('click',async e=>{
   if (!button || button.disabled) return;
   const action=button.dataset.action;
   if (action==='welcome') {
-    if(!welcomeToGame(state?.game,state?.childName)) info(soundEnabled?'لا يوجد صوت عربي متاح حاليًا. فعّل صوت اللغة العربية في إعدادات النطق على جهازك.':'شغّل الصوت من الزر العلوي أولًا.');
+    if(!welcomeToGame(state?.game,state?.childName)) info(soundEnabled?'المتصفح الحالي لا يتيح النطق الصوتي. جرّب فتح اللعبة في Google Chrome.':'شغّل الصوت من الزر العلوي أولًا.');
     return;
   }
   if (action==='create') return createRoom();
