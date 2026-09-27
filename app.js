@@ -8,7 +8,7 @@ const screen = $('#screen');
 const message = $('#message');
 const connection = $('#connection');
 const LETTERS = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789';
-const APP_VERSION = '11.0';
+const APP_VERSION = '13.0';
 const DRAW_ITEMS = [
   { name:'قطة', emoji:'🐱', choices:['🐱','🐶','🐰'] },
   { name:'شمس', emoji:'☀️', choices:['☀️','🌙','⭐'] },
@@ -55,10 +55,10 @@ const MEMORY_EMOJI = [
 const MEMORY_SIZES = [4,6,8,12,16,20,24,30];
 // The age is a gameplay setting chosen by the adult, not a date of birth.
 const AGE_GAME_LEVELS = [
-  {max:3,games:['memory','count','colors','compare'],memory:[4,6]},
-  {max:5,games:['draw','memory','odd','count','pattern','animals','colors','compare'],memory:[6,8,12]},
-  {max:7,games:['draw','memory','ttt','odd','count','pattern','animals','colors','math','treasure','read','english','compare','numberline'],memory:[8,12,16,20]},
-  {max:10,games:['draw','memory','ttt','odd','count','pattern','animals','colors','math','treasure','read','english','compare','numberline'],memory:[12,16,20,24,30]}
+  {max:3,games:['memory','count','colors','compare','coloring','sorting'],memory:[4,6]},
+  {max:5,games:['draw','memory','odd','count','pattern','animals','colors','compare','coloring','jigsaw','sorting','phonics'],memory:[6,8,12]},
+  {max:7,games:['draw','memory','ttt','odd','count','pattern','animals','colors','math','treasure','read','english','compare','numberline','snakes','coloring','jigsaw','sorting','phonics'],memory:[8,12,16,20]},
+  {max:10,games:['draw','memory','ttt','odd','count','pattern','animals','colors','math','treasure','read','english','compare','numberline','snakes','coloring','jigsaw','sorting','phonics'],memory:[12,16,20,24,30]}
 ];
 function normalizeAge(value) {
   const age=Number(value);
@@ -74,7 +74,7 @@ function effectiveMemoryPreference(age) {
   return memorySizesForAge(age).includes(Number(memoryPreference)) ? memoryPreference : 'random';
 }
 const QUIZ_GAMES = ['odd','count','pattern','animals','colors','math','read','english','compare','numberline'];
-const GAMES = ['draw','memory','ttt',...QUIZ_GAMES,'treasure'];
+const GAMES = ['draw','memory','ttt',...QUIZ_GAMES,'treasure','snakes','coloring','jigsaw','sorting','phonics'];
 const GAME_LABELS = {
   draw:['🎨','ارسم وخمّن','واحد يرسم والتاني يخمّن'],
   memory:['🃏','كروت الذاكرة','8–30 كارت أو عدد متغيّر'],
@@ -88,9 +88,35 @@ const GAME_LABELS = {
   treasure:['🗝️','رحلة الكنز','4 مفاتيح بالتناوب'],
   read:['📖','اقرئي واختاري','اقرئي كلمة عربية واختاري صورتها'],
   english:['🔤','عربي وإنجليزي','معاني كلمات بسيطة'],
-  compare:['📐','الأحجام والترتيب','اختار الحجم أو رتّب الصور حسب العمر'],
-  numberline:['🔢','الرقم الناقص','كمّلي تسلسل الأرقام']
+  compare:['🔢','ترتيب ومقارنة الأرقام','تصاعدي • تنازلي • مين الأكبر؟'],
+  numberline:['🔢','الرقم الناقص','كمّلي تسلسل الأرقام'],
+  snakes:['🐍','السلم والثعبان','ارموا النرد واتسابقوا للنهاية'],
+  coloring:['🎨','كتاب التلوين','اختاري لون واضغطي لتلوين الرسمة'],
+  jigsaw:['🧩','البازل المصغّر','ركّبي ٤ أو ٦ قطع في مكانها'],
+  sorting:['🧺','فرز الألوان والأشكال','اسحبي كل عنصر للصندوق المناسب'],
+  phonics:['🔤','الحروف والصور','وصّلي الحرف بالصورة التي تبدأ به']
 };
+
+const SNAKES = {14:5,22:12,29:19};
+const LADDERS = {3:11,8:17,15:24,20:28};
+const COLOR_PALETTE = ['#ef5350','#42a5f5','#fdd835','#66bb6a','#ec6fa9','#ff9800','#8e6bd8','#26c6da'];
+const COLORING_PAGES = [
+  {id:'flower',name:'زهرة',parts:10},
+  {id:'cat',name:'قطة',parts:9},
+  {id:'car',name:'سيارة',parts:8}
+];
+const PUZZLE_PICTURES=['apple','fish','house','car','flower','butterfly'];
+const SORT_COLORS={red:'#ef5350',blue:'#42a5f5'};
+const PHONICS_BANK = [
+  ['أ','ألف','أسد','🦁'],['ب','باء','بطة','🦆'],['ت','تاء','تفاحة','🍎'],['ث','ثاء','ثعلب','🦊'],
+  ['ج','جيم','جمل','🐪'],['ح','حاء','حصان','🐴'],['خ','خاء','خروف','🐑'],['د','دال','دب','🐻'],
+  ['ذ','ذال','ذئب','🐺'],['ر','راء','ريشة','🪶'],['ز','زاي','زهرة','🌸'],['س','سين','سمكة','🐟'],
+  ['ش','شين','شمس','☀️'],['ص','صاد','صقر','🦅'],['ض','ضاد','ضفدع','🐸'],['ط','طاء','طائرة','✈️'],
+  ['ظ','ظاء','ظرف','✉️'],['ع','عين','عنب','🍇'],['غ','غين','غزال','🦌'],['ف','فاء','فراشة','🦋'],
+  ['ق','قاف','قطة','🐱'],['ك','كاف','كتاب','📖'],['ل','لام','ليمون','🍋'],['م','ميم','موز','🍌'],
+  ['ن','نون','نحلة','🐝'],['ه','هاء','هلال','🌙'],['و','واو','وردة','🌹'],['ي','ياء','يد','✋']
+];
+
 // All illustration assets below are original inline SVG drawings, not third-party photographs.
 // Asset identifiers (rather than markup) travel through Firebase; both clients draw the same image.
 const SCENE_IDS = ['desert','sea','forest','pond','garden','snow','nest','farm','jungle','meadow','river','mountain','home'];
@@ -417,17 +443,27 @@ function newQuestion(which,previousIndex=-1,age=6,numberSettings={}) {
     return {index:n,prompt:`ما معنى كلمة ${en} بالعربي؟`,options,correct:options.indexOf(ar)};
   }
   if(which==='compare') {
-    const objects=['apple','fish','house','balloon','tree','car','flower','butterfly'];
-    const n=pick(objects.length*4),objectId=objects[n%objects.length];
-    if(age<=3){
-      const sizes=[44,116],options=shuffle(sizes.map(size=>`size:${size}:${objectId}`));
-      const target=n%2===0?'الكبير':'الصغير',wanted=target==='الكبير'?116:44;
-      return {index:n,prompt:`اختاري ${objectId==='house'?'البيت':objectId==='apple'?'التفاحة':'الصورة'} ${target} في الحجم`,visual:'sizes',options,correct:options.findIndex(v=>v.startsWith('size:'+wanted+':'))};
+    // V12: this game is numbers only: ascending order, descending order, and choosing the larger number.
+    // Use the same adult-selected range as the other number games.
+    let values=Array.from({length:rangeMax-rangeMin+1},(_,i)=>rangeMin+i);
+    // Keep the game usable if an older saved range contains only one value.
+    if(values.length<2){
+      const neighbor=rangeMin<20?rangeMin+1:rangeMin-1;
+      values=[rangeMin,neighbor].sort((a,b)=>a-b);
     }
-    const sizes=[44,78,116],options=shuffle(sizes.map(size=>`size:${size}:${objectId}`));
-    const descending=n%2===1;
-    const expectedOrder=options.map((_,i)=>i).sort((a,b)=>descending?Number(options[b].split(':')[1])-Number(options[a].split(':')[1]):Number(options[a].split(':')[1])-Number(options[b].split(':')[1]));
-    return {index:n,prompt:descending?'رتّبي الصور من الأكبر إلى الأصغر: اضغطي على الصور بالترتيب':'رتّبي الصور من الأصغر إلى الأكبر: اضغطي على الصور بالترتيب',visual:'size-order',options,correct:-1,expectedOrder,orderDirection:descending?'desc':'asc'};
+    const modeCount=values.length>=3?3:1;
+    const mode=modeCount===1?2:Math.floor(Math.random()*3);
+    if(mode===2){
+      const pair=shuffle(values).slice(0,2);
+      const options=shuffle(pair.map(String));
+      const answer=String(Math.max(...pair));
+      return {index:pair[0]*100+pair[1]+20000,prompt:'أي رقم أكبر؟',visual:'number-compare',options,correct:options.indexOf(answer)};
+    }
+    const picked=shuffle(values).slice(0,3);
+    const options=shuffle(picked.map(String));
+    const descending=mode===1;
+    const expectedOrder=options.map((_,i)=>i).sort((a,b)=>descending?Number(options[b])-Number(options[a]):Number(options[a])-Number(options[b]));
+    return {index:picked.reduce((acc,n)=>acc*100+n,mode+1),prompt:descending?'رتّبي الأرقام ترتيبًا تنازليًا: من الأكبر إلى الأصغر':'رتّبي الأرقام ترتيبًا تصاعديًا: من الأصغر إلى الأكبر',visual:'number-order',options,correct:-1,expectedOrder,orderDirection:descending?'desc':'asc'};
   }
   if(which==='numberline') {
     const span=rangeMax-rangeMin;
@@ -541,7 +577,7 @@ function sound(type='tap') {
   } catch (_) { /* Sound is optional on browsers that block audio. */ }
 }
 // Native Arabic speech runs on-device when supported; never sends a child name to analytics.
-const VOICE_GAME_NAMES={draw:'الرَّسْمَ وَالتَّخْمِينَ',memory:'كُرُوتَ الذَّاكِرَةِ',ttt:'إِكْس أَوْ',odd:'اخْتِيَارَ الصُّورَةِ الْمُخْتَلِفَةِ',count:'عَدَّ الصُّوَرِ',pattern:'إِكْمَالَ النَّمَطِ',animals:'بُيُوتَ الْحَيَوَانَاتِ',colors:'الأَلْوَانَ وَالأَشْكَالَ',math:'الْحِسَابَ',treasure:'رِحْلَةَ الْكَنْزِ',read:'الْقِرَاءَةَ',english:'الْعَرَبِيَّةَ وَالْإِنْجِلِيزِيَّةَ',compare:'مُقَارَنَةَ الأَحْجَامِ',numberline:'الرَّقْمَ النَّاقِصَ'};
+const VOICE_GAME_NAMES={draw:'الرَّسْمَ وَالتَّخْمِينَ',memory:'كُرُوتَ الذَّاكِرَةِ',ttt:'إِكْس أَوْ',odd:'اخْتِيَارَ الصُّورَةِ الْمُخْتَلِفَةِ',count:'عَدَّ الصُّوَرِ',pattern:'إِكْمَالَ النَّمَطِ',animals:'بُيُوتَ الْحَيَوَانَاتِ',colors:'الأَلْوَانَ وَالأَشْكَالَ',math:'الْحِسَابَ',treasure:'رِحْلَةَ الْكَنْزِ',read:'الْقِرَاءَةَ',english:'الْعَرَبِيَّةَ وَالْإِنْجِلِيزِيَّةَ',compare:'تَرْتِيبَ وَمُقَارَنَةَ الأَرْقَامِ',numberline:'الرَّقْمَ النَّاقِصَ',snakes:'السُّلَّمَ وَالثُّعْبَانَ',coloring:'التَّلْوِينَ',jigsaw:'تَرْكِيبَ الصُّوَرِ',sorting:'فَرْزَ الأَلْوَانِ وَالأَشْكَالِ',phonics:'مُطَابَقَةَ الْحُرُوفِ وَالصُّوَرِ'};
 let lastWelcomeKey='';
 function chooseArabicVoice(){
   const voices=window.speechSynthesis?.getVoices()||[];
@@ -578,7 +614,7 @@ function soundControl() {
     control.addEventListener('click',()=>{
       soundEnabled=!soundEnabled;
       try { localStorage.setItem('roqaya-sound',soundEnabled?'on':'off'); } catch (_) {}
-      if(!soundEnabled)try{window.speechSynthesis?.cancel();}catch(_){}
+      if(!soundEnabled){try{window.speechSynthesis?.cancel();}catch(_){} stopAlphabetMusic();}
       soundControl();
       document.querySelectorAll('.voice-replay').forEach(btn=>{btn.disabled=!soundEnabled;});
       if(soundEnabled)sound('good');
@@ -597,6 +633,28 @@ const WIN_LINES = [[0,1,2],[3,4,5],[6,7,8],[0,3,6],[1,4,7],[2,5,8],[0,4,8],[2,4,
 let auth, db, uid, roomCode = '', role = '', meta = null, state = null, presence = {}, strokes = {};
 let connected = false, unsubs = [], presenceBound = false, hideKey = '', pointerIsDown = false;
 let lastPoint = null, lastDrawAt = 0, lastRenderingKey = '';
+let coloringSelectedColor=COLOR_PALETTE[0], puzzleSelectedPiece=null, sortingDragSelected=false;
+let alphabetMusicTimer=null, alphabetMusicEnabled=false;
+function stopAlphabetMusic(){if(alphabetMusicTimer){clearInterval(alphabetMusicTimer);alphabetMusicTimer=null;}alphabetMusicEnabled=false;}
+function ambientChime(){
+  if(!soundEnabled)return;
+  try{
+    const Audio=window.AudioContext||window.webkitAudioContext;if(!Audio)return;
+    audioContext ||= new Audio();if(audioContext.state==='suspended')audioContext.resume().catch(()=>{});
+    const t=audioContext.currentTime;
+    [392,523,659].forEach((f,i)=>{const o=audioContext.createOscillator(),g=audioContext.createGain();o.type='sine';o.frequency.value=f;g.gain.setValueAtTime(.0001,t+i*.22);g.gain.exponentialRampToValueAtTime(.012,t+i*.22+.02);g.gain.exponentialRampToValueAtTime(.0001,t+i*.22+.45);o.connect(g).connect(audioContext.destination);o.start(t+i*.22);o.stop(t+i*.22+.5);});
+  }catch(_){}
+}
+function toggleAlphabetMusic(){
+  if(alphabetMusicTimer){stopAlphabetMusic();return false;}
+  if(!soundEnabled)return false;
+  ambientChime();alphabetMusicTimer=setInterval(ambientChime,5200);alphabetMusicEnabled=true;return true;
+}
+function speakArabicPhrase(text){
+  if(!soundEnabled||!('speechSynthesis'in window)||!('SpeechSynthesisUtterance'in window))return false;
+  try{const voice=chooseArabicVoice(),u=new SpeechSynthesisUtterance(text);u.lang=voice?.lang||'ar-SA';if(voice)u.voice=voice;u.rate=.78;u.pitch=1;u.volume=1;window.speechSynthesis.cancel();window.speechSynthesis.resume?.();window.speechSynthesis.speak(u);return true;}catch(_){return false;}
+}
+
 
 function info(text) { message.hidden = !text; message.textContent = text || ''; }
 function humanError(error) {
@@ -696,15 +754,16 @@ function memorySettingsInsideGame() {
   </div>`;
 }
 function numberSettingsInsideGame(gameKey) {
-  if (role !== 'host' || !['count','math','numberline'].includes(gameKey)) return '';
+  if (role !== 'host' || !['count','math','numberline','compare'].includes(gameKey)) return '';
   const cfg=currentNumberTraining();
   const mathMode=gameKey==='math'?`<label for="math-mode-game">نوع مسائل الحساب</label><select id="math-mode-game" class="input"><option value="addition" ${cfg.mode==='addition'?'selected':''}>➕ جمع عادي</option><option value="doubles" ${cfg.mode==='doubles'?'selected':''}>🟰 جمع المتماثلات فقط (١+١، ٢+٢…)</option><option value="mixed" ${cfg.mode==='mixed'?'selected':''}>➕➖ جمع وطرح</option></select>`:'';
+  const rangeHint=gameKey==='compare'?'اختار مدى فيه ٣ أرقام على الأقل عشان تظهر أسئلة التصاعدي والتنازلي والمقارنة.':'اختار أي مدى من ١ إلى ٢٠. الإعداد يفضل محفوظ على جهاز بابا.';
   return `<div class="in-game-settings number-settings compact-settings">
     <label>🔢 اختار الأرقام اللي هنتدرّب عليها</label>
     <div class="number-range-row"><label>من <input id="number-min-game" class="input number-input" type="text" inputmode="numeric" maxlength="2" value="${arabicDigits(cfg.min)}" aria-label="أول رقم في التدريب"></label><label>إلى <input id="number-max-game" class="input number-input" type="text" inputmode="numeric" maxlength="2" value="${arabicDigits(cfg.max)}" aria-label="آخر رقم في التدريب"></label></div>
     ${mathMode}
     <button class="btn soft settings-apply" data-action="apply-number-settings">طبّق وابدأ سؤال جديد</button>
-    <p class="hint">اختار أي مدى من ١ إلى ٢٠. الإعداد يفضل محفوظ على جهاز بابا.</p>
+    <p class="hint">${rangeHint}</p>
   </div>`;
 }
 function finishBox() {
@@ -784,24 +843,25 @@ function renderDraw() {
   redrawCanvas();
   bindCanvas(drawer && state.phase === 'playing');
 }
-function renderSizeOrder(){
+function renderNumberOrder(){
   const q=state.quiz.question,order=state.quiz.order||[],done=state.phase==='finished';
   const canAnswer=!done&&state.quiz.turn===role;
   const buttons=q.options.map((option,i)=>{
     const selectedAt=order.indexOf(i),selected=selectedAt!==-1;
     const correct=done && q.expectedOrder[selectedAt]===i;
-    return `<button class="quiz-choice visual-choice size-order-choice ${selected?(correct?'is-correct':'is-picked'):''}" data-quiz="${i}" ${!canAnswer||selected?'disabled':''}>${renderOption(option,q)}${selected?`<span class="choice-result-tag">${arabicDigits(selectedAt+1)} ${done?(correct?'✅':'❌'):'✓'}</span>`:''}</button>`;
+    return `<button class="quiz-choice number-order-choice ${selected?(correct?'is-correct':'is-picked'):''}" data-quiz="${i}" ${!canAnswer||selected?'disabled':''}><span class="number-card-value">${arabicDigits(option)}</span>${selected?`<span class="choice-result-tag">${arabicDigits(selectedAt+1)} ${done?(correct?'✅':'❌'):'✓'}</span>`:''}</button>`;
   }).join('');
-  const sequence=(indices)=>`<div class="order-preview">${indices.map(i=>renderOption(q.options[i],q)).join('<span class="order-arrow">←</span>')}</div>`;
-  const directionLabel=q.orderDirection==='desc'?'من الأكبر للأصغر':'من الأصغر للأكبر';
+  const sequence=(indices)=>`<div class="number-order-preview">${indices.map(i=>`<span class="number-chip">${arabicDigits(q.options[i])}</span>`).join('<span class="order-arrow">→</span>')}</div>`;
+  const directionLabel=q.orderDirection==='desc'?'من الأكبر إلى الأصغر':'من الأصغر إلى الأكبر';
   const result=done?`<div class="finish" role="status"><strong>${state.result==='correct'?'🎉 ترتيب صحيح!':'💜 نتعلّم سوا!'}</strong>${state.result==='incorrect'?`<div class="answer-feedback is-wrong"><strong>❌ ترتيبك:</strong>${sequence(order)}</div>`:''}<div class="answer-feedback is-correct"><strong>✅ الترتيب الصحيح ${directionLabel}:</strong>${sequence(q.expectedOrder)}</div></div>`:'';
-  screen.innerHTML=`<div class="panel">${gameHeading('📐','الأحجام والترتيب')}<h2 class="game-title center">${q.prompt}</h2><p class="status">${done?'الجولة خلصت 🎉':canAnswer?`اختاري الصورة رقم ${arabicDigits(order.length+1)} في الترتيب`: `دور ${nameOf(state.quiz.turn)} ⏳`}</p><div class="quiz-options size-order-options">${buttons}</div>${role==='host'&&done?'<div class="btn-row quiz-next-row"><button class="btn primary" data-action="restart">🔁 سؤال جديد</button></div>':''}${result}<p class="rule center">رتّبي الصور الثلاث لتكسبي ⭐ نقطتين</p></div>`;
+  screen.innerHTML=`<div class="panel">${gameHeading('🔢','ترتيب ومقارنة الأرقام')}${numberSettingsInsideGame('compare')}<h2 class="game-title center">${q.prompt}</h2><p class="status">${done?'الجولة خلصت 🎉':canAnswer?`اختاري الرقم التالي في الترتيب (${arabicDigits(order.length+1)} من ${arabicDigits(q.options.length)})`: `دور ${nameOf(state.quiz.turn)} ⏳`}</p><div class="quiz-options number-order-options">${buttons}</div>${role==='host'&&done?'<div class="btn-row quiz-next-row"><button class="btn primary" data-action="restart">🔁 سؤال جديد</button></div>':''}${result}<p class="rule center">رتّبي الأرقام صح لتحصلي على ⭐ نقطتين</p></div>`;
 }
+
 function renderQuiz() {
   const key=state.game, quiz=state.quiz;
   if (!quiz?.question) return;
   const q=quiz.question;
-  if(q.visual==='size-order')return renderSizeOrder();
+  if(q.visual==='number-order')return renderNumberOrder();
   const canAnswer=state.phase==='playing' && quiz.turn===role;
   const answered=state.phase==='finished';
   const selected=Number.isInteger(quiz.selected)?quiz.selected:null;
@@ -816,7 +876,7 @@ function renderQuiz() {
     <h2 class="game-title center">${q.prompt}</h2>
     ${renderQuestionDisplay(q)}
     <p class="status">${state.phase==='finished'?'الجولة خلصت 🎉':canAnswer?'دورك دلوقتي! ✨':`دور ${nameOf(quiz.turn)} ⏳`}</p>
-    <div class="quiz-options ${q.visual==='photos'?'photo-options':q.visual==='sizes'&&q.options.length===2?'two-size-options':''}">${buttons}</div>
+    <div class="quiz-options ${q.visual==='photos'?'photo-options':q.visual==='number-compare'?'number-compare-options':q.visual==='sizes'&&q.options.length===2?'two-size-options':''}">${buttons}</div>
     ${role==='host'&&state.phase==='finished'?'<div class="btn-row quiz-next-row"><button class="btn primary" data-action="restart">🔁 سؤال جديد</button></div>':''}
     ${result}
     <p class="rule center">إجابة صحيحة = ⭐ نقطتين • الدور بيتبدّل كل سؤال</p>
@@ -843,9 +903,94 @@ function renderTreasure() {
     <p class="rule center">كل مفتاح صح = ⭐ لصاحبه • الغلط يسلّم الدور للتاني</p>
   </div>`;
 }
+
+function celebration(title='أحسنتِ يا بطلة!'){
+  return `<div class="mini-celebration" role="status"><div class="celebration-stars">⭐ ✨ 🌟 ✨ ⭐</div><strong>${title}</strong></div>`;
+}
+function renderSnakes(){
+  const g=state.snakes;if(!g)return;
+  const order=[];
+  for(let row=5;row>=0;row--){const vals=Array.from({length:5},(_,i)=>row*5+i+1);if(row%2===1)vals.reverse();order.push(...vals);}
+  const cells=order.map(n=>{
+    const here=[];if(g.positions.host===n)here.push('👨');if(g.positions.guest===n)here.push('👧');
+    const special=LADDERS[n]?`🪜→${LADDERS[n]}`:SNAKES[n]?`🐍→${SNAKES[n]}`:'';
+    return `<div class="snake-cell ${LADDERS[n]?'ladder-cell':''} ${SNAKES[n]?'snake-start':''}"><span class="cell-number">${arabicDigits(n)}</span><span class="cell-special">${special?arabicDigits(special):''}</span><span class="cell-players">${here.join('')}</span></div>`;
+  }).join('');
+  const canRoll=state.phase==='playing'&&g.turn===role;
+  const last=g.lastRoll?`🎲 ${nameOf(g.lastRoll.player)} رمى ${arabicDigits(g.lastRoll.dice)}${g.lastRoll.jump==='ladder'?' وصعد السلم 🪜':g.lastRoll.jump==='snake'?' ونزل مع الثعبان 🐍':''}`:'ابدأوا السباق!';
+  screen.innerHTML=`<div class="panel">${gameHeading('🐍','السلم والثعبان')}<h2 class="game-title center">أول واحد يوصل إلى ${arabicDigits(30)} يفوز!</h2><div class="snakes-board">${cells}</div><p class="status">${state.phase==='finished'?'🏁 انتهى السباق!':canRoll?'دورك ترمي النرد 🎲':`دور ${nameOf(g.turn)} ⏳`}</p><div class="dice-result">${last}</div>${canRoll?'<div class="btn-row"><button class="btn primary dice-btn" data-action="roll-dice">🎲 ارمِ النرد</button></div>':''}${state.phase==='finished'?`${celebration(state.result==='host'?'بابا وصل للنهاية!':`${childName()} وصلت للنهاية!`)}${role==='host'?'<div class="btn-row"><button class="btn primary" data-action="restart">🔁 سباق جديد</button></div>':''}`:''}<p class="rule center">السلم يطلعك لفوق 🪜 • الثعبان ينزلك لتحت 🐍 • الفائز +٥ ⭐</p></div>`;
+}
+function coloringSvg(pageId,fills={}){
+  const f=i=>fills?.[i]||'#ffffff';
+  const p=(i,shape)=>shape.replace('<','<').replace('data-part',`data-color-part="${i}"`).replace('FILL',f(i));
+  const common='stroke="#2f294f" stroke-width="5" stroke-linejoin="round" stroke-linecap="round"';
+  let parts=[];
+  if(pageId==='cat') parts=[
+    `<path data-part d="M45 48 L57 19 L75 42Z" fill="FILL" ${common}/>`,`<path data-part d="M85 42 L105 19 L116 50Z" fill="FILL" ${common}/>`,'<circle data-part cx="80" cy="61" r="34" fill="FILL" '+common+'/>','<ellipse data-part cx="80" cy="116" rx="39" ry="42" fill="FILL" '+common+'/>','<ellipse data-part cx="55" cy="145" rx="16" ry="9" fill="FILL" '+common+'/>','<ellipse data-part cx="105" cy="145" rx="16" ry="9" fill="FILL" '+common+'/>','<circle data-part cx="67" cy="57" r="5" fill="FILL" '+common+'/>','<circle data-part cx="94" cy="57" r="5" fill="FILL" '+common+'/>','<path data-part d="M78 70 Q81 76 86 70 Q83 84 78 70Z" fill="FILL" '+common+'/>'
+  ];
+  else if(pageId==='car') parts=[
+    `<path data-part d="M28 92 L42 60 Q48 45 65 45 H103 Q117 47 128 69 L140 92 V119 H20V92Z" fill="FILL" ${common}/>`,`<path data-part d="M58 50 H78 V76 H42Z" fill="FILL" ${common}/>`,`<path data-part d="M83 50 H103 Q112 52 122 76 H83Z" fill="FILL" ${common}/>`,'<circle data-part cx="48" cy="119" r="17" fill="FILL" '+common+'/>','<circle data-part cx="116" cy="119" r="17" fill="FILL" '+common+'/>','<circle data-part cx="48" cy="119" r="7" fill="FILL" '+common+'/>','<circle data-part cx="116" cy="119" r="7" fill="FILL" '+common+'/>','<rect data-part x="135" y="92" width="10" height="17" rx="4" fill="FILL" '+common+'/>'
+  ];
+  else parts=[
+    '<circle data-part cx="80" cy="72" r="20" fill="FILL" '+common+'/>','<ellipse data-part cx="80" cy="33" rx="19" ry="29" fill="FILL" '+common+'/>','<ellipse data-part cx="116" cy="52" rx="19" ry="29" transform="rotate(55 116 52)" fill="FILL" '+common+'/>','<ellipse data-part cx="111" cy="91" rx="19" ry="29" transform="rotate(120 111 91)" fill="FILL" '+common+'/>','<ellipse data-part cx="49" cy="91" rx="19" ry="29" transform="rotate(60 49 91)" fill="FILL" '+common+'/>','<ellipse data-part cx="44" cy="52" rx="19" ry="29" transform="rotate(125 44 52)" fill="FILL" '+common+'/>','<path data-part d="M80 93 V150 H69 L80 93Z" fill="FILL" '+common+'/>','<path data-part d="M76 120 Q46 104 42 128 Q62 142 76 132Z" fill="FILL" '+common+'/>','<path data-part d="M83 128 Q112 109 121 133 Q103 148 84 140Z" fill="FILL" '+common+'/>','<rect data-part x="65" y="149" width="31" height="10" rx="5" fill="FILL" '+common+'/>'
+  ];
+  return `<svg class="coloring-canvas" viewBox="0 0 160 170" role="img" aria-label="رسمة للتلوين">${parts.map((s,i)=>p(i,s)).join('')}</svg>`;
+}
+function renderColoring(){
+  const g=state.coloring;if(!g)return;const page=COLORING_PAGES[g.pageIndex%COLORING_PAGES.length];
+  const palette=COLOR_PALETTE.map(c=>`<button class="palette-color ${c===coloringSelectedColor?'selected':''}" data-color-pick="${c}" style="--palette:${c}" aria-label="اختيار لون"></button>`).join('');
+  const filled=Object.keys(g.fills||{}).length;
+  screen.innerHTML=`<div class="panel">${gameHeading('🎨','كتاب التلوين')}<h2 class="game-title center">لوّني ${page.name} بالضغط على الأجزاء</h2><div class="coloring-wrap">${coloringSvg(page.id,g.fills)}</div><div class="color-palette" aria-label="لوحة الألوان">${palette}</div><p class="status">تم تلوين ${arabicDigits(filled)} من ${arabicDigits(page.parts)} أجزاء</p>${state.phase==='finished'?celebration(`أحسنتِ يا ${childName()}! اكتملت الرسمة 🎨`):''}<div class="btn-row">${role==='host'?'<button class="btn soft" data-action="reset-coloring">🧽 مسح وإعادة</button><button class="btn primary" data-action="next-coloring">➡️ الرسمة التالية</button>':''}</div><p class="rule center">اختاري لونًا ثم اضغطي داخل أي جزء أبيض • التلوين يظهر على الجهازين</p></div>`;
+}
+function puzzleImageUrl(id){return `data:image/svg+xml,${encodeURIComponent(artSvg(id))}`;}
+function puzzleTile(id,piece,rows,cols,extra=''){
+  const x=piece%cols,y=Math.floor(piece/cols),px=cols===1?0:(x/(cols-1))*100,py=rows===1?0:(y/(rows-1))*100;
+  return `<span class="puzzle-tile ${extra}" style="background-image:url('${puzzleImageUrl(id)}');background-size:${cols*100}% ${rows*100}%;background-position:${px}% ${py}%"></span>`;
+}
+function renderJigsaw(){
+  const g=state.jigsaw;if(!g)return;const total=g.rows*g.cols,placed=g.placed||{};
+  const slots=Array.from({length:total},(_,i)=>`<button class="puzzle-slot ${placed[i]?'filled':''}" data-puzzle-slot="${i}" ${placed[i]?'disabled':''} aria-label="مكان القطعة ${i+1}">${placed[i]?puzzleTile(g.pictureId,i,g.rows,g.cols):'<span>＋</span>'}</button>`).join('');
+  const tray=(g.order||[]).filter(i=>!placed[i]).map(i=>`<button class="puzzle-piece ${puzzleSelectedPiece===i?'selected':''}" data-puzzle-piece="${i}" aria-label="قطعة بازل">${puzzleTile(g.pictureId,i,g.rows,g.cols)}</button>`).join('');
+  screen.innerHTML=`<div class="panel">${gameHeading('🧩','البازل المصغّر')}<div class="jigsaw-head"><div><h2 class="game-title">ركّبي الصورة في مكانها</h2><p class="hint">اسحبي القطعة للمكان الصحيح، أو اضغطي القطعة ثم مكانها.</p></div><img class="puzzle-reference" src="${puzzleImageUrl(g.pictureId)}" alt="الصورة المرجعية"></div><div class="puzzle-board" style="--pcols:${g.cols}">${slots}</div><div class="puzzle-tray">${tray||'<span class="hint">كل القطع اتركبت ✅</span>'}</div>${state.phase==='finished'?celebration('أحسنتِ يا بطلة! اكتملت الصورة 🧩'):''}${role==='host'&&state.phase==='finished'?'<div class="btn-row"><button class="btn primary" data-action="restart">🧩 بازل جديد</button></div>':''}<p class="rule center">كل قطعة صحيحة = ⭐ • إكمال الصورة يعطي نجمتين إضافيتين</p></div>`;
+  bindPuzzleDrag();
+}
+function sortingObject(item,small=false){
+  const color=item.color==='red'?SORT_COLORS.red:SORT_COLORS.blue;
+  if(item.shape==='circle')return `<span class="sort-shape circle ${small?'small':''}" style="--sort-color:${color}"></span>`;
+  return `<span class="sort-shape square ${small?'small':''}" style="--sort-color:${color}"></span>`;
+}
+function renderSorting(){
+  const g=state.sorting;if(!g)return;const item=g.items?.[g.index],can=state.phase==='playing'&&g.turn===role;
+  const bins=g.mode==='color'?[['red','🔴 السلة الحمراء'],['blue','🔵 السلة الزرقاء']]:[['circle','⚪ صندوق الدائرة'],['square','⬜ صندوق المربع']];
+  const binHtml=bins.map(([key,label])=>`<button class="sort-bin" data-sort-bin="${key}" ${!can?'disabled':''}><span>${label}</span></button>`).join('');
+  screen.innerHTML=`<div class="panel">${gameHeading('🧺','فرز الألوان والأشكال')}<h2 class="game-title center">${g.mode==='color'?'اسحبي الشكل إلى سلة لونه':'اسحبي الشكل إلى صندوق شكله'}</h2><p class="status">${state.phase==='finished'?'خلص الفرز 🎉':can?'دورك الآن ✨':`دور ${nameOf(g.turn)} ⏳`}</p>${item&&state.phase==='playing'?`<button class="sorting-item" data-sort-item="1" ${!can?'disabled':''}>${sortingObject(item)}<small>اسحبي العنصر</small></button>`:''}<div class="sort-bins">${binHtml}</div><div class="sort-progress">${Array.from({length:g.goal||8},(_,i)=>`<span>${i<g.index?'⭐':'☆'}</span>`).join('')}</div>${state.phase==='finished'?`${celebration('ممتاز! خلصتوا الفرز كله 🌟')}${role==='host'?'<div class="btn-row"><button class="btn primary" data-action="restart">🔁 جولة فرز جديدة</button></div>':''}`:''}<p class="rule center">الصح = ⭐ • الخطأ يرجّع العنصر مكانه ويدّي الدور للتاني</p></div>`;
+  bindSortingDrag();
+}
+function renderPhonics(){
+  const g=state.phonics;if(!g)return;const matched=g.matched||[],can=state.phase==='playing'&&g.turn===role;
+  const letters=(g.indices||[]).map(idx=>{const [letter,name]=PHONICS_BANK[idx];return `<button class="phonics-card phonics-letter ${matched.includes(idx)?'matched':''} ${g.selected===idx?'selected':''}" data-phonics-letter="${idx}" ${!can||matched.includes(idx)?'disabled':''}><strong>${letter}</strong><small>${name}</small></button>`;}).join('');
+  const images=(g.imageOrder||g.indices||[]).map(idx=>{const [letter,,word,emoji]=PHONICS_BANK[idx];return `<button class="phonics-card phonics-image ${matched.includes(idx)?'matched':''}" data-phonics-image="${idx}" ${!can||matched.includes(idx)?'disabled':''}><span>${emoji}</span><small>${word}</small></button>`;}).join('');
+  const links=matched.map(idx=>{const [letter,,word,emoji]=PHONICS_BANK[idx];return `<span class="phonics-link">${letter} ⟵ ${emoji} ${word}</span>`;}).join('');
+  screen.innerHTML=`<div class="panel">${gameHeading('🔤','الحروف والصور')}<h2 class="game-title center">اختاري حرفًا ثم الصورة التي تبدأ به</h2><p class="status">${state.phase==='finished'?'اكتملت اللوحة 🎉':can?'دورك في المطابقة ✨':`دور ${nameOf(g.turn)} ⏳`}</p><div class="phonics-columns"><div class="phonics-col"><h3>الحروف</h3>${letters}</div><div class="phonics-col"><h3>الصور</h3>${images}</div></div><div class="phonics-links">${links}</div><div class="btn-row"><button class="btn soft" data-action="alphabet-music">${alphabetMusicEnabled?'🔇 أوقف الموسيقى':'🎵 موسيقى هادئة'}</button></div>${state.phase==='finished'?`${celebration(`أحسنتِ يا ${childName()}!`)}${role==='host'?'<div class="btn-row"><button class="btn primary" data-action="restart">🔤 حروف جديدة</button></div>':''}`:''}<p class="rule center">عند اختيار الحرف نحاول نطقه بالعربية • كل مطابقة صحيحة = ⭐</p></div>`;
+}
+function bindPointerDrop(sourceSelector,targetSelector,onDrop){
+  document.querySelectorAll(sourceSelector).forEach(source=>{
+    source.addEventListener('pointerdown',e=>{
+      if(source.disabled)return;e.preventDefault();source.setPointerCapture?.(e.pointerId);
+      const rect=source.getBoundingClientRect(),ghost=source.cloneNode(true);ghost.classList.add('drag-ghost');ghost.style.width=`${rect.width}px`;ghost.style.height=`${rect.height}px`;document.body.append(ghost);
+      const move=ev=>{ghost.style.left=`${ev.clientX-rect.width/2}px`;ghost.style.top=`${ev.clientY-rect.height/2}px`;};move(e);
+      const up=ev=>{move(ev);ghost.remove();const target=document.elementFromPoint(ev.clientX,ev.clientY)?.closest(targetSelector);source.removeEventListener('pointermove',move);source.removeEventListener('pointerup',up);source.removeEventListener('pointercancel',up);if(target)onDrop(source,target);};
+      source.addEventListener('pointermove',move);source.addEventListener('pointerup',up);source.addEventListener('pointercancel',up);
+    });
+  });
+}
+function bindPuzzleDrag(){bindPointerDrop('.puzzle-piece','.puzzle-slot',(source,target)=>placePuzzle(Number(source.dataset.puzzlePiece),Number(target.dataset.puzzleSlot),source));}
+function bindSortingDrag(){bindPointerDrop('.sorting-item','.sort-bin',(source,target)=>chooseSorting(target.dataset.sortBin,source));}
+
 function render() {
   connection.textContent = !uid ? '⏳ جاري الاتصال' : connected ? '🟢 الإنترنت متصل' : '🟠 الاتصال مقطوع';
   document.body.classList.toggle('playing-game',Boolean(roomCode&&state&&state.game!=='lobby'));
+  if(state?.game!=='phonics'&&alphabetMusicTimer)stopAlphabetMusic();
   if (!roomCode) { renderHome(); return; }
   if (!meta || !state) { screen.innerHTML = '<div class="panel center"><div class="big-emoji">🎠</div><h2>جاري دخول الملاهي…</h2></div>'; return; }
   if (state.game === 'lobby') return renderLobby();
@@ -854,6 +999,11 @@ function render() {
   if (state.game === 'draw') return renderDraw();
   if (QUIZ_GAMES.includes(state.game)) return renderQuiz();
   if (state.game === 'treasure') return renderTreasure();
+  if (state.game === 'snakes') return renderSnakes();
+  if (state.game === 'coloring') return renderColoring();
+  if (state.game === 'jigsaw') return renderJigsaw();
+  if (state.game === 'sorting') return renderSorting();
+  if (state.game === 'phonics') return renderPhonics();
   screen.innerHTML = '<div class="panel"><p>اللعبة غير معروفة. اطلب من بابا يرجع للمدينة.</p></div>';
 }
 // Counts only game starts and completed rounds, not child names, answers, drawings or device IDs.
@@ -915,6 +1065,28 @@ function newGame(which, old, previousDraw) {
     const size=sizes.includes(requested)?requested:(eligible.length?eligible:sizes)[Math.floor(Math.random()*(eligible.length||sizes.length))];
     const picks=shuffle(MEMORY_EMOJI).slice(0,size/2);
     return { ...common,game:which,phase:'playing',scores,round,memory:{cards:shuffle([...picks,...picks]),matched:[],revealed:[],roundScores:{host:0,guest:0},waiting:false,turn:round%2===0?'guest':'host'} };
+  }
+  if (which === 'snakes') return {...common,game:which,phase:'playing',scores,round,snakes:{positions:{host:1,guest:1},turn:round%2===0?'guest':'host',lastRoll:null}};
+  if (which === 'coloring') {
+    const previous=old?.game==='coloring'?old.coloring?.pageIndex:-1,pageIndex=(Number(previous)+1)%COLORING_PAGES.length;
+    return {...common,game:which,phase:'playing',scores,round,coloring:{pageIndex,fills:{}}};
+  }
+  if (which === 'jigsaw') {
+    const rows=2,cols=childAge<=6?2:3,total=rows*cols;
+    const oldPic=old?.game==='jigsaw'?old.jigsaw?.pictureId:null;
+    const choices=PUZZLE_PICTURES.filter(x=>x!==oldPic),pictureId=choices[Math.floor(Math.random()*choices.length)]||PUZZLE_PICTURES[0];
+    return {...common,game:which,phase:'playing',scores,round,jigsaw:{pictureId,rows,cols,order:shuffle(Array.from({length:total},(_,i)=>i)),placed:{}}};
+  }
+  if (which === 'sorting') {
+    const mode=round%2===0?'shape':'color',goal=8,items=[];
+    for(let i=0;i<goal;i++)items.push({shape:Math.random()<.5?'circle':'square',color:Math.random()<.5?'red':'blue'});
+    return {...common,game:which,phase:'playing',scores,round,sorting:{mode,goal,items,index:0,turn:round%2===0?'guest':'host',roundScores:{host:0,guest:0}}};
+  }
+  if (which === 'phonics') {
+    const oldSet=old?.game==='phonics'?old.phonics?.indices||[]:[];
+    let pool=shuffle(Array.from({length:PHONICS_BANK.length},(_,i)=>i));
+    let indices=pool.filter(i=>!oldSet.includes(i)).slice(0,3);if(indices.length<3)indices=pool.slice(0,3);
+    return {...common,game:which,phase:'playing',scores,round,phonics:{indices,imageOrder:shuffle(indices),matched:[],selected:null,turn:round%2===0?'guest':'host',roundScores:{host:0,guest:0}}};
   }
   if (which === 'ttt') return {...common,game:which,phase:'playing',scores,round,ttt:{board:'.........',turn:round%2===0?'guest':'host'}};
   if (QUIZ_GAMES.includes(which)) return {...common,game:which,phase:'playing',scores,round,quiz:{turn:round%2===0?'guest':'host',question:newQuestion(which,old?.game===which?old?.quiz?.question?.index:-1,childAge,currentNumberTraining())}};
@@ -1005,7 +1177,7 @@ async function chooseQuiz(index) {
     if(!QUIZ_GAMES.includes(old.game)||old.phase!=='playing'||old.quiz?.turn!==role)return;
     const q=old.quiz.question;
     if(!Number.isInteger(index)||index<0||index>=q.options.length)return;
-    if(q.visual==='size-order'){
+    if(q.visual==='number-order'){
       const order=old.quiz.order||[];
       if(order.includes(index))return;
       const nextOrder=[...order,index];
@@ -1021,6 +1193,58 @@ async function chooseQuiz(index) {
     return {...old,scores,feedback:addFeedback(old,correct?'good':'bad'),phase:'finished',result:correct?'correct':'incorrect',quiz:{...old.quiz,selected:index}};
   });
 }
+
+async function rollDice(){
+  await mutateState(old=>{
+    if(old.game!=='snakes'||old.phase!=='playing'||old.snakes?.turn!==role)return;
+    const g=old.snakes,dice=1+Math.floor(Math.random()*6),positions={...g.positions};let landing=Math.min(30,(positions[role]||1)+dice),jump='';
+    if(LADDERS[landing]){landing=LADDERS[landing];jump='ladder';}else if(SNAKES[landing]){landing=SNAKES[landing];jump='snake';}
+    positions[role]=landing;const finished=landing>=30,scores={...old.scores};if(finished)scores[role]+=5;
+    return {...old,scores,feedback:addFeedback(old,finished?'win':'tap'),phase:finished?'finished':'playing',...(finished?{result:role}:{}),snakes:{...g,positions,turn:finished?g.turn:other(role),lastRoll:{player:role,dice,jump,landing}}};
+  });
+}
+async function colorPart(index){
+  if(!Number.isInteger(index)||!COLOR_PALETTE.includes(coloringSelectedColor))return;
+  await mutateState(old=>{
+    if(old.game!=='coloring'||old.phase!=='playing'||!old.coloring)return;
+    const page=COLORING_PAGES[old.coloring.pageIndex%COLORING_PAGES.length];if(index<0||index>=page.parts)return;
+    const fills={...(old.coloring.fills||{}),[index]:coloringSelectedColor},finished=Object.keys(fills).length>=page.parts,scores={...old.scores};if(finished)scores[role]+=3;
+    return {...old,scores,feedback:addFeedback(old,finished?'win':'tap'),phase:finished?'finished':'playing',...(finished?{result:'complete'}:{}),coloring:{...old.coloring,fills}};
+  });
+}
+async function placePuzzle(piece,slot,source){
+  if(!Number.isInteger(piece)||!Number.isInteger(slot))return;
+  if(piece!==slot){sound('bad');source?.classList.add('shake');setTimeout(()=>source?.classList.remove('shake'),420);return;}
+  puzzleSelectedPiece=null;
+  await mutateState(old=>{
+    if(old.game!=='jigsaw'||old.phase!=='playing'||!old.jigsaw)return;const g=old.jigsaw,total=g.rows*g.cols;if(piece<0||piece>=total||g.placed?.[piece])return;
+    const placed={...(g.placed||{}),[piece]:true},finished=Object.keys(placed).length>=total,scores={...old.scores,[role]:(old.scores?.[role]||0)+1+(finished?2:0)};
+    return {...old,scores,feedback:addFeedback(old,finished?'win':'good'),phase:finished?'finished':'playing',...(finished?{result:'complete'}:{}),jigsaw:{...g,placed}};
+  });
+}
+async function chooseSorting(bin,source){
+  await mutateState(old=>{
+    if(old.game!=='sorting'||old.phase!=='playing'||old.sorting?.turn!==role)return;const g=old.sorting,item=g.items?.[g.index];if(!item)return;
+    const target=g.mode==='color'?item.color:item.shape,correct=bin===target,scores={...old.scores},roundScores={...g.roundScores};let index=g.index;
+    if(correct){scores[role]+=1;roundScores[role]=(roundScores[role]||0)+1;index++;}
+    const finished=correct&&index>=g.goal,result=finished?(roundScores.host===roundScores.guest?'draw':roundScores.host>roundScores.guest?'host':'guest'):undefined;
+    return {...old,scores,feedback:addFeedback(old,finished?'win':correct?'good':'bad'),phase:finished?'finished':'playing',...(finished?{result}:{}),sorting:{...g,index,turn:other(role),roundScores}};
+  });
+}
+async function choosePhonicsLetter(index){
+  if(!Number.isInteger(index)||!state?.phonics?.indices?.includes(index))return;
+  const entry=PHONICS_BANK[index];if(entry)speakArabicPhrase(`حَرْفُ ${entry[1]}`);
+  await mutateState(old=>old.game==='phonics'&&old.phase==='playing'&&old.phonics?.turn===role&&!old.phonics.matched?.includes(index)?{...old,phonics:{...old.phonics,selected:index}}:undefined);
+}
+async function choosePhonicsImage(index){
+  await mutateState(old=>{
+    if(old.game!=='phonics'||old.phase!=='playing'||old.phonics?.turn!==role)return;const g=old.phonics,selected=g.selected;if(!Number.isInteger(selected)||!g.indices?.includes(index)||g.matched?.includes(index))return;
+    const correct=selected===index,scores={...old.scores},roundScores={...g.roundScores},matched=[...(g.matched||[])];if(correct){matched.push(index);scores[role]+=1;roundScores[role]=(roundScores[role]||0)+1;}
+    const finished=correct&&matched.length>=g.indices.length,result=finished?(roundScores.host===roundScores.guest?'draw':roundScores.host>roundScores.guest?'host':'guest'):undefined;
+    return {...old,scores,feedback:addFeedback(old,finished?'win':correct?'good':'bad'),phase:finished?'finished':'playing',...(finished?{result}:{}),phonics:{...g,matched,selected:null,turn:other(role),roundScores}};
+  });
+}
+
 async function chooseTreasure(index) {
   await mutateState(old=>{
     if(old.game!=='treasure'||old.phase!=='playing'||old.treasure?.turn!==role)return;
@@ -1195,6 +1419,10 @@ screen.addEventListener('change',async e=>{
   }
 });
 screen.addEventListener('click',async e=>{
+  const part=e.target.closest?.('[data-color-part]');
+  if(part&&state?.game==='coloring'&&state.phase==='playing'){e.preventDefault();return colorPart(Number(part.dataset.colorPart));}
+});
+screen.addEventListener('click',async e=>{
   const button=e.target.closest('button');
   if (!button || button.disabled) return;
   const action=button.dataset.action;
@@ -1206,6 +1434,17 @@ screen.addEventListener('click',async e=>{
   if (action==='join') return joinRoom();
   if (action==='copy') return copyLink();
   if (action==='lobby') return goLobby();
+  if (action==='roll-dice') return rollDice();
+  if (action==='reset-coloring'&&role==='host'&&state?.game==='coloring') return mutateState(old=>old.game==='coloring'?{...old,phase:'playing',coloring:{...old.coloring,fills:{}}}:undefined);
+  if (action==='next-coloring'&&role==='host'&&state?.game==='coloring') return mutateState(old=>old.game==='coloring'?newGame('coloring',old):undefined);
+  if (action==='alphabet-music') {toggleAlphabetMusic();render();return;}
+  if (button.dataset.colorPick) {coloringSelectedColor=button.dataset.colorPick;document.querySelectorAll('.palette-color').forEach(x=>x.classList.toggle('selected',x.dataset.colorPick===coloringSelectedColor));return;}
+  if (button.dataset.puzzlePiece!==undefined) {puzzleSelectedPiece=Number(button.dataset.puzzlePiece);document.querySelectorAll('.puzzle-piece').forEach(x=>x.classList.toggle('selected',Number(x.dataset.puzzlePiece)===puzzleSelectedPiece));return;}
+  if (button.dataset.puzzleSlot!==undefined&&puzzleSelectedPiece!==null) return placePuzzle(puzzleSelectedPiece,Number(button.dataset.puzzleSlot),document.querySelector(`[data-puzzle-piece="${puzzleSelectedPiece}"]`));
+  if (button.dataset.sortItem!==undefined) {sortingDragSelected=!sortingDragSelected;button.classList.toggle('selected',sortingDragSelected);return;}
+  if (button.dataset.sortBin&&state?.game==='sorting') {sortingDragSelected=false;return chooseSorting(button.dataset.sortBin,document.querySelector('.sorting-item'));}
+  if (button.dataset.phonicsLetter!==undefined) return choosePhonicsLetter(Number(button.dataset.phonicsLetter));
+  if (button.dataset.phonicsImage!==undefined) return choosePhonicsImage(Number(button.dataset.phonicsImage));
   if (action==='apply-memory-settings') {
     if(role!=='host'||state?.game!=='memory')return;
     const value=document.querySelector('#memory-size-game')?.value||'random';
@@ -1215,9 +1454,10 @@ screen.addEventListener('click',async e=>{
     return mutateState(old=>old.game==='memory'?newGame('memory',old):undefined);
   }
   if (action==='apply-number-settings') {
-    if(role!=='host'||!['count','math','numberline'].includes(state?.game))return;
+    if(role!=='host'||!['count','math','numberline','compare'].includes(state?.game))return;
     const rawMin=parseTrainingNumber(document.querySelector('#number-min-game')?.value),rawMax=parseTrainingNumber(document.querySelector('#number-max-game')?.value);
     if(!Number.isInteger(rawMin)||!Number.isInteger(rawMax)||rawMin<1||rawMax<1||rawMin>20||rawMax>20){info('اكتب مدى أرقام من ١ إلى ٢٠.');return;}
+    if(state.game==='compare'&&Math.abs(rawMax-rawMin)<2){info('في ترتيب ومقارنة الأرقام اختار مدى فيه ٣ أرقام على الأقل، مثل ١ إلى ٣.');return;}
     const cfg=normalizeNumberTraining({min:rawMin,max:rawMax,mode:document.querySelector('#math-mode-game')?.value||mathModePreference});
     numberMinPreference=cfg.min;numberMaxPreference=cfg.max;if(state.game==='math')mathModePreference=cfg.mode;saveNumberTraining();info('');
     const which=state.game;
