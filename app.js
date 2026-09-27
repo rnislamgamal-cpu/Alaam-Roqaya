@@ -8,7 +8,7 @@ const screen = $('#screen');
 const message = $('#message');
 const connection = $('#connection');
 const LETTERS = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789';
-const APP_VERSION = '13.0';
+const APP_VERSION = '15.0';
 const DRAW_ITEMS = [
   { name:'قطة', emoji:'🐱', choices:['🐱','🐶','🐰'] },
   { name:'شمس', emoji:'☀️', choices:['☀️','🌙','⭐'] },
@@ -97,16 +97,33 @@ const GAME_LABELS = {
   phonics:['🔤','الحروف والصور','وصّلي الحرف بالصورة التي تبدأ به']
 };
 
-const SNAKES = {14:5,22:12,29:19};
-const LADDERS = {3:11,8:17,15:24,20:28};
+const BOARD_FINAL_CELL = 100;
+const SNAKES = {98:61,95:67,51:11,38:17,86:54};
+const LADDERS = {5:25,21:42,35:57,54:76,71:92,80:99};
 const COLOR_PALETTE = ['#ef5350','#42a5f5','#fdd835','#66bb6a','#ec6fa9','#ff9800','#8e6bd8','#26c6da'];
 const COLORING_PAGES = [
-  {id:'flower',name:'زهرة',parts:10},
-  {id:'cat',name:'قطة',parts:9},
-  {id:'car',name:'سيارة',parts:8}
+  {id:'kitten',name:'القطة المرِحة',parts:15},
+  {id:'car',name:'السيارة السعيدة',parts:14},
+  {id:'butterfly',name:'فراشة الحديقة',parts:14},
+  {id:'flower',name:'زهرة جميلة',parts:12},
+  {id:'house',name:'البيت اللطيف',parts:13},
+  {id:'fish',name:'السمكة المرحة',parts:12}
 ];
-const PUZZLE_PICTURES=['apple','fish','house','car','flower','butterfly'];
+const PUZZLE_PICTURES=[
+  {id:'farm',name:'عائلة البقر'},
+  {id:'pond',name:'السمكة المرحة'},
+  {id:'garden',name:'حديقة الفراشة'},
+  {id:'car-trip',name:'نزهة السيارة'},
+  {id:'castle',name:'قصر الأحلام'},
+  {id:'dino',name:'الديناصور اللطيف'}
+];
 const SORT_COLORS={red:'#ef5350',blue:'#42a5f5'};
+const SORTING_POOL=[
+  {icon:'🍎',label:'تفاحة'},{icon:'🚗',label:'سيارة'},{icon:'🐠',label:'سمكة'},{icon:'🦋',label:'فراشة'},
+  {icon:'⚽',label:'كرة'},{icon:'🍓',label:'فراولة'},{icon:'🚢',label:'قارب'},{icon:'☕',label:'كوب'},
+  {icon:'🎈',label:'بالونة'},{icon:'🌸',label:'زهرة'},{icon:'🧸',label:'دبدوب'},{icon:'🍋',label:'ليمونة'},
+  {icon:'🍇',label:'عنب'},{icon:'🚂',label:'قطار'},{icon:'🪁',label:'طائرة ورقية'},{icon:'🦆',label:'بطة'}
+];
 const PHONICS_BANK = [
   ['أ','ألف','أسد','🦁'],['ب','باء','بطة','🦆'],['ت','تاء','تفاحة','🍎'],['ث','ثاء','ثعلب','🦊'],
   ['ج','جيم','جمل','🐪'],['ح','حاء','حصان','🐴'],['خ','خاء','خروف','🐑'],['د','دال','دب','🐻'],
@@ -689,13 +706,13 @@ function scorePanel() {
   const statusB = presence[meta?.guestUid] ? '🟢 متصلة' : '⚪ غير متصلة';
   return `<div class="scoreboard">
     <div class="score"><span>👨 بابا • ${statusA}</span><strong>${a} ⭐</strong></div>
-    <div class="score rose"><span>👧 رقية • ${statusB}</span><strong>${b} ⭐</strong></div>
+    <div class="score rose"><span>👧 ${childName()} • ${statusB}</span><strong>${b} ⭐</strong></div>
   </div>`;
 }
 function renderHome() {
   const invitation = /^#room=([A-Z2-9]{8})$/.exec(location.hash)?.[1] || '';
   screen.innerHTML = `<div class="panel center">
-    <div class="hero"><div class="big-emoji">🎡 🎠 🎈</div><h2>أهلًا بيكم في عالم رقية!</h2><p>ألعاب بتكبر مع عمر طفلك من سنتين لحد 10 سنوات 💜</p></div>
+    <div class="hero"><div class="big-emoji">🎡 🎠 🎈</div><h2>أهلًا بيكم في عالم ${childNamePreference || 'رقية'}!</h2><p>ألعاب بتكبر مع عمر طفلك من سنتين لحد 10 سنوات 💜</p></div>
     <div class="age-settings"><label for="child-name-home">✏️ ولي الأمر: اكتب اسم الطفل</label>
       <input id="child-name-home" class="input" type="text" maxlength="24" autocomplete="off" spellcheck="false" value="${childNamePreference}" placeholder="مثلاً: سلمى" aria-label="اسم الطفل" />
       <p class="hint">الأفضل تكتب الاسم الأول أو اسم مستعار، من غير الاسم الكامل.</p>
@@ -708,7 +725,7 @@ function renderHome() {
     <p class="rule">أو ادخلي غرفة بابا بالكود:</p>
     <label for="room-input" class="tiny">رمز الغرفة • 8 حروف أو أرقام</label>
     <input class="input code-input" id="room-input" maxlength="8" spellcheck="false" autocomplete="off" autocapitalize="characters" value="${invitation}" placeholder="ABCD2345" aria-label="رمز الغرفة" />
-    <div class="btn-row"><button class="btn pink full" data-action="join">🎀 رقية: ادخلي الغرفة</button></div>
+    <div class="btn-row"><button class="btn pink full" data-action="join">🎀 ${childNamePreference || 'رقية'}: ادخلي الغرفة</button></div>
     <p class="hint">رمز الغرفة خاص. ابعته لبنتك فقط؛ ما تنشروش علنًا.</p>
   </div>`;
 }
@@ -717,11 +734,11 @@ function renderLobby() {
   const childAge=normalizeAge(state?.childAge);
   const available=gamesForAge(childAge);
   screen.innerHTML = `<div class="panel center">
-    <div class="big-emoji">🎪</div><h2>${waiting ? 'في انتظار دخول رقية 💌' : 'يلا نلعب سوا! 🎉'}</h2>
+    <div class="big-emoji">🎪</div><h2>${waiting ? `في انتظار دخول ${childName()} 💌` : 'يلا نلعب سوا! 🎉'}</h2>
     <p>رمز الغرفة</p><div class="room-code" aria-label="رمز الغرفة">${roomCode}</div>
     <div class="btn-row"><button class="btn soft" data-action="copy">🔗 نسخ رابط الدعوة</button></div>
     ${scorePanel()}
-    ${waiting ? '<p class="hint">ابعث الرابط لرقية، وتفتح اللعبة من موبايلها وتضغط دخول الغرفة.</p>' : '<p class="hint">بابا يختار اللعبة؛ ورقية هتشوف نفس اللعبة فورًا.</p>'}
+    ${waiting ? `<p class="hint">ابعث الرابط لـ${childName()}، وتفتح اللعبة من موبايلها وتضغط دخول الغرفة.</p>` : `<p class="hint">بابا يختار اللعبة؛ و${childName()} هتشوف نفس اللعبة فورًا.</p>`}
     <div class="age-settings"><label for="child-name-lobby">✏️ اسم الطفل في الغرفة</label>
       ${role==='host'?`<input id="child-name-lobby" class="input" type="text" maxlength="24" autocomplete="off" spellcheck="false" value="${childName()}" aria-label="اسم الطفل في الغرفة" />`:`<div class="age-view">${childName()}</div>`}
       <p class="hint">ولي الأمر يقدر يغيّر الاسم هنا، وهيوصل للجهازين فورًا.</p>
@@ -769,7 +786,7 @@ function numberSettingsInsideGame(gameKey) {
 function finishBox() {
   if (state.phase !== 'finished') return '';
   const result = state.result;
-  const title = result === 'draw' ? 'تعادل جميل! 🤝' : result === 'host' ? 'بابا كسب الجولة! 🎉' : result === 'guest' ? 'الفوز لـرقية! 🎉' : 'خلصت الجولة! 🎉';
+  const title = result === 'draw' ? 'تعادل جميل! 🤝' : result === 'host' ? 'بابا كسب الجولة! 🎉' : result === 'guest' ? `الفوز لـ${childName()}! 🎉` : 'خلصت الجولة! 🎉';
   return `<div class="finish"><div class="big-emoji">🏆</div><strong>${title}</strong><p class="hint">النقاط متجمعة بين الألعاب.</p></div>`;
 }
 function renderMemory() {
@@ -809,7 +826,7 @@ function renderTtt() {
     <div class="ttt-grid">${cells}</div>
     ${finishBox()}
     ${role === 'host' && state.phase === 'finished' ? '<div class="btn-row"><button class="btn primary" data-action="restart">🔁 جولة جديدة</button></div>' : ''}
-    <p class="rule center">بابا ❌ • رقية ⭕ • الفوز 3 ⭐ والتعادل ⭐ لكل واحد</p>
+    <p class="rule center">بابا ❌ • ${childName()} ⭕ • الفوز 3 ⭐ والتعادل ⭐ لكل واحد</p>
   </div>`;
 }
 function renderDraw() {
@@ -897,7 +914,7 @@ function renderTreasure() {
   screen.innerHTML=`<div class="panel">${gameHeading('🗝️','رحلة الكنز')}
     <h2 class="game-title center">افتحوا صندوق الكنز سوا! 🧰</h2>
     <div class="treasure-progress">${Array.from({length:treasure.goal||4},(_,i)=>`<span>${i<treasure.stage?'🔑':'🔒'}</span>`).join('')}</div>
-    ${state.phase==='finished'?`<div class="finish"><div class="big-emoji">🎁</div><strong>فتحتوا صندوق الكنز! 🎉</strong><p>بابا: ${treasure.roundScores.host} ⭐ • رقية: ${treasure.roundScores.guest} ⭐</p></div>`:
+    ${state.phase==='finished'?`<div class="finish"><div class="big-emoji">🎁</div><strong>فتحتوا صندوق الكنز! 🎉</strong><p>بابا: ${treasure.roundScores.host} ⭐ • ${childName()}: ${treasure.roundScores.guest} ⭐</p></div>`:
     `<h3 class="game-title center">${q.prompt}</h3><p class="status">${canAnswer?'دورك تختار المفتاح ✨':`دور ${nameOf(treasure.turn)} ⏳`}</p><div class="quiz-options">${buttons}</div>${wrongAnswer}`}
     ${role==='host'&&state.phase==='finished'?'<div class="btn-row"><button class="btn primary" data-action="restart">🎁 كنز جديد</button></div>':''}
     <p class="rule center">كل مفتاح صح = ⭐ لصاحبه • الغلط يسلّم الدور للتاني</p>
@@ -907,42 +924,151 @@ function renderTreasure() {
 function celebration(title='أحسنتِ يا بطلة!'){
   return `<div class="mini-celebration" role="status"><div class="celebration-stars">⭐ ✨ 🌟 ✨ ⭐</div><strong>${title}</strong></div>`;
 }
+function snakeTokenPosition(cell){
+  const value=Math.max(1,Math.min(BOARD_FINAL_CELL,Number(cell)||1));
+  const zero=value-1;
+  const row=Math.floor(zero/10);
+  const colInRow=zero%10;
+  const col=row%2===0?colInRow:9-colInRow;
+  return {x:((col+0.5)/10)*100,y:((9-row+0.5)/10)*100};
+}
 function renderSnakes(){
   const g=state.snakes;if(!g)return;
-  const order=[];
-  for(let row=5;row>=0;row--){const vals=Array.from({length:5},(_,i)=>row*5+i+1);if(row%2===1)vals.reverse();order.push(...vals);}
-  const cells=order.map(n=>{
-    const here=[];if(g.positions.host===n)here.push('👨');if(g.positions.guest===n)here.push('👧');
-    const special=LADDERS[n]?`🪜→${LADDERS[n]}`:SNAKES[n]?`🐍→${SNAKES[n]}`:'';
-    return `<div class="snake-cell ${LADDERS[n]?'ladder-cell':''} ${SNAKES[n]?'snake-start':''}"><span class="cell-number">${arabicDigits(n)}</span><span class="cell-special">${special?arabicDigits(special):''}</span><span class="cell-players">${here.join('')}</span></div>`;
-  }).join('');
+  const host=snakeTokenPosition(g.positions.host),guest=snakeTokenPosition(g.positions.guest);
   const canRoll=state.phase==='playing'&&g.turn===role;
-  const last=g.lastRoll?`🎲 ${nameOf(g.lastRoll.player)} رمى ${arabicDigits(g.lastRoll.dice)}${g.lastRoll.jump==='ladder'?' وصعد السلم 🪜':g.lastRoll.jump==='snake'?' ونزل مع الثعبان 🐍':''}`:'ابدأوا السباق!';
-  screen.innerHTML=`<div class="panel">${gameHeading('🐍','السلم والثعبان')}<h2 class="game-title center">أول واحد يوصل إلى ${arabicDigits(30)} يفوز!</h2><div class="snakes-board">${cells}</div><p class="status">${state.phase==='finished'?'🏁 انتهى السباق!':canRoll?'دورك ترمي النرد 🎲':`دور ${nameOf(g.turn)} ⏳`}</p><div class="dice-result">${last}</div>${canRoll?'<div class="btn-row"><button class="btn primary dice-btn" data-action="roll-dice">🎲 ارمِ النرد</button></div>':''}${state.phase==='finished'?`${celebration(state.result==='host'?'بابا وصل للنهاية!':`${childName()} وصلت للنهاية!`)}${role==='host'?'<div class="btn-row"><button class="btn primary" data-action="restart">🔁 سباق جديد</button></div>':''}`:''}<p class="rule center">السلم يطلعك لفوق 🪜 • الثعبان ينزلك لتحت 🐍 • الفائز +٥ ⭐</p></div>`;
+  const last=g.lastRoll?`🎲 ${nameOf(g.lastRoll.player)} رمى ${arabicDigits(g.lastRoll.dice)} وانتقل إلى ${arabicDigits(g.lastRoll.landing)}${g.lastRoll.jump==='ladder'?' وصعد سلّمًا 🪜':g.lastRoll.jump==='snake'?' ونزل مع الثعبان 🐍':''}`:'ابدأوا السباق وارموا النرد!';
+  screen.innerHTML=`<div class="panel">${gameHeading('🐍','السلم والثعبان')}
+    <h2 class="game-title center">نسخة كبيرة واحترافية حتى ${arabicDigits(BOARD_FINAL_CELL)} 🏁</h2>
+    <div class="snakes-summary"><span>👨 بابا: ${arabicDigits(g.positions.host)}</span><span>👧 ${childName()}: ${arabicDigits(g.positions.guest)}</span></div>
+    <div class="snakes-visual-board">
+      <img src="snakes_board.png" alt="لوحة السلم والثعبان">
+      <div class="snake-token host" style="left:${host.x}%;top:${host.y}%">👨</div>
+      <div class="snake-token guest" style="left:${guest.x}%;top:${guest.y}%">👧</div>
+    </div>
+    <p class="status">${state.phase==='finished'?'🏁 انتهى السباق!':canRoll?'دورك ترمي النرد 🎲':`دور ${nameOf(g.turn)} ⏳`}</p>
+    <div class="dice-result">${last}</div>
+    ${canRoll?'<div class="btn-row"><button class="btn primary dice-btn" data-action="roll-dice">🎲 ارمِ النرد</button></div>':''}
+    ${state.phase==='finished'?`${celebration(state.result==='host'?'بابا وصل للكأس! 🏆':`${childName()} وصلت للكأس! 🏆`)}${role==='host'?'<div class="btn-row"><button class="btn primary" data-action="restart">🔁 سباق جديد</button></div>':''}`:''}
+    <p class="rule center">لوحة ١٠٠ خانة مثل الصورة المرجعية • السلم يطلعك لفوق 🪜 • الثعبان ينزلك لتحت 🐍 • الفائز +٥ ⭐</p>
+  </div>`;
 }
 function coloringSvg(pageId,fills={}){
-  const f=i=>fills?.[i]||'#ffffff';
-  const p=(i,shape)=>shape.replace('<','<').replace('data-part',`data-color-part="${i}"`).replace('FILL',f(i));
-  const common='stroke="#2f294f" stroke-width="5" stroke-linejoin="round" stroke-linecap="round"';
+  const fill=i=>fills?.[i]||'#ffffff';
+  const part=(i,markup)=>markup.replace('data-part',`data-color-part="${i}"`).replace(/FILL/g,fill(i));
+  const common='stroke="#24174d" stroke-width="4.8" stroke-linejoin="round" stroke-linecap="round"';
   let parts=[];
-  if(pageId==='cat') parts=[
-    `<path data-part d="M45 48 L57 19 L75 42Z" fill="FILL" ${common}/>`,`<path data-part d="M85 42 L105 19 L116 50Z" fill="FILL" ${common}/>`,'<circle data-part cx="80" cy="61" r="34" fill="FILL" '+common+'/>','<ellipse data-part cx="80" cy="116" rx="39" ry="42" fill="FILL" '+common+'/>','<ellipse data-part cx="55" cy="145" rx="16" ry="9" fill="FILL" '+common+'/>','<ellipse data-part cx="105" cy="145" rx="16" ry="9" fill="FILL" '+common+'/>','<circle data-part cx="67" cy="57" r="5" fill="FILL" '+common+'/>','<circle data-part cx="94" cy="57" r="5" fill="FILL" '+common+'/>','<path data-part d="M78 70 Q81 76 86 70 Q83 84 78 70Z" fill="FILL" '+common+'/>'
+  if(pageId==='kitten') parts=[
+    `<circle data-part cx="38" cy="36" r="16" fill="FILL" ${common}/>` ,
+    `<path data-part d="M115 27 Q139 8 163 27 Q158 47 139 57 Q120 47 115 27Z" fill="FILL" ${common}/>` ,
+    `<path data-part d="M140 44 C90 36 54 50 39 84 C28 111 43 153 77 170 C107 185 146 177 166 149 C183 125 180 90 159 67 C152 58 147 51 140 44Z" fill="FILL" ${common}/>` ,
+    `<path data-part d="M81 52 L96 24 L112 51Z" fill="FILL" ${common}/>` ,
+    `<path data-part d="M124 48 L144 20 L160 49Z" fill="FILL" ${common}/>` ,
+    `<ellipse data-part cx="89" cy="123" rx="44" ry="36" fill="FILL" ${common}/>` ,
+    `<path data-part d="M54 139 Q35 144 30 159 Q49 168 66 156Z" fill="FILL" ${common}/>` ,
+    `<path data-part d="M117 154 Q135 166 157 159 Q154 144 134 141Z" fill="FILL" ${common}/>` ,
+    `<path data-part d="M56 126 Q21 118 19 146 Q18 168 42 172" fill="FILL" ${common}/>` ,
+    `<path data-part d="M168 129 Q184 135 185 149 Q184 165 165 171" fill="FILL" ${common}/>` ,
+    `<path data-part d="M85 44 Q93 57 105 46 Q96 34 85 44Z" fill="FILL" ${common}/>` ,
+    `<circle data-part cx="100" cy="73" r="8" fill="FILL" ${common}/>` ,
+    `<circle data-part cx="132" cy="74" r="8" fill="FILL" ${common}/>` ,
+    `<path data-part d="M26 164 Q43 148 56 168 Q40 186 26 164Z" fill="FILL" ${common}/>` ,
+    `<path data-part d="M143 171 Q161 152 176 171 Q160 187 143 171Z" fill="FILL" ${common}/>`
   ];
   else if(pageId==='car') parts=[
-    `<path data-part d="M28 92 L42 60 Q48 45 65 45 H103 Q117 47 128 69 L140 92 V119 H20V92Z" fill="FILL" ${common}/>`,`<path data-part d="M58 50 H78 V76 H42Z" fill="FILL" ${common}/>`,`<path data-part d="M83 50 H103 Q112 52 122 76 H83Z" fill="FILL" ${common}/>`,'<circle data-part cx="48" cy="119" r="17" fill="FILL" '+common+'/>','<circle data-part cx="116" cy="119" r="17" fill="FILL" '+common+'/>','<circle data-part cx="48" cy="119" r="7" fill="FILL" '+common+'/>','<circle data-part cx="116" cy="119" r="7" fill="FILL" '+common+'/>','<rect data-part x="135" y="92" width="10" height="17" rx="4" fill="FILL" '+common+'/>'
+    `<circle data-part cx="162" cy="30" r="18" fill="FILL" ${common}/>` ,
+    `<path data-part d="M26 37 Q48 12 72 37 Q54 53 26 37Z" fill="FILL" ${common}/>` ,
+    `<path data-part d="M20 122 L50 84 Q60 72 81 72 H122 Q143 73 156 95 L179 122 V150 H18 V122Z" fill="FILL" ${common}/>` ,
+    `<path data-part d="M74 79 H99 V109 H50Z" fill="FILL" ${common}/>` ,
+    `<path data-part d="M104 79 H126 Q139 79 149 110 H104Z" fill="FILL" ${common}/>` ,
+    `<circle data-part cx="56" cy="150" r="21" fill="FILL" ${common}/>` ,
+    `<circle data-part cx="142" cy="150" r="21" fill="FILL" ${common}/>` ,
+    `<circle data-part cx="56" cy="150" r="8" fill="FILL" ${common}/>` ,
+    `<circle data-part cx="142" cy="150" r="8" fill="FILL" ${common}/>` ,
+    `<path data-part d="M13 170 Q62 139 119 156 Q163 168 192 160" fill="none" stroke="FILL" stroke-width="10" stroke-linecap="round"/>` ,
+    `<path data-part d="M160 130 V72" fill="none" stroke="FILL" stroke-width="8" stroke-linecap="round"/>` ,
+    `<circle data-part cx="160" cy="61" r="19" fill="FILL" ${common}/>` ,
+    `<path data-part d="M24 163 Q36 146 52 163 Q41 179 24 163Z" fill="FILL" ${common}/>` ,
+    `<path data-part d="M54 164 Q67 146 83 163 Q70 181 54 164Z" fill="FILL" ${common}/>`
+  ];
+  else if(pageId==='butterfly') parts=[
+    `<circle data-part cx="33" cy="32" r="15" fill="FILL" ${common}/>` ,
+    `<path data-part d="M27 178 Q56 134 82 176" fill="none" stroke="FILL" stroke-width="11" stroke-linecap="round"/>` ,
+    `<ellipse data-part cx="87" cy="92" rx="28" ry="38" fill="FILL" ${common}/>` ,
+    `<ellipse data-part cx="127" cy="92" rx="28" ry="38" fill="FILL" ${common}/>` ,
+    `<ellipse data-part cx="92" cy="137" rx="24" ry="29" fill="FILL" ${common}/>` ,
+    `<ellipse data-part cx="124" cy="137" rx="24" ry="29" fill="FILL" ${common}/>` ,
+    `<ellipse data-part cx="108" cy="113" rx="10" ry="35" fill="FILL" ${common}/>` ,
+    `<ellipse data-part cx="40" cy="162" rx="18" ry="18" fill="FILL" ${common}/>` ,
+    `<ellipse data-part cx="72" cy="162" rx="18" ry="18" fill="FILL" ${common}/>` ,
+    `<circle data-part cx="40" cy="162" r="6" fill="FILL" ${common}/>` ,
+    `<circle data-part cx="72" cy="162" r="6" fill="FILL" ${common}/>` ,
+    `<path data-part d="M140 176 Q160 140 183 176" fill="none" stroke="FILL" stroke-width="11" stroke-linecap="round"/>` ,
+    `<ellipse data-part cx="140" cy="160" rx="18" ry="18" fill="FILL" ${common}/>` ,
+    `<ellipse data-part cx="183" cy="160" rx="18" ry="18" fill="FILL" ${common}/>`
+  ];
+  else if(pageId==='house') parts=[
+    `<rect data-part x="43" y="89" width="116" height="78" rx="7" fill="FILL" ${common}/>` ,
+    `<path data-part d="M28 93 L101 28 L176 93 Z" fill="FILL" ${common}/>` ,
+    `<rect data-part x="90" y="119" width="27" height="48" rx="6" fill="FILL" ${common}/>` ,
+    `<rect data-part x="58" y="108" width="22" height="21" rx="4" fill="FILL" ${common}/>` ,
+    `<rect data-part x="123" y="108" width="22" height="21" rx="4" fill="FILL" ${common}/>` ,
+    `<rect data-part x="24" y="167" width="154" height="13" rx="7" fill="FILL" ${common}/>` ,
+    `<circle data-part cx="24" cy="42" r="16" fill="FILL" ${common}/>` ,
+    `<circle data-part cx="177" cy="43" r="16" fill="FILL" ${common}/>` ,
+    `<path data-part d="M154 59 V30 H169 V76" fill="FILL" ${common}/>` ,
+    `<circle data-part cx="35" cy="148" r="13" fill="FILL" ${common}/>` ,
+    `<circle data-part cx="164" cy="148" r="13" fill="FILL" ${common}/>` ,
+    `<path data-part d="M31 178 Q47 157 65 178" fill="none" stroke="FILL" stroke-width="11" stroke-linecap="round"/>` ,
+    `<path data-part d="M139 178 Q155 157 173 178" fill="none" stroke="FILL" stroke-width="11" stroke-linecap="round"/>`
+  ];
+  else if(pageId==='fish') parts=[
+    `<ellipse data-part cx="97" cy="101" rx="56" ry="34" fill="FILL" ${common}/>` ,
+    `<path data-part d="M147 100 L184 71 L185 130 Z" fill="FILL" ${common}/>` ,
+    `<path data-part d="M92 68 Q110 43 131 69Z" fill="FILL" ${common}/>` ,
+    `<circle data-part cx="79" cy="93" r="7" fill="FILL" ${common}/>` ,
+    `<path data-part d="M76 111 Q95 123 114 111" fill="none" stroke="FILL" stroke-width="5" stroke-linecap="round"/>` ,
+    `<path data-part d="M42 145 Q70 133 96 145" fill="none" stroke="FILL" stroke-width="10" stroke-linecap="round"/>` ,
+    `<path data-part d="M109 149 Q140 132 168 149" fill="none" stroke="FILL" stroke-width="10" stroke-linecap="round"/>` ,
+    `<circle data-part cx="36" cy="44" r="14" fill="FILL" ${common}/>` ,
+    `<circle data-part cx="168" cy="38" r="12" fill="FILL" ${common}/>` ,
+    `<circle data-part cx="149" cy="166" r="12" fill="FILL" ${common}/>` ,
+    `<path data-part d="M23 172 Q36 157 49 172" fill="none" stroke="FILL" stroke-width="10" stroke-linecap="round"/>` ,
+    `<path data-part d="M166 178 Q180 162 193 178" fill="none" stroke="FILL" stroke-width="10" stroke-linecap="round"/>`
   ];
   else parts=[
-    '<circle data-part cx="80" cy="72" r="20" fill="FILL" '+common+'/>','<ellipse data-part cx="80" cy="33" rx="19" ry="29" fill="FILL" '+common+'/>','<ellipse data-part cx="116" cy="52" rx="19" ry="29" transform="rotate(55 116 52)" fill="FILL" '+common+'/>','<ellipse data-part cx="111" cy="91" rx="19" ry="29" transform="rotate(120 111 91)" fill="FILL" '+common+'/>','<ellipse data-part cx="49" cy="91" rx="19" ry="29" transform="rotate(60 49 91)" fill="FILL" '+common+'/>','<ellipse data-part cx="44" cy="52" rx="19" ry="29" transform="rotate(125 44 52)" fill="FILL" '+common+'/>','<path data-part d="M80 93 V150 H69 L80 93Z" fill="FILL" '+common+'/>','<path data-part d="M76 120 Q46 104 42 128 Q62 142 76 132Z" fill="FILL" '+common+'/>','<path data-part d="M83 128 Q112 109 121 133 Q103 148 84 140Z" fill="FILL" '+common+'/>','<rect data-part x="65" y="149" width="31" height="10" rx="5" fill="FILL" '+common+'/>'
+    `<circle data-part cx="103" cy="52" r="20" fill="FILL" ${common}/>` ,
+    `<ellipse data-part cx="103" cy="17" rx="17" ry="22" fill="FILL" ${common}/>` ,
+    `<ellipse data-part cx="137" cy="32" rx="17" ry="22" transform="rotate(52 137 32)" fill="FILL" ${common}/>` ,
+    `<ellipse data-part cx="144" cy="70" rx="17" ry="22" transform="rotate(118 144 70)" fill="FILL" ${common}/>` ,
+    `<ellipse data-part cx="66" cy="73" rx="17" ry="22" transform="rotate(60 66 73)" fill="FILL" ${common}/>` ,
+    `<ellipse data-part cx="61" cy="35" rx="17" ry="22" transform="rotate(122 61 35)" fill="FILL" ${common}/>` ,
+    `<path data-part d="M102 75 V156 H90 L102 75Z" fill="FILL" ${common}/>` ,
+    `<path data-part d="M99 112 Q60 97 50 126 Q74 142 97 131Z" fill="FILL" ${common}/>` ,
+    `<path data-part d="M110 128 Q141 109 154 129 Q136 149 113 141Z" fill="FILL" ${common}/>` ,
+    `<rect data-part x="85" y="156" width="35" height="10" rx="5" fill="FILL" ${common}/>` ,
+    `<circle data-part cx="27" cy="160" r="15" fill="FILL" ${common}/>` ,
+    `<circle data-part cx="173" cy="160" r="15" fill="FILL" ${common}/>`
   ];
-  return `<svg class="coloring-canvas" viewBox="0 0 160 170" role="img" aria-label="رسمة للتلوين">${parts.map((s,i)=>p(i,s)).join('')}</svg>`;
+  return `<svg class="coloring-canvas" viewBox="0 0 200 190" role="img" aria-label="رسمة للتلوين">${parts.map((s,i)=>part(i,s)).join('')}</svg>`;
 }
 function renderColoring(){
   const g=state.coloring;if(!g)return;const page=COLORING_PAGES[g.pageIndex%COLORING_PAGES.length];
   const palette=COLOR_PALETTE.map(c=>`<button class="palette-color ${c===coloringSelectedColor?'selected':''}" data-color-pick="${c}" style="--palette:${c}" aria-label="اختيار لون"></button>`).join('');
   const filled=Object.keys(g.fills||{}).length;
-  screen.innerHTML=`<div class="panel">${gameHeading('🎨','كتاب التلوين')}<h2 class="game-title center">لوّني ${page.name} بالضغط على الأجزاء</h2><div class="coloring-wrap">${coloringSvg(page.id,g.fills)}</div><div class="color-palette" aria-label="لوحة الألوان">${palette}</div><p class="status">تم تلوين ${arabicDigits(filled)} من ${arabicDigits(page.parts)} أجزاء</p>${state.phase==='finished'?celebration(`أحسنتِ يا ${childName()}! اكتملت الرسمة 🎨`):''}<div class="btn-row">${role==='host'?'<button class="btn soft" data-action="reset-coloring">🧽 مسح وإعادة</button><button class="btn primary" data-action="next-coloring">➡️ الرسمة التالية</button>':''}</div><p class="rule center">اختاري لونًا ثم اضغطي داخل أي جزء أبيض • التلوين يظهر على الجهازين</p></div>`;
+  screen.innerHTML=`<div class="panel">${gameHeading('🎨','كتاب التلوين')}<h2 class="game-title center">لوّني ${page.name} بالضغط على الأجزاء</h2><div class="coloring-wrap premium">${coloringSvg(page.id,g.fills)}</div><div class="color-palette" aria-label="لوحة الألوان">${palette}</div><p class="status">تم تلوين ${arabicDigits(filled)} من ${arabicDigits(page.parts)} أجزاء</p>${state.phase==='finished'?celebration(`أحسنتِ يا ${childName()}! اكتملت الرسمة 🎨`):''}<div class="btn-row">${role==='host'?'<button class="btn soft" data-action="reset-coloring">🧽 مسح وإعادة</button><button class="btn primary" data-action="next-coloring">➡️ الرسمة التالية</button>':''}</div><p class="rule center">رسومات أوضح وأجمل للتلوين • اختاري لونًا ثم اضغطي داخل أي جزء • عند الاكتمال تظهر نجوم الاحتفال</p></div>`;
 }
-function puzzleImageUrl(id){return `data:image/svg+xml,${encodeURIComponent(artSvg(id))}`;}
+function puzzleSceneSvg(id){
+  const common=`<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512">`;
+  if(id==='pond')return `${common}<defs><linearGradient id="sky" x1="0" x2="0" y1="0" y2="1"><stop offset="0" stop-color="#9be0ff"/><stop offset="1" stop-color="#e9fbff"/></linearGradient></defs><rect width="512" height="512" fill="url(#sky)"/><rect y="315" width="512" height="197" fill="#8fd46a"/><ellipse cx="267" cy="331" rx="187" ry="82" fill="#56bfe7"/><ellipse cx="266" cy="337" rx="130" ry="54" fill="#8ae6ff"/><circle cx="90" cy="83" r="38" fill="#ffd45f"/><g fill="#fff"><ellipse cx="186" cy="84" rx="52" ry="22"/><ellipse cx="370" cy="88" rx="60" ry="25"/></g><g fill="#2ea56d"><circle cx="91" cy="266" r="53"/><circle cx="140" cy="248" r="42"/><circle cx="426" cy="272" r="47"/><circle cx="376" cy="282" r="34"/></g><g><ellipse cx="258" cy="331" rx="98" ry="49" fill="#ffb342"/><circle cx="217" cy="320" r="10" fill="#fff"/><circle cx="217" cy="320" r="5" fill="#2a355f"/><path d="M348 334Q327 310 304 334Q327 359 348 334Z" fill="#ff8d2f"/><path d="M210 366Q258 388 307 366" stroke="#d57f27" stroke-width="12" fill="none" stroke-linecap="round"/></g><g fill="#ff78a0"><circle cx="126" cy="415" r="17"/><circle cx="153" cy="416" r="17"/><circle cx="426" cy="406" r="17"/><circle cx="453" cy="408" r="17"/></g></svg>`;
+  if(id==='garden')return `${common}<rect width="512" height="512" fill="#dff8ff"/><rect y="344" width="512" height="168" fill="#90d96b"/><circle cx="428" cy="91" r="41" fill="#ffd966"/><g fill="#fff"><ellipse cx="122" cy="94" rx="61" ry="24"/><ellipse cx="244" cy="60" rx="56" ry="20"/></g><g><ellipse cx="181" cy="232" rx="94" ry="72" fill="#ff96b5"/><ellipse cx="331" cy="232" rx="94" ry="72" fill="#9bb8ff"/><ellipse cx="210" cy="324" rx="70" ry="58" fill="#ffb45f"/><ellipse cx="305" cy="324" rx="70" ry="58" fill="#8de28d"/><ellipse cx="257" cy="271" rx="34" ry="108" fill="#6a4d3a"/><circle cx="257" cy="222" r="30" fill="#ffe3a5"/><circle cx="247" cy="217" r="5" fill="#2a355f"/><circle cx="268" cy="217" r="5" fill="#2a355f"/><path d="M244 232Q257 246 270 232" stroke="#2a355f" stroke-width="5" fill="none" stroke-linecap="round"/><path d="M239 177Q220 146 195 160" stroke="#6a4d3a" stroke-width="6" fill="none" stroke-linecap="round"/><path d="M275 177Q293 146 319 160" stroke="#6a4d3a" stroke-width="6" fill="none" stroke-linecap="round"/></g><g fill="#ff79ae"><circle cx="86" cy="426" r="19"/><circle cx="118" cy="426" r="19"/><circle cx="101" cy="396" r="19"/></g><circle cx="101" cy="418" r="10" fill="#ffd966"/><g fill="#89c36b"><rect x="98" y="418" width="7" height="62"/></g></svg>`;
+  if(id==='castle')return `${common}<defs><linearGradient id="castleSky" x1="0" x2="0" y1="0" y2="1"><stop offset="0" stop-color="#cfe9ff"/><stop offset="1" stop-color="#fff4fb"/></linearGradient></defs><rect width="512" height="512" fill="url(#castleSky)"/><rect y="357" width="512" height="155" fill="#97d87b"/><path d="M123 352H389V210H123Z" fill="#f7b3d3"/><path d="M105 218H164V128H105Z" fill="#d783c3"/><path d="M348 218H407V128H348Z" fill="#d783c3"/><path d="M218 209H293V111H218Z" fill="#ef98ca"/><path d="M105 128L134 94L164 128M218 111L256 72L293 111M348 128L377 94L407 128" fill="#8b63d8" stroke="#4c2f9f" stroke-width="6" stroke-linejoin="round"/><rect x="230" y="271" width="52" height="81" rx="24" fill="#7c53d6"/><rect x="148" y="246" width="44" height="44" rx="13" fill="#fff0fa"/><rect x="322" y="246" width="44" height="44" rx="13" fill="#fff0fa"/><circle cx="86" cy="84" r="35" fill="#ffd966"/><g fill="#fff"><ellipse cx="172" cy="86" rx="55" ry="22"/><ellipse cx="325" cy="71" rx="60" ry="23"/></g><path d="M55 357Q130 330 208 357T360 357T512 357V512H0V357Z" fill="#66bc63"/><g fill="#ff88b1"><circle cx="60" cy="414" r="17"/><circle cx="92" cy="414" r="17"/><circle cx="76" cy="386" r="17"/><circle cx="430" cy="423" r="17"/><circle cx="460" cy="423" r="17"/><circle cx="445" cy="396" r="17"/></g></svg>`;
+  if(id==='dino')return `${common}<rect width="512" height="512" fill="#dcf4ff"/><rect y="338" width="512" height="174" fill="#98da71"/><circle cx="429" cy="90" r="36" fill="#ffd966"/><g fill="#fff"><ellipse cx="143" cy="83" rx="57" ry="23"/><ellipse cx="273" cy="60" rx="52" ry="20"/></g><g><path d="M160 303Q128 149 283 138Q386 132 405 228Q420 300 367 337Q323 368 262 357Q186 344 160 303Z" fill="#7fd278" stroke="#2e6b4a" stroke-width="10"/><path d="M110 290Q67 272 66 229Q74 194 130 219" fill="#7fd278" stroke="#2e6b4a" stroke-width="10" stroke-linejoin="round"/><circle cx="307" cy="187" r="13" fill="#fff"/><circle cx="311" cy="186" r="7" fill="#243058"/><path d="M343 220Q314 249 286 220" stroke="#243058" stroke-width="8" fill="none" stroke-linecap="round"/><path d="M228 354V420M319 355V420" stroke="#2e6b4a" stroke-width="18" stroke-linecap="round"/><path d="M390 284Q426 279 441 303Q428 326 392 319" fill="#7fd278" stroke="#2e6b4a" stroke-width="10" stroke-linejoin="round"/><g fill="#f7f3ff"><path d="M195 146L210 113L228 147Z"/><path d="M233 138L249 102L267 140Z"/><path d="M274 136L289 102L307 139Z"/></g></g><g fill="#ff87aa"><circle cx="81" cy="421" r="15"/><circle cx="109" cy="421" r="15"/><circle cx="95" cy="396" r="15"/></g></svg>`;
+  return `${common}<defs><linearGradient id="roadSky" x1="0" x2="0" y1="0" y2="1"><stop offset="0" stop-color="#b8ecff"/><stop offset="1" stop-color="#f7fdff"/></linearGradient></defs><rect width="512" height="512" fill="url(#roadSky)"/><rect y="322" width="512" height="190" fill="#8fd16a"/><path d="M0 510Q158 386 318 406Q430 418 512 374V512Z" fill="#55566a"/><path d="M198 443L266 425M316 408L388 391M428 378L480 362" stroke="#fff3b0" stroke-width="15" stroke-linecap="round"/><circle cx="412" cy="85" r="41" fill="#ffd966"/><g fill="#fff"><ellipse cx="118" cy="81" rx="63" ry="25"/><ellipse cx="241" cy="112" rx="51" ry="21"/></g><g><rect x="92" y="221" width="295" height="111" rx="53" fill="#ff6b62"/><path d="M160 221Q205 145 299 145Q350 145 387 221Z" fill="#ff7f72"/><rect x="190" y="165" width="90" height="72" rx="18" fill="#b8ecff"/><rect x="286" y="165" width="72" height="72" rx="18" fill="#b8ecff"/><circle cx="176" cy="329" r="41" fill="#30344f"/><circle cx="318" cy="329" r="41" fill="#30344f"/><circle cx="176" cy="329" r="20" fill="#f2f2fb"/><circle cx="318" cy="329" r="20" fill="#f2f2fb"/><circle cx="350" cy="255" r="9" fill="#fff"/><circle cx="193" cy="255" r="9" fill="#fff"/><path d="M240 279Q274 302 307 279" stroke="#813734" stroke-width="10" fill="none" stroke-linecap="round"/></g><g fill="#53af63"><circle cx="440" cy="241" r="47"/><rect x="432" y="241" width="17" height="74" fill="#86664d"/></g></svg>`;
+}
+function puzzleImageUrl(id){
+  if(id==='farm')return 'puzzle_farm.png';
+  return `data:image/svg+xml,${encodeURIComponent(puzzleSceneSvg(id))}`;
+}
 function puzzleTile(id,piece,rows,cols,extra=''){
   const x=piece%cols,y=Math.floor(piece/cols),px=cols===1?0:(x/(cols-1))*100,py=rows===1?0:(y/(rows-1))*100;
   return `<span class="puzzle-tile ${extra}" style="background-image:url('${puzzleImageUrl(id)}');background-size:${cols*100}% ${rows*100}%;background-position:${px}% ${py}%"></span>`;
@@ -951,19 +1077,18 @@ function renderJigsaw(){
   const g=state.jigsaw;if(!g)return;const total=g.rows*g.cols,placed=g.placed||{};
   const slots=Array.from({length:total},(_,i)=>`<button class="puzzle-slot ${placed[i]?'filled':''}" data-puzzle-slot="${i}" ${placed[i]?'disabled':''} aria-label="مكان القطعة ${i+1}">${placed[i]?puzzleTile(g.pictureId,i,g.rows,g.cols):'<span>＋</span>'}</button>`).join('');
   const tray=(g.order||[]).filter(i=>!placed[i]).map(i=>`<button class="puzzle-piece ${puzzleSelectedPiece===i?'selected':''}" data-puzzle-piece="${i}" aria-label="قطعة بازل">${puzzleTile(g.pictureId,i,g.rows,g.cols)}</button>`).join('');
-  screen.innerHTML=`<div class="panel">${gameHeading('🧩','البازل المصغّر')}<div class="jigsaw-head"><div><h2 class="game-title">ركّبي الصورة في مكانها</h2><p class="hint">اسحبي القطعة للمكان الصحيح، أو اضغطي القطعة ثم مكانها.</p></div><img class="puzzle-reference" src="${puzzleImageUrl(g.pictureId)}" alt="الصورة المرجعية"></div><div class="puzzle-board" style="--pcols:${g.cols}">${slots}</div><div class="puzzle-tray">${tray||'<span class="hint">كل القطع اتركبت ✅</span>'}</div>${state.phase==='finished'?celebration('أحسنتِ يا بطلة! اكتملت الصورة 🧩'):''}${role==='host'&&state.phase==='finished'?'<div class="btn-row"><button class="btn primary" data-action="restart">🧩 بازل جديد</button></div>':''}<p class="rule center">كل قطعة صحيحة = ⭐ • إكمال الصورة يعطي نجمتين إضافيتين</p></div>`;
+  screen.innerHTML=`<div class="panel">${gameHeading('🧩','البازل المصغّر')}<div class="jigsaw-head"><div><h2 class="game-title">ركّبي صورة ${g.pictureName||'ممتعة'} في مكانها</h2><p class="hint">اسحبي القطعة للمكان الصحيح، أو اضغطي القطعة ثم مكانها.</p></div><img class="puzzle-reference" src="${puzzleImageUrl(g.pictureId)}" alt="الصورة المرجعية"></div><div class="puzzle-board" style="--pcols:${g.cols}">${slots}</div><div class="puzzle-tray premium">${tray||'<span class="hint">كل القطع اتركبت ✅</span>'}</div>${state.phase==='finished'?celebration('أحسنتِ يا بطلة! اكتملت الصورة 🧩'):''}${role==='host'&&state.phase==='finished'?'<div class="btn-row"><button class="btn primary" data-action="restart">🧩 بازل جديد</button></div>':''}<p class="rule center">صور ملوّنة وجذابة للأطفال • كل قطعة صحيحة = ⭐ • إكمال الصورة يعطي نجمتين إضافيتين</p></div>`;
   bindPuzzleDrag();
 }
-function sortingObject(item,small=false){
+function sortingObject(item){
   const color=item.color==='red'?SORT_COLORS.red:SORT_COLORS.blue;
-  if(item.shape==='circle')return `<span class="sort-shape circle ${small?'small':''}" style="--sort-color:${color}"></span>`;
-  return `<span class="sort-shape square ${small?'small':''}" style="--sort-color:${color}"></span>`;
+  return `<div class="sort-object-card" style="--sort-color:${color}"><span class="sort-object-emoji">${item.icon}</span><strong>${item.label}</strong><small>${item.color==='red'?'أحمر':'أزرق'}</small></div>`;
 }
 function renderSorting(){
   const g=state.sorting;if(!g)return;const item=g.items?.[g.index],can=state.phase==='playing'&&g.turn===role;
-  const bins=g.mode==='color'?[['red','🔴 السلة الحمراء'],['blue','🔵 السلة الزرقاء']]:[['circle','⚪ صندوق الدائرة'],['square','⬜ صندوق المربع']];
-  const binHtml=bins.map(([key,label])=>`<button class="sort-bin" data-sort-bin="${key}" ${!can?'disabled':''}><span>${label}</span></button>`).join('');
-  screen.innerHTML=`<div class="panel">${gameHeading('🧺','فرز الألوان والأشكال')}<h2 class="game-title center">${g.mode==='color'?'اسحبي الشكل إلى سلة لونه':'اسحبي الشكل إلى صندوق شكله'}</h2><p class="status">${state.phase==='finished'?'خلص الفرز 🎉':can?'دورك الآن ✨':`دور ${nameOf(g.turn)} ⏳`}</p>${item&&state.phase==='playing'?`<button class="sorting-item" data-sort-item="1" ${!can?'disabled':''}>${sortingObject(item)}<small>اسحبي العنصر</small></button>`:''}<div class="sort-bins">${binHtml}</div><div class="sort-progress">${Array.from({length:g.goal||8},(_,i)=>`<span>${i<g.index?'⭐':'☆'}</span>`).join('')}</div>${state.phase==='finished'?`${celebration('ممتاز! خلصتوا الفرز كله 🌟')}${role==='host'?'<div class="btn-row"><button class="btn primary" data-action="restart">🔁 جولة فرز جديدة</button></div>':''}`:''}<p class="rule center">الصح = ⭐ • الخطأ يرجّع العنصر مكانه ويدّي الدور للتاني</p></div>`;
+  const bins=[['red','السلة الحمراء','basket_red.png'],['blue','السلة الزرقاء','basket_blue.png']];
+  const binHtml=bins.map(([key,label,src])=>`<button class="sort-bin basket-bin" data-sort-bin="${key}" ${!can?'disabled':''}><img src="${src}" alt="${label}"><span>${label}</span></button>`).join('');
+  screen.innerHTML=`<div class="panel">${gameHeading('🧺','فرز الألوان والأشكال')}<h2 class="game-title center">اسحبي العنصر إلى سلة لونه</h2><p class="status">${state.phase==='finished'?'خلص الفرز 🎉':can?'دورك الآن ✨':`دور ${nameOf(g.turn)} ⏳`}</p>${item&&state.phase==='playing'?`<button class="sorting-item premium" data-sort-item="1" ${!can?'disabled':''}>${sortingObject(item)}<small>اسحبي العنصر</small></button>`:''}<div class="sort-bins premium">${binHtml}</div><div class="sort-progress">${Array.from({length:g.goal||10},(_,i)=>`<span>${i<g.index?'⭐':'☆'}</span>`).join('')}</div>${state.phase==='finished'?`${celebration('ممتاز! خلصتوا الفرز كله 🌟')}${role==='host'?'<div class="btn-row"><button class="btn primary" data-action="restart">🔁 جولة فرز جديدة</button></div>':''}`:''}<p class="rule center">العناصر أصبحت متنوعة أكثر والتحدي أكبر • اسحب العنصر إلى السلة المطابقة للونه • الصح = ⭐ • الخطأ يرجّع العنصر مكانه ويدّي الدور للتاني</p></div>`;
   bindSortingDrag();
 }
 function renderPhonics(){
@@ -1074,13 +1199,16 @@ function newGame(which, old, previousDraw) {
   if (which === 'jigsaw') {
     const rows=2,cols=childAge<=6?2:3,total=rows*cols;
     const oldPic=old?.game==='jigsaw'?old.jigsaw?.pictureId:null;
-    const choices=PUZZLE_PICTURES.filter(x=>x!==oldPic),pictureId=choices[Math.floor(Math.random()*choices.length)]||PUZZLE_PICTURES[0];
-    return {...common,game:which,phase:'playing',scores,round,jigsaw:{pictureId,rows,cols,order:shuffle(Array.from({length:total},(_,i)=>i)),placed:{}}};
+    const choices=PUZZLE_PICTURES.filter(x=>x.id!==oldPic),picture=choices[Math.floor(Math.random()*choices.length)]||PUZZLE_PICTURES[0];
+    return {...common,game:which,phase:'playing',scores,round,jigsaw:{pictureId:picture.id,pictureName:picture.name,rows,cols,order:shuffle(Array.from({length:total},(_,i)=>i)),placed:{}}};
   }
   if (which === 'sorting') {
-    const mode=round%2===0?'shape':'color',goal=8,items=[];
-    for(let i=0;i<goal;i++)items.push({shape:Math.random()<.5?'circle':'square',color:Math.random()<.5?'red':'blue'});
-    return {...common,game:which,phase:'playing',scores,round,sorting:{mode,goal,items,index:0,turn:round%2===0?'guest':'host',roundScores:{host:0,guest:0}}};
+    const goal=normalizeAge(childAge)<=5?8:12,items=[];
+    for(let i=0;i<goal;i++){
+      const base=SORTING_POOL[Math.floor(Math.random()*SORTING_POOL.length)];
+      items.push({...base,color:Math.random()<.5?'red':'blue'});
+    }
+    return {...common,game:which,phase:'playing',scores,round,sorting:{goal,items,index:0,turn:round%2===0?'guest':'host',roundScores:{host:0,guest:0}}};
   }
   if (which === 'phonics') {
     const oldSet=old?.game==='phonics'?old.phonics?.indices||[]:[];
@@ -1197,9 +1325,14 @@ async function chooseQuiz(index) {
 async function rollDice(){
   await mutateState(old=>{
     if(old.game!=='snakes'||old.phase!=='playing'||old.snakes?.turn!==role)return;
-    const g=old.snakes,dice=1+Math.floor(Math.random()*6),positions={...g.positions};let landing=Math.min(30,(positions[role]||1)+dice),jump='';
-    if(LADDERS[landing]){landing=LADDERS[landing];jump='ladder';}else if(SNAKES[landing]){landing=SNAKES[landing];jump='snake';}
-    positions[role]=landing;const finished=landing>=30,scores={...old.scores};if(finished)scores[role]+=5;
+    const g=old.snakes,dice=1+Math.floor(Math.random()*6),positions={...g.positions};
+    let landing=(positions[role]||1)+dice;
+    if(landing>BOARD_FINAL_CELL) landing=BOARD_FINAL_CELL;
+    let jump='';
+    if(LADDERS[landing]){landing=LADDERS[landing];jump='ladder';}
+    else if(SNAKES[landing]){landing=SNAKES[landing];jump='snake';}
+    positions[role]=landing;
+    const finished=landing>=BOARD_FINAL_CELL,scores={...old.scores};if(finished)scores[role]+=5;
     return {...old,scores,feedback:addFeedback(old,finished?'win':'tap'),phase:finished?'finished':'playing',...(finished?{result:role}:{}),snakes:{...g,positions,turn:finished?g.turn:other(role),lastRoll:{player:role,dice,jump,landing}}};
   });
 }
@@ -1224,8 +1357,9 @@ async function placePuzzle(piece,slot,source){
 }
 async function chooseSorting(bin,source){
   await mutateState(old=>{
-    if(old.game!=='sorting'||old.phase!=='playing'||old.sorting?.turn!==role)return;const g=old.sorting,item=g.items?.[g.index];if(!item)return;
-    const target=g.mode==='color'?item.color:item.shape,correct=bin===target,scores={...old.scores},roundScores={...g.roundScores};let index=g.index;
+    if(old.game!=='sorting'||old.phase!=='playing'||old.sorting?.turn!==role)return;
+    const g=old.sorting,item=g.items?.[g.index];if(!item)return;
+    const correct=bin===item.color,scores={...old.scores},roundScores={...g.roundScores};let index=g.index;
     if(correct){scores[role]+=1;roundScores[role]=(roundScores[role]||0)+1;index++;}
     const finished=correct&&index>=g.goal,result=finished?(roundScores.host===roundScores.guest?'draw':roundScores.host>roundScores.guest?'host':'guest'):undefined;
     return {...old,scores,feedback:addFeedback(old,finished?'win':correct?'good':'bad'),phase:finished?'finished':'playing',...(finished?{result}:{}),sorting:{...g,index,turn:other(role),roundScores}};
@@ -1365,7 +1499,7 @@ async function joinRoom() {
     const current=(await get(target)).val();
     if (!current) {info('الرمز مش موجود. تأكد من كتابة الكود صح.');return;}
     if (current.hostUid===uid || current.guestUid===uid) {subscribeRoom(code);return;}
-    if (current.guestUid) {info('الغرفة مكتملة؛ فيها بابا ورقية بالفعل.');return;}
+    if (current.guestUid) {info(`الغرفة مكتملة؛ فيها بابا و${childName()} بالفعل.`);return;}
     const joined=await runTransaction(target,old=>{
       // The first local transaction attempt can receive null for an existing room.
       // Use the room we just read; Firebase will retry with server data on conflict.
@@ -1379,7 +1513,7 @@ async function joinRoom() {
 }
 async function copyLink() {
   const link=`${location.origin}${location.pathname}#room=${roomCode}`;
-  try { await navigator.clipboard.writeText(link);info('اتنسخ رابط الدعوة! ابعته لرقية بشكل خاص 💌'); }
+  try { await navigator.clipboard.writeText(link);info(`اتنسخ رابط الدعوة! ابعته لـ${childName()} بشكل خاص 💌`); }
   catch(e) { info(`انسخ الكود وابعت الرابط من شريط العنوان: ${roomCode}`); }
 }
 screen.addEventListener('click',e=>{if(e.target.closest('button:not(:disabled)'))sound('tap');},true);
