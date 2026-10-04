@@ -8,7 +8,7 @@ const screen = $('#screen');
 const message = $('#message');
 const connection = $('#connection');
 const LETTERS = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789';
-const APP_VERSION = '16.0';
+const APP_VERSION = '17.0';
 const DRAW_ITEMS = [
   { name:'قطة', emoji:'🐱', choices:['🐱','🐶','🐰'] },
   { name:'شمس', emoji:'☀️', choices:['☀️','🌙','⭐'] },
@@ -655,6 +655,12 @@ let coloringSelectedColor=COLOR_PALETTE[0], puzzleSelectedPiece=null, sortingDra
 let alphabetMusicTimer=null, alphabetMusicEnabled=false;
 let snakeRollVisualKey='', snakeMoveVisualKey='';
 let snakeRollVisualTimer=null;
+// V17 voice call (WebRTC). Firebase state carries only the one-time connection handshake;
+// the actual microphone audio flows peer-to-peer between the two browsers.
+const VOICE_RTC_CONFIG={iceServers:[{urls:['stun:stun.l.google.com:19302','stun:stun1.l.google.com:19302']}]};
+let voicePeer=null,voiceLocalStream=null,voiceRemoteStream=null,voiceCallId='',voiceCallMode='idle';
+let voiceMicMuted=false,voiceSpeakerMuted=false,voiceRingTimer=null,voiceRingCallId='',voiceSyncBusy=false;
+
 function stopAlphabetMusic(){if(alphabetMusicTimer){clearInterval(alphabetMusicTimer);alphabetMusicTimer=null;}alphabetMusicEnabled=false;}
 function ambientChime(){
   if(!soundEnabled)return;
@@ -691,6 +697,170 @@ function snakeStepSound(index=0){snakeTone(index%2?520:430,.08,.05,'sine');snake
 function snakeLadderCheer(){[523,659,784,1047].forEach((f,i)=>snakeTone(f,.17,.065,'sine',i*.13));}
 function snakeSadSound(){[392,330,262,196].forEach((f,i)=>snakeTone(f,.22,.055,'triangle',i*.18));}
 function waitMs(ms){return new Promise(resolve=>setTimeout(resolve,ms));}
+function voiceCallSupported(){return Boolean(window.RTCPeerConnection&&navigator.mediaDevices?.getUserMedia);}
+function remoteAudioElement(){return document.querySelector('#remote-audio');}
+function voiceCallError(error){
+  const name=error?.name||'';
+  if(name==='NotAllowedError'||name==='PermissionDeniedError')return 'لازم تسمح للعبة باستخدام الميكروفون عشان المكالمة تشتغل.';
+  if(name==='NotFoundError'||name==='DevicesNotFoundError')return 'مش لاقي ميكروفون متاح على الجهاز.';
+  if(name==='NotReadableError'||name==='TrackStartError')return 'الميكروفون مستخدم في تطبيق تاني أو مش متاح دلوقتي.';
+  return 'تعذر تشغيل المكالمة الصوتية. جرّب تاني أو افتح اللعبة في Chrome.';
+}
+function voiceCallTone(kind='ring'){
+  try{
+    const Audio=window.AudioContext||window.webkitAudioContext;if(!Audio)return;
+    audioContext ||= new Audio();if(audioContext.state==='suspended')audioContext.resume().catch(()=>{});
+    const seq=kind==='connected'?[[660,0,.09],[880,.11,.13]]:kind==='ended'?[[440,0,.09],[330,.11,.13]]:[[740,0,.13],[920,.18,.13]];
+    const t=audioContext.currentTime;
+    for(const [freq,delay,duration] of seq){const o=audioContext.createOscillator(),g=audioContext.createGain();o.type='sine';o.frequency.value=freq;g.gain.setValueAtTime(.0001,t+delay);g.gain.exponentialRampToValueAtTime(.05,t+delay+.015);g.gain.exponentialRampToValueAtTime(.0001,t+delay+duration);o.connect(g).connect(audioContext.destination);o.start(t+delay);o.stop(t+delay+duration+.02);}
+  }catch(_){}
+}
+function startIncomingVoiceRing(callId){
+  if(voiceRingCallId===callId&&voiceRingTimer)return;
+  stopIncomingVoiceRing();voiceRingCallId=callId;
+  const ring=()=>{voiceCallTone('ring');try{navigator.vibrate?.([120,80,120]);}catch(_){}};
+  ring();voiceRingTimer=setInterval(ring,2800);
+}
+function stopIncomingVoiceRing(){if(voiceRingTimer){clearInterval(voiceRingTimer);voiceRingTimer=null;}voiceRingCallId='';}
+function stopVoiceLocalTracks(){
+  if(voiceLocalStream){for(const track of voiceLocalStream.getTracks())try{track.stop();}catch(_){} voiceLocalStream=null;}
+}
+function cleanupVoicePeer({stopLocal=true}={}){
+  stopIncomingVoiceRing();
+  if(voicePeer){try{voicePeer.ontrack=null;voicePeer.onconnectionstatechange=null;voicePeer.close();}catch(_){} voicePeer=null;}
+  voiceRemoteStream=null;
+  const audio=remoteAudioElement();if(audio){try{audio.pause();}catch(_){}audio.srcObject=null;audio.muted=false;}
+  if(stopLocal)stopVoiceLocalTracks();
+  voiceCallId='';voiceCallMode='idle';voiceMicMuted=false;voiceSpeakerMuted=false;
+}
+async function ensureVoiceLocalStream(){
+  if(voiceLocalStream?.getAudioTracks().some(t=>t.readyState==='live'))return voiceLocalStream;
+  voiceLocalStream=await navigator.mediaDevices.getUserMedia({video:false,audio:{echoCancellation:true,noiseSuppression:true,autoGainControl:true}});
+  voiceMicMuted=false;return voiceLocalStream;
+}
+function attachVoiceRemoteStream(stream){
+  voiceRemoteStream=stream;const audio=remoteAudioElement();if(!audio)return;
+  audio.srcObject=stream;audio.muted=voiceSpeakerMuted;audio.volume=1;
+  const play=()=>audio.play().catch(()=>{});play();setTimeout(play,250);
+}
+async function createVoicePeer(callId){
+  if(voicePeer&&voiceCallId===callId)return voicePeer;
+  if(voicePeer)cleanupVoicePeer({stopLocal:false});
+  const local=await ensureVoiceLocalStream();
+  const pc=new RTCPeerConnection(VOICE_RTC_CONFIG);voicePeer=pc;voiceCallId=callId;voiceCallMode='connecting';
+  for(const track of local.getTracks())pc.addTrack(track,local);
+  pc.ontrack=e=>attachVoiceRemoteStream(e.streams?.[0]||new MediaStream([e.track]));
+  pc.onconnectionstatechange=()=>{
+    if(pc!==voicePeer)return;
+    const status=pc.connectionState;
+    if(status==='connected'){voiceCallMode='connected';stopIncomingVoiceRing();voiceCallTone('connected');}
+    else if(status==='connecting'||status==='new')voiceCallMode='connecting';
+    else if(status==='failed'||status==='disconnected')voiceCallMode='failed';
+    renderVoiceCallControls();
+  };
+  return pc;
+}
+function waitForVoiceIce(pc,timeout=5500){
+  return new Promise(resolve=>{
+    if(!pc||pc.iceGatheringState==='complete')return resolve();
+    let done=false;const finish=()=>{if(done)return;done=true;pc.removeEventListener('icegatheringstatechange',check);clearTimeout(timer);resolve();};
+    const check=()=>{if(pc.iceGatheringState==='complete')finish();};
+    pc.addEventListener('icegatheringstatechange',check);const timer=setTimeout(finish,timeout);
+  });
+}
+function voiceSdp(desc){return desc?{type:desc.type,sdp:desc.sdp}:null;}
+async function startVoiceCall(){
+  if(!voiceCallSupported()){info('المتصفح الحالي لا يدعم المكالمات الصوتية داخل اللعبة. جرّب Google Chrome.');return;}
+  if(!roomCode||!state||!canPlay()){info('المكالمة بتشتغل بعد ما اللاعب الثاني يدخل الغرفة.');return;}
+  if(state.call){info('فيه مكالمة حالية بالفعل. انهيها الأول.');return;}
+  const callId=`${Date.now()}-${role}-${Math.random().toString(36).slice(2,8)}`;
+  try{
+    voiceCallMode='outgoing';voiceCallId=callId;renderVoiceCallControls();
+    const pc=await createVoicePeer(callId),offer=await pc.createOffer({offerToReceiveAudio:true});
+    await pc.setLocalDescription(offer);await waitForVoiceIce(pc);
+    const localOffer=voiceSdp(pc.localDescription);
+    const result=await mutateState(old=>{
+      if(old.call)return;
+      return {...old,call:{id:callId,status:'ringing',caller:role,offer:localOffer,createdAt:Date.now()}};
+    });
+    if(result&&!result.committed){cleanupVoicePeer();info('مقدرناش نبدأ المكالمة. جرّب مرة تانية.');}
+  }catch(error){cleanupVoicePeer();info(voiceCallError(error));}
+  renderVoiceCallControls();
+}
+async function acceptVoiceCall(){
+  const call=state?.call;if(!call||call.status!=='ringing'||call.caller===role||!call.offer)return;
+  if(!voiceCallSupported()){info('المتصفح الحالي لا يدعم المكالمات الصوتية داخل اللعبة. جرّب Google Chrome.');return;}
+  stopIncomingVoiceRing();
+  try{
+    voiceCallId=call.id;voiceCallMode='connecting';renderVoiceCallControls();
+    const pc=await createVoicePeer(call.id);
+    await pc.setRemoteDescription(new RTCSessionDescription(call.offer));
+    const answer=await pc.createAnswer();await pc.setLocalDescription(answer);await waitForVoiceIce(pc);
+    const localAnswer=voiceSdp(pc.localDescription);
+    const result=await mutateState(old=>old.call?.id===call.id&&old.call.status==='ringing'?{...old,call:{...old.call,status:'accepted',answer:localAnswer,acceptedBy:role,acceptedAt:Date.now()}}:undefined);
+    if(result&&!result.committed){cleanupVoicePeer();info('المكالمة انتهت قبل ما يتم قبولها.');}
+  }catch(error){cleanupVoicePeer();info(voiceCallError(error));}
+  renderVoiceCallControls();
+}
+async function clearSharedVoiceCall(callId){
+  if(!callId)return;
+  return mutateState(old=>{
+    if(old.call?.id!==callId)return;
+    const next={...old};delete next.call;return next;
+  });
+}
+async function endVoiceCall(){
+  const id=state?.call?.id||voiceCallId;cleanupVoicePeer();voiceCallTone('ended');renderVoiceCallControls();
+  if(id)await clearSharedVoiceCall(id);
+}
+async function rejectVoiceCall(){const id=state?.call?.id;stopIncomingVoiceRing();cleanupVoicePeer();if(id)await clearSharedVoiceCall(id);renderVoiceCallControls();}
+function toggleVoiceMic(){
+  if(!voiceLocalStream)return;voiceMicMuted=!voiceMicMuted;
+  for(const track of voiceLocalStream.getAudioTracks())track.enabled=!voiceMicMuted;
+  renderVoiceCallControls();
+}
+function toggleVoiceSpeaker(){
+  voiceSpeakerMuted=!voiceSpeakerMuted;const audio=remoteAudioElement();if(audio){audio.muted=voiceSpeakerMuted;if(!voiceSpeakerMuted)audio.play().catch(()=>{});}renderVoiceCallControls();
+}
+async function syncVoiceCall(before,after){
+  if(voiceSyncBusy)return;voiceSyncBusy=true;
+  try{
+    const previous=before?.call||null,call=after?.call||null;
+    if(!call){
+      stopIncomingVoiceRing();
+      if(previous&&voiceCallId===previous.id)cleanupVoicePeer();
+      renderVoiceCallControls();return;
+    }
+    if(call.status==='ringing'&&call.caller!==role)startIncomingVoiceRing(call.id);else stopIncomingVoiceRing();
+    if(call.status==='accepted'&&call.caller===role&&call.answer&&voicePeer&&voiceCallId===call.id&&!voicePeer.currentRemoteDescription){
+      try{await voicePeer.setRemoteDescription(new RTCSessionDescription(call.answer));voiceCallMode='connecting';}catch(error){console.warn('voice remote description',error);voiceCallMode='failed';}
+    }
+    renderVoiceCallControls();
+  }finally{voiceSyncBusy=false;}
+}
+function renderVoiceCallControls(){
+  const box=document.querySelector('#call-controls');if(!box)return;
+  const available=Boolean(roomCode&&state&&meta&&canPlay());
+  if(!available){box.hidden=true;box.innerHTML='';return;}
+  box.hidden=false;
+  if(!voiceCallSupported()){box.innerHTML='<div class="call-pill unavailable">📞 المكالمة غير مدعومة في المتصفح ده</div>';return;}
+  const call=state?.call||null;
+  if(!call){
+    if(voiceCallId&&voiceCallMode!=='idle'){box.innerHTML='<div class="call-pill outgoing"><span class="call-status-text">🎙️ جاري تجهيز الاتصال...</span><button class="call-end" data-call-action="end">إلغاء</button></div>';return;}
+    box.innerHTML='<button class="call-main-btn" data-call-action="start">📞 اتصال صوتي</button>';return;
+  }
+  const callerName=call.caller==='host'?'بابا':childName(),otherName=nameOf(other(role));
+  if(call.status==='ringing'&&call.caller!==role){
+    box.innerHTML=`<div class="call-pill incoming"><span class="call-status-text">📞 ${callerName} بيتصل...</span><button class="call-accept" data-call-action="accept">✅ قبول</button><button class="call-reject" data-call-action="reject">✖️ رفض</button></div>`;return;
+  }
+  if(call.status==='ringing'&&call.caller===role){
+    box.innerHTML=`<div class="call-pill outgoing"><span class="call-status-text">📞 جاري الاتصال بـ ${otherName}...</span><button class="call-end" data-call-action="end">إلغاء</button></div>`;return;
+  }
+  const connected=voicePeer?.connectionState==='connected'||voiceCallMode==='connected';
+  const failed=voiceCallMode==='failed'||(!voicePeer&&call.status==='accepted');
+  const statusText=connected?'🟢 المكالمة شغالة':failed?'⚠️ الاتصال الصوتي انقطع':'🟡 جاري توصيل الصوت...';
+  box.innerHTML=`<div class="call-pill active"><span class="call-status-text">${statusText}</span><button class="call-tool ${voiceMicMuted?'is-off':''}" data-call-action="mic">${voiceMicMuted?'🎙️ تشغيل الميكروفون':'🎙️ كتم الميكروفون'}</button><button class="call-tool ${voiceSpeakerMuted?'is-off':''}" data-call-action="speaker">${voiceSpeakerMuted?'🔇 تشغيل صوت المكالمة':'🔊 كتم صوت المكالمة'}</button><button class="call-end" data-call-action="end">📵 إنهاء</button></div>`;
+}
 function info(text) { message.hidden = !text; message.textContent = text || ''; }
 function humanError(error) {
   console.error(error);
@@ -1213,6 +1383,7 @@ function bindPuzzleDrag(){bindPointerDrop('.puzzle-piece','.puzzle-slot',(source
 function bindSortingDrag(){bindPointerDrop('.sorting-item','.sort-bin',(source,target)=>chooseSorting(target.dataset.sortBin,source));}
 
 function render() {
+  renderVoiceCallControls();
   connection.textContent = !uid ? '⏳ جاري الاتصال' : connected ? '🟢 الإنترنت متصل' : '🟠 الاتصال مقطوع';
   document.body.classList.toggle('playing-game',Boolean(roomCode&&state&&state.game!=='lobby'));
   if(state?.game!=='phonics'&&alphabetMusicTimer)stopAlphabetMusic();
@@ -1280,7 +1451,7 @@ async function mutateState(transform) {
 }
 function newGame(which, old, previousDraw) {
   const childAge=normalizeAge(old?.childAge);
-  const common={childAge,childName:normalizeChildName(old?.childName)||'رقية'};
+  const common={childAge,childName:normalizeChildName(old?.childName)||'رقية',...(old?.call?{call:old.call}:{})};
   const scores = {...(old?.scores || { host:0,guest:0 })};
   const round = (old?.round || 0) + 1;
   if (which === 'memory') {
@@ -1570,8 +1741,10 @@ function bindCanvas(enabled) {
   canvas.addEventListener('lostpointercapture',()=>{pointerIsDown=false;lastPoint=null;});
 }
 function detachRoom() {
+  cleanupVoicePeer();
   for (const unsub of unsubs) try { unsub(); } catch(e) { console.warn(e); }
   unsubs=[];presenceBound=false;meta=null;state=null;presence={};strokes={};role='';lastAudioFeedback=null;snakeRollVisualKey='';snakeMoveVisualKey='';if(snakeRollVisualTimer){clearInterval(snakeRollVisualTimer);snakeRollVisualTimer=null;}
+  renderVoiceCallControls();
 }
 function trackPresence() {
   if (presenceBound || !role || !uid) return;
@@ -1594,7 +1767,7 @@ function subscribeRoom(code) {
     if (!role) { info('الغرفة مكتملة أو مش مسموح لك تدخلها.'); detachRoom();roomCode='';location.hash='';render();return; }
     trackPresence();render();
   },e=>{info(humanError(e));detachRoom();roomCode='';location.hash='';render();}));
-  unsubs.push(onValue(ref(db,`${base}/state`),snap=>{const oldState=state;state=snap.val();feedbackSignal(oldState,state);maybeWelcomeOnSync(oldState,state);render();},e=>info(humanError(e))));
+  unsubs.push(onValue(ref(db,`${base}/state`),snap=>{const oldState=state;state=snap.val();feedbackSignal(oldState,state);maybeWelcomeOnSync(oldState,state);syncVoiceCall(oldState,state);render();},e=>info(humanError(e))));
   unsubs.push(onValue(ref(db,`${base}/strokes`),snap=>{strokes=snap.val()||{};redrawCanvas();},e=>info(humanError(e))));
   unsubs.push(onValue(ref(db,`${base}/presence`),snap=>{presence=snap.val()||{};render();},e=>info(humanError(e))));
 }
@@ -1734,11 +1907,22 @@ screen.addEventListener('click',async e=>{
   if (button.dataset.quiz!==undefined) return chooseQuiz(Number(button.dataset.quiz));
   if (button.dataset.treasure!==undefined) return chooseTreasure(Number(button.dataset.treasure));
 });
+document.querySelector('#call-controls')?.addEventListener('click',async e=>{
+  const button=e.target.closest('button[data-call-action]');if(!button||button.disabled)return;
+  const action=button.dataset.callAction;
+  if(action==='start')return startVoiceCall();
+  if(action==='accept')return acceptVoiceCall();
+  if(action==='reject')return rejectVoiceCall();
+  if(action==='end')return endVoiceCall();
+  if(action==='mic')return toggleVoiceMic();
+  if(action==='speaker')return toggleVoiceSpeaker();
+});
 screen.addEventListener('keydown',e=>{
   if (e.key==='Enter'&&e.target?.id==='room-input') {e.preventDefault();joinRoom();}
 });
 async function initialize() {
   soundControl();
+  renderVoiceCallControls();
   document.querySelector('.brand p')?.append(` • V${APP_VERSION}`);
   personalizeUi();
   if (!firebaseConfig.apiKey || firebaseConfig.apiKey.startsWith('PASTE_') || firebaseConfig.databaseURL.includes('PASTE_')) {

@@ -172,3 +172,22 @@ body.playing-game footer{margin-top:10px}
 @media(max-width:520px){.snakes-pro-board{padding:6px;border-radius:18px}.snakes-grid,.snakes-overlay{inset:6px}.snakes-overlay{width:calc(100% - 12px);height:calc(100% - 12px)}.snakes-cell{padding:1px;font-size:.55rem}.snakes-cell span{min-width:1.4em;height:1.35em;border-radius:4px}.snakes-cell small{font-size:.65em}.dice-stage{grid-template-columns:66px 1fr;padding:9px 10px}.dice-face{width:62px;height:62px;font-size:3rem}.snakes-title-row{align-items:flex-start}.turn-badge{font-size:.78rem;padding:6px 9px}}
 .snakes-token-layer{position:absolute;inset:9px;z-index:9;pointer-events:none}
 @media(max-width:520px){.snakes-token-layer{inset:6px}}
+
+/* V17: private two-player voice call controls (WebRTC audio). */
+#remote-audio{position:fixed;width:1px;height:1px;opacity:.001;pointer-events:none;left:-10px;bottom:-10px}
+.call-controls{flex-basis:100%;width:100%;display:flex;justify-content:flex-end;margin-top:-8px;position:relative;z-index:40}
+.call-controls[hidden]{display:none!important}
+.call-main-btn,.call-pill button{font:inherit;border:0;cursor:pointer;touch-action:manipulation;font-weight:900}
+.call-main-btn{min-height:42px;padding:9px 14px;border-radius:999px;background:linear-gradient(135deg,#daf8e8,#c9f0ff);color:#17624b;border:1px solid #a9dfc6;box-shadow:0 5px 14px #355f4d18}
+.call-main-btn:active,.call-pill button:active{transform:scale(.97)}
+.call-pill{width:min(100%,650px);margin-inline-start:auto;display:flex;align-items:center;justify-content:flex-end;gap:7px;flex-wrap:wrap;padding:8px 9px;border-radius:18px;border:1px solid #dfd5f6;background:rgba(255,255,255,.96);box-shadow:0 9px 22px #4935761a;color:#49377c}
+.call-pill.incoming{background:linear-gradient(135deg,#fff3fa,#f0eaff);border-color:#e6b8d3;animation:callPulse 1.15s ease-in-out infinite alternate}
+.call-pill.outgoing{background:linear-gradient(135deg,#f2f6ff,#f8f2ff)}
+.call-pill.active{background:linear-gradient(135deg,#ecfff3,#eef8ff);border-color:#b9e4cd}
+.call-pill.unavailable{font-size:.78rem;color:#7c6f8b;padding:7px 10px}
+.call-status-text{font-size:.86rem;font-weight:900;margin-inline-end:auto;min-width:125px}
+.call-pill button{min-height:36px;padding:7px 10px;border-radius:12px;font-size:.78rem}
+.call-accept{background:#d9f7e5;color:#17684e}.call-reject,.call-end{background:#ffe5ea;color:#a12c4d}.call-tool{background:#f0eaff;color:#584493}.call-tool.is-off{background:#efeef3;color:#807789}
+@keyframes callPulse{from{box-shadow:0 8px 20px #7a4e8f18}to{box-shadow:0 8px 26px #d45a9a38}}
+body.playing-game .call-controls{margin-top:-6px}
+@media(max-width:520px){.call-controls{justify-content:stretch}.call-main-btn{width:100%}.call-pill{width:100%;justify-content:center}.call-status-text{flex-basis:100%;text-align:center;margin:0}.call-pill button{flex:1;min-width:92px}.header{gap:7px}.header .sound-toggle{margin-inline-start:0}}
