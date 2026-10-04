@@ -8,7 +8,7 @@ const screen = $('#screen');
 const message = $('#message');
 const connection = $('#connection');
 const LETTERS = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789';
-const APP_VERSION = '17.0';
+const APP_VERSION = '18.0';
 const DRAW_ITEMS = [
   { name:'قطة', emoji:'🐱', choices:['🐱','🐶','🐰'] },
   { name:'شمس', emoji:'☀️', choices:['☀️','🌙','⭐'] },
@@ -655,11 +655,22 @@ let coloringSelectedColor=COLOR_PALETTE[0], puzzleSelectedPiece=null, sortingDra
 let alphabetMusicTimer=null, alphabetMusicEnabled=false;
 let snakeRollVisualKey='', snakeMoveVisualKey='';
 let snakeRollVisualTimer=null;
-// V17 voice call (WebRTC). Firebase state carries only the one-time connection handshake;
-// the actual microphone audio flows peer-to-peer between the two browsers.
-const VOICE_RTC_CONFIG={iceServers:[{urls:['stun:stun.l.google.com:19302','stun:stun1.l.google.com:19302']}]};
+// V18 voice call: faster signalling, trickle ICE, low-bandwidth audio, auto-reconnect,
+// connection health, and a modern animated call UI.
+const VOICE_RTC_CONFIG={
+  iceServers:[
+    {urls:['stun:stun.l.google.com:19302','stun:stun1.l.google.com:19302','stun:stun2.l.google.com:19302','stun:stun3.l.google.com:19302','stun:stun4.l.google.com:19302']}
+  ],
+  iceCandidatePoolSize:4,
+  bundlePolicy:'max-bundle',
+  rtcpMuxPolicy:'require'
+};
 let voicePeer=null,voiceLocalStream=null,voiceRemoteStream=null,voiceCallId='',voiceCallMode='idle';
-let voiceMicMuted=false,voiceSpeakerMuted=false,voiceRingTimer=null,voiceRingCallId='',voiceSyncBusy=false;
+let voiceMicMuted=false,voiceSpeakerMuted=false,voiceRingTimer=null,voiceRingCallId='';
+let voiceSyncChain=Promise.resolve(),voiceCandidateFlushBusy=false,voiceCandidateSeq=0;
+let voicePendingCandidates=[],voiceSeenRemoteCandidates=new Set(),voiceIceGeneration=0,voiceRemoteDescriptionGeneration=-1;
+let voiceReconnectTimer=null,voiceRestartInFlight=false,voiceLastReconnectRequest=0;
+let voiceStatsTimer=null,voiceUiTimer=null,voiceQuality='idle',voiceWakeLock=null;
 
 function stopAlphabetMusic(){if(alphabetMusicTimer){clearInterval(alphabetMusicTimer);alphabetMusicTimer=null;}alphabetMusicEnabled=false;}
 function ambientChime(){
@@ -697,6 +708,7 @@ function snakeStepSound(index=0){snakeTone(index%2?520:430,.08,.05,'sine');snake
 function snakeLadderCheer(){[523,659,784,1047].forEach((f,i)=>snakeTone(f,.17,.065,'sine',i*.13));}
 function snakeSadSound(){[392,330,262,196].forEach((f,i)=>snakeTone(f,.22,.055,'triangle',i*.18));}
 function waitMs(ms){return new Promise(resolve=>setTimeout(resolve,ms));}
+
 function voiceCallSupported(){return Boolean(window.RTCPeerConnection&&navigator.mediaDevices?.getUserMedia);}
 function remoteAudioElement(){return document.querySelector('#remote-audio');}
 function voiceCallError(error){
@@ -704,163 +716,309 @@ function voiceCallError(error){
   if(name==='NotAllowedError'||name==='PermissionDeniedError')return 'لازم تسمح للعبة باستخدام الميكروفون عشان المكالمة تشتغل.';
   if(name==='NotFoundError'||name==='DevicesNotFoundError')return 'مش لاقي ميكروفون متاح على الجهاز.';
   if(name==='NotReadableError'||name==='TrackStartError')return 'الميكروفون مستخدم في تطبيق تاني أو مش متاح دلوقتي.';
-  return 'تعذر تشغيل المكالمة الصوتية. جرّب تاني أو افتح اللعبة في Chrome.';
+  return 'تعذر تشغيل المكالمة الصوتية. جرّب تاني.';
 }
 function voiceCallTone(kind='ring'){
   try{
     const Audio=window.AudioContext||window.webkitAudioContext;if(!Audio)return;
     audioContext ||= new Audio();if(audioContext.state==='suspended')audioContext.resume().catch(()=>{});
-    const seq=kind==='connected'?[[660,0,.09],[880,.11,.13]]:kind==='ended'?[[440,0,.09],[330,.11,.13]]:[[740,0,.13],[920,.18,.13]];
+    const seq=kind==='connected'?[[660,0,.08],[880,.1,.12]]:kind==='ended'?[[440,0,.08],[330,.1,.12]]:[[740,0,.12],[920,.17,.12]];
     const t=audioContext.currentTime;
-    for(const [freq,delay,duration] of seq){const o=audioContext.createOscillator(),g=audioContext.createGain();o.type='sine';o.frequency.value=freq;g.gain.setValueAtTime(.0001,t+delay);g.gain.exponentialRampToValueAtTime(.05,t+delay+.015);g.gain.exponentialRampToValueAtTime(.0001,t+delay+duration);o.connect(g).connect(audioContext.destination);o.start(t+delay);o.stop(t+delay+duration+.02);}
+    for(const [freq,delay,duration] of seq){const o=audioContext.createOscillator(),g=audioContext.createGain();o.type='sine';o.frequency.value=freq;g.gain.setValueAtTime(.0001,t+delay);g.gain.exponentialRampToValueAtTime(.04,t+delay+.015);g.gain.exponentialRampToValueAtTime(.0001,t+delay+duration);o.connect(g).connect(audioContext.destination);o.start(t+delay);o.stop(t+delay+duration+.02);}
   }catch(_){}
 }
 function startIncomingVoiceRing(callId){
   if(voiceRingCallId===callId&&voiceRingTimer)return;
   stopIncomingVoiceRing();voiceRingCallId=callId;
-  const ring=()=>{voiceCallTone('ring');try{navigator.vibrate?.([120,80,120]);}catch(_){}};
-  ring();voiceRingTimer=setInterval(ring,2800);
+  const ring=()=>{voiceCallTone('ring');try{navigator.vibrate?.([100,70,100]);}catch(_){}};
+  ring();voiceRingTimer=setInterval(ring,2600);
 }
 function stopIncomingVoiceRing(){if(voiceRingTimer){clearInterval(voiceRingTimer);voiceRingTimer=null;}voiceRingCallId='';}
+function voiceDuration(start){
+  if(!start)return '00:00';const sec=Math.max(0,Math.floor((Date.now()-start)/1000)),m=Math.floor(sec/60),s=sec%60;
+  return `${String(m).padStart(2,'0')}:${String(s).padStart(2,'0')}`;
+}
+async function acquireVoiceWakeLock(){
+  if(!('wakeLock'in navigator)||voiceWakeLock)return;
+  try{voiceWakeLock=await navigator.wakeLock.request('screen');voiceWakeLock.addEventListener?.('release',()=>{voiceWakeLock=null;});}catch(_){}
+}
+async function releaseVoiceWakeLock(){if(voiceWakeLock){try{await voiceWakeLock.release();}catch(_){}voiceWakeLock=null;}}
+document.addEventListener('visibilitychange',()=>{if(document.visibilityState==='visible'&&state?.call&&voiceCallMode!=='idle')acquireVoiceWakeLock();});
 function stopVoiceLocalTracks(){
   if(voiceLocalStream){for(const track of voiceLocalStream.getTracks())try{track.stop();}catch(_){} voiceLocalStream=null;}
 }
+function stopVoiceTimers(){
+  if(voiceReconnectTimer){clearTimeout(voiceReconnectTimer);voiceReconnectTimer=null;}
+  if(voiceStatsTimer){clearInterval(voiceStatsTimer);voiceStatsTimer=null;}
+  if(voiceUiTimer){clearInterval(voiceUiTimer);voiceUiTimer=null;}
+}
 function cleanupVoicePeer({stopLocal=true}={}){
-  stopIncomingVoiceRing();
-  if(voicePeer){try{voicePeer.ontrack=null;voicePeer.onconnectionstatechange=null;voicePeer.close();}catch(_){} voicePeer=null;}
+  stopIncomingVoiceRing();stopVoiceTimers();releaseVoiceWakeLock();
+  if(voicePeer){try{voicePeer.ontrack=null;voicePeer.onconnectionstatechange=null;voicePeer.oniceconnectionstatechange=null;voicePeer.onicecandidate=null;voicePeer.close();}catch(_){} voicePeer=null;}
   voiceRemoteStream=null;
   const audio=remoteAudioElement();if(audio){try{audio.pause();}catch(_){}audio.srcObject=null;audio.muted=false;}
   if(stopLocal)stopVoiceLocalTracks();
-  voiceCallId='';voiceCallMode='idle';voiceMicMuted=false;voiceSpeakerMuted=false;
+  voiceCallId='';voiceCallMode='idle';voiceMicMuted=false;voiceSpeakerMuted=false;voiceQuality='idle';
+  voicePendingCandidates=[];voiceSeenRemoteCandidates.clear();voiceIceGeneration=0;voiceRemoteDescriptionGeneration=-1;
+  voiceCandidateFlushBusy=false;voiceRestartInFlight=false;voiceLastReconnectRequest=0;
 }
 async function ensureVoiceLocalStream(){
   if(voiceLocalStream?.getAudioTracks().some(t=>t.readyState==='live'))return voiceLocalStream;
-  voiceLocalStream=await navigator.mediaDevices.getUserMedia({video:false,audio:{echoCancellation:true,noiseSuppression:true,autoGainControl:true}});
+  voiceLocalStream=await navigator.mediaDevices.getUserMedia({
+    video:false,
+    audio:{echoCancellation:true,noiseSuppression:true,autoGainControl:true,channelCount:{ideal:1},sampleRate:{ideal:16000},sampleSize:{ideal:16}}
+  });
   voiceMicMuted=false;return voiceLocalStream;
 }
 function attachVoiceRemoteStream(stream){
   voiceRemoteStream=stream;const audio=remoteAudioElement();if(!audio)return;
   audio.srcObject=stream;audio.muted=voiceSpeakerMuted;audio.volume=1;
-  const play=()=>audio.play().catch(()=>{});play();setTimeout(play,250);
+  const play=()=>audio.play().catch(()=>{});play();setTimeout(play,250);setTimeout(play,1000);
 }
-async function createVoicePeer(callId){
+async function tuneVoiceSender(sender){
+  if(!sender)return;
+  try{const p=sender.getParameters();p.encodings=p.encodings?.length?p.encodings:[{}];p.encodings[0].maxBitrate=24000;await sender.setParameters(p);}catch(_){}
+}
+function queueVoiceCandidate(candidate,generation=voiceIceGeneration){
+  if(!candidate)return;
+  const json=candidate.toJSON?candidate.toJSON():{candidate:candidate.candidate,sdpMid:candidate.sdpMid,sdpMLineIndex:candidate.sdpMLineIndex,usernameFragment:candidate.usernameFragment};
+  voicePendingCandidates.push({key:`${generation}-${role}-${Date.now()}-${++voiceCandidateSeq}`,generation,candidate:json});
+  flushVoiceCandidates();
+}
+async function publishVoiceCandidate(entry){
+  const result=await mutateState(old=>{
+    if(!old.call||old.call.id!==voiceCallId||Number(old.call.generation||0)!==Number(entry.generation))return;
+    const candidates={...(old.call.candidates||{})};
+    const mine={...(candidates[role]||{})};mine[entry.key]={generation:entry.generation,...entry.candidate};candidates[role]=mine;
+    return {...old,call:{...old.call,candidates}};
+  });
+  return Boolean(result?.committed);
+}
+async function flushVoiceCandidates(){
+  if(voiceCandidateFlushBusy||!voicePendingCandidates.length||!state?.call||state.call.id!==voiceCallId)return;
+  voiceCandidateFlushBusy=true;
+  try{
+    let guard=0;
+    while(voicePendingCandidates.length&&guard++<30){
+      const entry=voicePendingCandidates[0];
+      if(Number(state?.call?.generation||0)!==Number(entry.generation))break;
+      const ok=await publishVoiceCandidate(entry);if(!ok)break;voicePendingCandidates.shift();
+    }
+  }finally{voiceCandidateFlushBusy=false;}
+}
+async function addRemoteVoiceCandidates(call){
+  if(!voicePeer||!voicePeer.remoteDescription||!call||call.id!==voiceCallId)return;
+  const generation=Number(call.generation||0),remoteRole=other(role),items=call.candidates?.[remoteRole]||{};
+  for(const [key,value] of Object.entries(items)){
+    if(voiceSeenRemoteCandidates.has(key)||Number(value?.generation||0)!==generation)continue;
+    try{await voicePeer.addIceCandidate(new RTCIceCandidate({candidate:value.candidate,sdpMid:value.sdpMid??null,sdpMLineIndex:value.sdpMLineIndex??null,usernameFragment:value.usernameFragment??undefined}));voiceSeenRemoteCandidates.add(key);}catch(error){console.warn('voice ICE candidate',error);}
+  }
+}
+function voiceSdp(desc){return desc?{type:desc.type,sdp:desc.sdp}:null;}
+function scheduleVoiceReconnect(delay=3500){
+  if(voiceReconnectTimer||!state?.call)return;
+  voiceReconnectTimer=setTimeout(()=>{voiceReconnectTimer=null;if(state?.call&&voicePeer?.connectionState!=='connected')requestVoiceReconnect();},delay);
+}
+async function requestVoiceReconnect(){
+  const call=state?.call;if(!call||!voiceCallId||call.id!==voiceCallId)return;
+  voiceCallMode='reconnecting';voiceQuality='offline';renderVoiceCallControls();
+  if(call.caller===role)return restartVoiceIce();
+  const stamp=Date.now();voiceLastReconnectRequest=stamp;
+  await mutateState(old=>old.call?.id===call.id?{...old,call:{...old.call,status:'reconnecting',reconnectRequestAt:stamp}}:undefined);
+}
+async function restartVoiceIce(){
+  const call=state?.call;if(!call||call.id!==voiceCallId||call.caller!==role||!voicePeer||voiceRestartInFlight)return;
+  voiceRestartInFlight=true;
+  try{
+    const generation=Number(call.generation||0)+1;voiceIceGeneration=generation;voiceRemoteDescriptionGeneration=-1;voiceSeenRemoteCandidates.clear();voicePendingCandidates=[];
+    try{voicePeer.restartIce?.();}catch(_){}
+    const offer=await voicePeer.createOffer({iceRestart:true});await voicePeer.setLocalDescription(offer);
+    const result=await mutateState(old=>{
+      if(old.call?.id!==call.id)return;
+      return {...old,call:{...old.call,status:'reconnecting',offer:voiceSdp(voicePeer.localDescription),answer:null,generation,candidates:{host:{},guest:{}},restartAt:Date.now()}};
+    });
+    if(!result?.committed)throw new Error('restart-not-committed');
+    await flushVoiceCandidates();
+  }catch(error){console.warn('voice ICE restart',error);scheduleVoiceReconnect(5000);}
+  finally{voiceRestartInFlight=false;renderVoiceCallControls();}
+}
+async function createVoicePeer(callId,generation=0){
   if(voicePeer&&voiceCallId===callId)return voicePeer;
   if(voicePeer)cleanupVoicePeer({stopLocal:false});
   const local=await ensureVoiceLocalStream();
-  const pc=new RTCPeerConnection(VOICE_RTC_CONFIG);voicePeer=pc;voiceCallId=callId;voiceCallMode='connecting';
-  for(const track of local.getTracks())pc.addTrack(track,local);
+  const pc=new RTCPeerConnection(VOICE_RTC_CONFIG);voicePeer=pc;voiceCallId=callId;voiceCallMode='connecting';voiceQuality='connecting';voiceIceGeneration=Number(generation||0);
+  for(const track of local.getTracks()){const sender=pc.addTrack(track,local);tuneVoiceSender(sender);}
   pc.ontrack=e=>attachVoiceRemoteStream(e.streams?.[0]||new MediaStream([e.track]));
-  pc.onconnectionstatechange=()=>{
-    if(pc!==voicePeer)return;
-    const status=pc.connectionState;
-    if(status==='connected'){voiceCallMode='connected';stopIncomingVoiceRing();voiceCallTone('connected');}
-    else if(status==='connecting'||status==='new')voiceCallMode='connecting';
-    else if(status==='failed'||status==='disconnected')voiceCallMode='failed';
+  pc.onicecandidate=e=>{if(e.candidate)queueVoiceCandidate(e.candidate,voiceIceGeneration);};
+  const update=()=>{
+    if(pc!==voicePeer)return;const status=pc.connectionState,ice=pc.iceConnectionState;
+    if(status==='connected'||ice==='connected'||ice==='completed'){
+      const wasConnected=voiceCallMode==='connected';voiceCallMode='connected';voiceQuality=voiceQuality==='poor'?'poor':'good';
+      if(voiceReconnectTimer){clearTimeout(voiceReconnectTimer);voiceReconnectTimer=null;}stopIncomingVoiceRing();acquireVoiceWakeLock();startVoiceHealthMonitor();if(!wasConnected)voiceCallTone('connected');
+    }else if(status==='failed'||ice==='failed'){
+      voiceCallMode='reconnecting';voiceQuality='offline';scheduleVoiceReconnect(900);
+    }else if(status==='disconnected'||ice==='disconnected'){
+      voiceCallMode='reconnecting';voiceQuality='offline';scheduleVoiceReconnect(3500);
+    }else if(status==='connecting'||status==='new'||ice==='checking'||ice==='new'){
+      voiceCallMode='connecting';voiceQuality='connecting';
+    }
     renderVoiceCallControls();
   };
-  return pc;
+  pc.onconnectionstatechange=update;pc.oniceconnectionstatechange=update;
+  acquireVoiceWakeLock();ensureVoiceUiTicker();return pc;
 }
-function waitForVoiceIce(pc,timeout=5500){
-  return new Promise(resolve=>{
-    if(!pc||pc.iceGatheringState==='complete')return resolve();
-    let done=false;const finish=()=>{if(done)return;done=true;pc.removeEventListener('icegatheringstatechange',check);clearTimeout(timer);resolve();};
-    const check=()=>{if(pc.iceGatheringState==='complete')finish();};
-    pc.addEventListener('icegatheringstatechange',check);const timer=setTimeout(finish,timeout);
-  });
+async function updateVoiceQuality(){
+  if(!voicePeer||voicePeer.connectionState!=='connected'){if(voiceCallMode==='reconnecting')voiceQuality='offline';return renderVoiceCallControls();}
+  try{
+    const stats=await voicePeer.getStats();let inbound=null,pair=null;
+    stats.forEach(r=>{if(r.type==='inbound-rtp'&&r.kind==='audio'&&!r.isRemote)inbound=r;if(r.type==='candidate-pair'&&r.state==='succeeded'&&r.nominated)pair=r;});
+    const received=Number(inbound?.packetsReceived||0),lost=Number(inbound?.packetsLost||0),loss=received+lost>0?lost/(received+lost):0,jitter=Number(inbound?.jitter||0),rtt=Number(pair?.currentRoundTripTime||0);
+    voiceQuality=loss>.12||jitter>.12||rtt>.9?'poor':loss>.04||jitter>.065||rtt>.45?'fair':'good';
+  }catch(_){voiceQuality='good';}
+  renderVoiceCallControls();
 }
-function voiceSdp(desc){return desc?{type:desc.type,sdp:desc.sdp}:null;}
+function startVoiceHealthMonitor(){if(!voiceStatsTimer){updateVoiceQuality();voiceStatsTimer=setInterval(updateVoiceQuality,4000);}}
+function ensureVoiceUiTicker(){if(!voiceUiTimer)voiceUiTimer=setInterval(()=>{if(state?.call)renderVoiceCallControls();else{clearInterval(voiceUiTimer);voiceUiTimer=null;}},1000);}
 async function startVoiceCall(){
   if(!voiceCallSupported()){info('المتصفح الحالي لا يدعم المكالمات الصوتية داخل اللعبة. جرّب Google Chrome.');return;}
   if(!roomCode||!state||!canPlay()){info('المكالمة بتشتغل بعد ما اللاعب الثاني يدخل الغرفة.');return;}
   if(state.call){info('فيه مكالمة حالية بالفعل. انهيها الأول.');return;}
   const callId=`${Date.now()}-${role}-${Math.random().toString(36).slice(2,8)}`;
   try{
-    voiceCallMode='outgoing';voiceCallId=callId;renderVoiceCallControls();
-    const pc=await createVoicePeer(callId),offer=await pc.createOffer({offerToReceiveAudio:true});
-    await pc.setLocalDescription(offer);await waitForVoiceIce(pc);
-    const localOffer=voiceSdp(pc.localDescription);
+    voiceCallMode='outgoing';voiceCallId=callId;voiceIceGeneration=0;voicePendingCandidates=[];voiceSeenRemoteCandidates.clear();renderVoiceCallControls();
+    const pc=await createVoicePeer(callId,0),offer=await pc.createOffer({offerToReceiveAudio:true});
+    await pc.setLocalDescription(offer);
     const result=await mutateState(old=>{
       if(old.call)return;
-      return {...old,call:{id:callId,status:'ringing',caller:role,offer:localOffer,createdAt:Date.now()}};
+      return {...old,call:{id:callId,status:'ringing',caller:role,offer:voiceSdp(pc.localDescription),generation:0,candidates:{host:{},guest:{}},createdAt:Date.now()}};
     });
-    if(result&&!result.committed){cleanupVoicePeer();info('مقدرناش نبدأ المكالمة. جرّب مرة تانية.');}
+    if(!result?.committed){cleanupVoicePeer();info('مقدرناش نبدأ المكالمة. جرّب مرة تانية.');return;}
+    ensureVoiceUiTicker();await flushVoiceCandidates();
   }catch(error){cleanupVoicePeer();info(voiceCallError(error));}
   renderVoiceCallControls();
+}
+async function commitVoiceAnswer(callId,answer,generation){
+  for(let attempt=0;attempt<2;attempt++){
+    const result=await mutateState(old=>{
+      if(old.call?.id!==callId||!['ringing','reconnecting'].includes(old.call.status))return;
+      return {...old,call:{...old.call,status:'accepted',answer,acceptedBy:role,acceptedAt:old.call.acceptedAt||Date.now(),generation:Number(generation||0)}};
+    });
+    if(result?.committed)return true;
+    await waitMs(280);
+  }
+  return false;
 }
 async function acceptVoiceCall(){
   const call=state?.call;if(!call||call.status!=='ringing'||call.caller===role||!call.offer)return;
   if(!voiceCallSupported()){info('المتصفح الحالي لا يدعم المكالمات الصوتية داخل اللعبة. جرّب Google Chrome.');return;}
   stopIncomingVoiceRing();
   try{
-    voiceCallId=call.id;voiceCallMode='connecting';renderVoiceCallControls();
-    const pc=await createVoicePeer(call.id);
-    await pc.setRemoteDescription(new RTCSessionDescription(call.offer));
-    const answer=await pc.createAnswer();await pc.setLocalDescription(answer);await waitForVoiceIce(pc);
-    const localAnswer=voiceSdp(pc.localDescription);
-    const result=await mutateState(old=>old.call?.id===call.id&&old.call.status==='ringing'?{...old,call:{...old.call,status:'accepted',answer:localAnswer,acceptedBy:role,acceptedAt:Date.now()}}:undefined);
-    if(result&&!result.committed){cleanupVoicePeer();info('المكالمة انتهت قبل ما يتم قبولها.');}
+    const generation=Number(call.generation||0);voiceCallId=call.id;voiceCallMode='connecting';voiceIceGeneration=generation;voiceSeenRemoteCandidates.clear();renderVoiceCallControls();
+    const pc=await createVoicePeer(call.id,generation);
+    await pc.setRemoteDescription(new RTCSessionDescription(call.offer));voiceRemoteDescriptionGeneration=generation;
+    await addRemoteVoiceCandidates(call);
+    const answer=await pc.createAnswer();await pc.setLocalDescription(answer);
+    const ok=await commitVoiceAnswer(call.id,voiceSdp(pc.localDescription),generation);
+    if(!ok){
+      const latest=(await get(ref(db,`rooms/${roomCode}/state/call`))).val();
+      if(latest?.id!==call.id||latest?.status!=='accepted'){cleanupVoicePeer();info('المكالمة انتهت قبل ما يتم قبولها.');return;}
+    }
+    ensureVoiceUiTicker();await flushVoiceCandidates();
   }catch(error){cleanupVoicePeer();info(voiceCallError(error));}
   renderVoiceCallControls();
 }
+async function answerVoiceRestart(call){
+  if(!call?.offer||call.caller===role||voiceRestartInFlight)return;
+  const generation=Number(call.generation||0);if(generation<=voiceRemoteDescriptionGeneration)return;
+  voiceRestartInFlight=true;
+  try{
+    const pc=await createVoicePeer(call.id,generation);voiceIceGeneration=generation;voicePendingCandidates=[];voiceSeenRemoteCandidates.clear();
+    await pc.setRemoteDescription(new RTCSessionDescription(call.offer));voiceRemoteDescriptionGeneration=generation;
+    await addRemoteVoiceCandidates(call);
+    const answer=await pc.createAnswer();await pc.setLocalDescription(answer);
+    await commitVoiceAnswer(call.id,voiceSdp(pc.localDescription),generation);await flushVoiceCandidates();
+  }catch(error){console.warn('voice restart answer',error);scheduleVoiceReconnect(5000);}
+  finally{voiceRestartInFlight=false;renderVoiceCallControls();}
+}
 async function clearSharedVoiceCall(callId){
   if(!callId)return;
-  return mutateState(old=>{
-    if(old.call?.id!==callId)return;
-    const next={...old};delete next.call;return next;
-  });
+  return mutateState(old=>{if(old.call?.id!==callId)return;const next={...old};delete next.call;return next;});
 }
 async function endVoiceCall(){
-  const id=state?.call?.id||voiceCallId;cleanupVoicePeer();voiceCallTone('ended');renderVoiceCallControls();
-  if(id)await clearSharedVoiceCall(id);
+  const id=state?.call?.id||voiceCallId;cleanupVoicePeer();voiceCallTone('ended');renderVoiceCallControls();if(id)await clearSharedVoiceCall(id);
 }
 async function rejectVoiceCall(){const id=state?.call?.id;stopIncomingVoiceRing();cleanupVoicePeer();if(id)await clearSharedVoiceCall(id);renderVoiceCallControls();}
 function toggleVoiceMic(){
-  if(!voiceLocalStream)return;voiceMicMuted=!voiceMicMuted;
-  for(const track of voiceLocalStream.getAudioTracks())track.enabled=!voiceMicMuted;
-  renderVoiceCallControls();
+  if(!voiceLocalStream)return;voiceMicMuted=!voiceMicMuted;for(const track of voiceLocalStream.getAudioTracks())track.enabled=!voiceMicMuted;renderVoiceCallControls();
 }
 function toggleVoiceSpeaker(){
   voiceSpeakerMuted=!voiceSpeakerMuted;const audio=remoteAudioElement();if(audio){audio.muted=voiceSpeakerMuted;if(!voiceSpeakerMuted)audio.play().catch(()=>{});}renderVoiceCallControls();
 }
-async function syncVoiceCall(before,after){
-  if(voiceSyncBusy)return;voiceSyncBusy=true;
-  try{
-    const previous=before?.call||null,call=after?.call||null;
-    if(!call){
-      stopIncomingVoiceRing();
-      if(previous&&voiceCallId===previous.id)cleanupVoicePeer();
-      renderVoiceCallControls();return;
+async function retryVoiceCall(){voiceCallMode='reconnecting';voiceQuality='offline';renderVoiceCallControls();return requestVoiceReconnect();}
+async function syncVoiceCallNow(before,after){
+  const previous=before?.call||null,call=after?.call||null;
+  if(!call){
+    stopIncomingVoiceRing();if(previous&&voiceCallId===previous.id)cleanupVoicePeer();renderVoiceCallControls();return;
+  }
+  ensureVoiceUiTicker();
+  if(call.status==='ringing'&&call.caller!==role)startIncomingVoiceRing(call.id);else stopIncomingVoiceRing();
+  if(voiceCallId===call.id&&voicePeer){
+    const generation=Number(call.generation||0);
+    if(call.caller===role&&call.answer&&generation>voiceRemoteDescriptionGeneration){
+      try{await voicePeer.setRemoteDescription(new RTCSessionDescription(call.answer));voiceRemoteDescriptionGeneration=generation;voiceCallMode='connecting';await addRemoteVoiceCandidates(call);}catch(error){console.warn('voice remote answer',error);voiceCallMode='reconnecting';scheduleVoiceReconnect(1800);}
+    }else if(call.caller!==role&&call.status==='reconnecting'&&call.offer&&generation>voiceRemoteDescriptionGeneration){
+      await answerVoiceRestart(call);
+    }else if(voicePeer.remoteDescription){
+      await addRemoteVoiceCandidates(call);
     }
-    if(call.status==='ringing'&&call.caller!==role)startIncomingVoiceRing(call.id);else stopIncomingVoiceRing();
-    if(call.status==='accepted'&&call.caller===role&&call.answer&&voicePeer&&voiceCallId===call.id&&!voicePeer.currentRemoteDescription){
-      try{await voicePeer.setRemoteDescription(new RTCSessionDescription(call.answer));voiceCallMode='connecting';}catch(error){console.warn('voice remote description',error);voiceCallMode='failed';}
+    await flushVoiceCandidates();
+  }else if(call.status!=='ringing'&&role&&call.id!==voiceCallId){
+    // A page reload or Android browser suspension lost the PeerConnection. Ask the original caller to renegotiate instead of silently ending the call.
+    voiceCallId=call.id;voiceCallMode='reconnecting';voiceQuality='offline';
+    if(call.caller===role){
+      try{await createVoicePeer(call.id,Number(call.generation||0));await restartVoiceIce();}catch(error){console.warn('voice resume caller',error);}
+    }else{
+      requestVoiceReconnect();
     }
-    renderVoiceCallControls();
-  }finally{voiceSyncBusy=false;}
+  }
+  if(call.caller===role&&call.reconnectRequestAt&&Number(call.reconnectRequestAt)>voiceLastReconnectRequest){
+    voiceLastReconnectRequest=Number(call.reconnectRequestAt);restartVoiceIce();
+  }
+  renderVoiceCallControls();
 }
+function syncVoiceCall(before,after){
+  voiceSyncChain=voiceSyncChain.then(()=>syncVoiceCallNow(before,after)).catch(error=>{console.warn('voice sync',error);voiceCallMode='reconnecting';voiceQuality='offline';renderVoiceCallControls();});
+  return voiceSyncChain;
+}
+function callSignalBars(){return `<span class="call-signal ${voiceQuality}" aria-hidden="true"><i></i><i></i><i></i></span>`;}
+function callWave(){return '<span class="call-wave" aria-hidden="true"><i></i><i></i><i></i><i></i></span>';}
 function renderVoiceCallControls(){
   const box=document.querySelector('#call-controls');if(!box)return;
   const available=Boolean(roomCode&&state&&meta&&canPlay());
   if(!available){box.hidden=true;box.innerHTML='';return;}
   box.hidden=false;
-  if(!voiceCallSupported()){box.innerHTML='<div class="call-pill unavailable">📞 المكالمة غير مدعومة في المتصفح ده</div>';return;}
+  if(!voiceCallSupported()){box.innerHTML='<div class="call-unsupported">📞</div>';return;}
   const call=state?.call||null;
-  if(!call){
-    if(voiceCallId&&voiceCallMode!=='idle'){box.innerHTML='<div class="call-pill outgoing"><span class="call-status-text">🎙️ جاري تجهيز الاتصال...</span><button class="call-end" data-call-action="end">إلغاء</button></div>';return;}
-    box.innerHTML='<button class="call-main-btn" data-call-action="start">📞 اتصال صوتي</button>';return;
-  }
+  if(!call){box.className='call-controls';box.innerHTML='<button class="call-main-btn" data-call-action="start" aria-label="بدء مكالمة صوتية"><span class="call-main-icon">📞</span><span>اتصال</span></button>';return;}
   const callerName=call.caller==='host'?'بابا':childName(),otherName=nameOf(other(role));
   if(call.status==='ringing'&&call.caller!==role){
-    box.innerHTML=`<div class="call-pill incoming"><span class="call-status-text">📞 ${callerName} بيتصل...</span><button class="call-accept" data-call-action="accept">✅ قبول</button><button class="call-reject" data-call-action="reject">✖️ رفض</button></div>`;return;
+    box.className='call-controls call-overlay';
+    box.innerHTML=`<div class="call-incoming-card"><div class="caller-orbit"><span class="caller-avatar">${call.caller==='host'?'👨':'👧'}</span><i></i><i></i><i></i></div><strong>${callerName}</strong><small>📞 مكالمة صوتية</small><div class="incoming-wave">${callWave()}</div><div class="call-round-actions"><button class="call-round reject" data-call-action="reject" aria-label="رفض المكالمة">✕</button><button class="call-round accept" data-call-action="accept" aria-label="قبول المكالمة">📞</button></div></div>`;return;
   }
   if(call.status==='ringing'&&call.caller===role){
-    box.innerHTML=`<div class="call-pill outgoing"><span class="call-status-text">📞 جاري الاتصال بـ ${otherName}...</span><button class="call-end" data-call-action="end">إلغاء</button></div>`;return;
+    box.className='call-controls';
+    box.innerHTML=`<div class="call-modern-pill ringing"><div class="call-avatar-mini">${other(role)==='host'?'👨':'👧'}</div><div class="call-ring-dots"><i></i><i></i><i></i></div><span class="call-peer-name">${otherName}</span><button class="call-icon-btn end" data-call-action="end" aria-label="إلغاء المكالمة">✕</button></div>`;return;
   }
   const connected=voicePeer?.connectionState==='connected'||voiceCallMode==='connected';
-  const failed=voiceCallMode==='failed'||(!voicePeer&&call.status==='accepted');
-  const statusText=connected?'🟢 المكالمة شغالة':failed?'⚠️ الاتصال الصوتي انقطع':'🟡 جاري توصيل الصوت...';
-  box.innerHTML=`<div class="call-pill active"><span class="call-status-text">${statusText}</span><button class="call-tool ${voiceMicMuted?'is-off':''}" data-call-action="mic">${voiceMicMuted?'🎙️ تشغيل الميكروفون':'🎙️ كتم الميكروفون'}</button><button class="call-tool ${voiceSpeakerMuted?'is-off':''}" data-call-action="speaker">${voiceSpeakerMuted?'🔇 تشغيل صوت المكالمة':'🔊 كتم صوت المكالمة'}</button><button class="call-end" data-call-action="end">📵 إنهاء</button></div>`;
+  const reconnecting=!connected&&(voiceCallMode==='reconnecting'||call.status==='reconnecting'||voiceQuality==='offline');
+  const statusClass=connected?'live':reconnecting?'reconnecting':'connecting';
+  const statusIcon=connected?'●':reconnecting?'↻':'◌';
+  const statusLabel=connected?(voiceQuality==='poor'?'الاتصال ضعيف':voiceQuality==='fair'?'الاتصال متوسط':'المكالمة شغالة'):reconnecting?'إعادة الاتصال…':'جاري التوصيل…';
+  box.className='call-controls';
+  box.innerHTML=`<div class="call-modern-pill ${statusClass} ${voiceQuality}"><div class="call-live-core"><span class="call-state-dot" aria-label="${statusLabel}">${statusIcon}</span>${connected?callWave():''}<span class="call-timer">${voiceDuration(call.acceptedAt)}</span>${callSignalBars()}</div><div class="call-icon-tools"><button class="call-icon-btn ${voiceMicMuted?'off':''}" data-call-action="mic" aria-label="${voiceMicMuted?'تشغيل الميكروفون':'كتم الميكروفون'}">${voiceMicMuted?'🔇':'🎙️'}</button><button class="call-icon-btn ${voiceSpeakerMuted?'off':''}" data-call-action="speaker" aria-label="${voiceSpeakerMuted?'تشغيل صوت المكالمة':'كتم صوت المكالمة'}">${voiceSpeakerMuted?'🔈':'🔊'}</button>${reconnecting?'<button class="call-icon-btn retry" data-call-action="retry" aria-label="إعادة محاولة الاتصال">↻</button>':''}<button class="call-icon-btn end" data-call-action="end" aria-label="إنهاء المكالمة">📵</button></div><span class="call-sr-status">${statusLabel}</span></div>`;
 }
+
+
 function info(text) { message.hidden = !text; message.textContent = text || ''; }
 function humanError(error) {
   console.error(error);
@@ -1916,6 +2074,7 @@ document.querySelector('#call-controls')?.addEventListener('click',async e=>{
   if(action==='end')return endVoiceCall();
   if(action==='mic')return toggleVoiceMic();
   if(action==='speaker')return toggleVoiceSpeaker();
+  if(action==='retry')return retryVoiceCall();
 });
 screen.addEventListener('keydown',e=>{
   if (e.key==='Enter'&&e.target?.id==='room-input') {e.preventDefault();joinRoom();}
