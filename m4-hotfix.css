@@ -1,64 +1,117 @@
-/* M4.2 — shared hub-screen layout hotfix */
-body.hub-view .hub-stage:not(.corridor-stage){
-  margin-bottom:0!important;
+/* M4.3 — robust hub visibility fix
+   The action card is placed in normal document flow below the artwork.
+   This avoids Samsung/Android browsers clipping absolute overlays after re-render.
+*/
+body.hub-view .hub-screen-wrap{
+  width:100%!important;
+  max-width:1536px!important;
+  margin:0 auto!important;
+  padding:0 6px max(12px,env(safe-area-inset-bottom))!important;
+}
+
+body.hub-view .hub-screen-wrap > .hub-stage{
+  margin:0 auto!important;
   overflow:hidden!important;
 }
-body.hub-view .hub-stage:not(.corridor-stage) .hub-stage-caption{
+
+body.hub-view .hub-stage-caption.hub-stage-caption-static{
+  position:relative!important;
   top:auto!important;
-  bottom:max(10px, env(safe-area-inset-bottom))!important;
-  left:10px!important;
-  right:10px!important;
-  width:auto!important;
+  right:auto!important;
+  bottom:auto!important;
+  left:auto!important;
+  inset:auto!important;
+  display:block!important;
+  visibility:visible!important;
+  opacity:1!important;
+  transform:none!important;
+  width:min(620px,calc(100% - 8px))!important;
   max-width:620px!important;
-  margin:auto!important;
+  margin:7px auto 0!important;
   padding:9px 10px!important;
   border-radius:16px!important;
-  background:rgba(255,252,255,.95)!important;
+  background:rgba(255,252,255,.98)!important;
   backdrop-filter:blur(14px)!important;
   -webkit-backdrop-filter:blur(14px)!important;
-  box-shadow:0 10px 28px rgba(59,32,77,.22)!important;
-  z-index:20!important;
+  border:1px solid rgba(255,255,255,.92)!important;
+  box-shadow:0 9px 24px rgba(59,32,77,.18)!important;
+  z-index:10!important;
+  text-align:center!important;
+  pointer-events:auto!important;
 }
-body.hub-view .hub-stage:not(.corridor-stage) .hub-stage-caption>strong{
+
+body.hub-view .hub-stage-caption-static > strong{
+  display:block!important;
   font-size:.9rem!important;
 }
-body.hub-view .hub-stage:not(.corridor-stage) .hub-stage-caption>small{
+
+body.hub-view .hub-stage-caption-static > small{
+  display:block!important;
   font-size:.62rem!important;
   margin:2px 0 4px!important;
 }
-body.hub-view .hub-stage:not(.corridor-stage) .hub-room-line{
+
+body.hub-view .hub-stage-caption-static .hub-room-line{
+  display:flex!important;
+  align-items:center!important;
+  justify-content:center!important;
+  gap:6px!important;
+  flex-wrap:wrap!important;
   margin:4px 0!important;
 }
-body.hub-view .hub-stage:not(.corridor-stage) .hub-enter-btn{
+
+body.hub-view .hub-stage-caption-static .hub-enter-btn,
+body.hub-view .hub-stage-caption-static .hub-share-fix{
+  display:block!important;
+  width:100%!important;
   min-height:38px!important;
+  margin-top:5px!important;
   padding:7px 10px!important;
-  margin-top:4px!important;
-}
-body.hub-view .hub-stage:not(.corridor-stage) .hub-gate-actions{
-  margin-top:4px!important;
-  gap:5px!important;
-}
-body.hub-view .hub-stage:not(.corridor-stage) .hub-gate-actions .btn{
-  min-height:36px!important;
-  padding:6px 10px!important;
 }
 
-@media (max-width:420px){
-  body.hub-view .hub-stage:not(.corridor-stage) .hub-stage-caption{
-    bottom:max(7px, env(safe-area-inset-bottom))!important;
+body.hub-view .hub-stage-caption-static .hub-share-fix{
+  border:0;
+  border-radius:12px;
+  font:inherit;
+  font-weight:900;
+  cursor:pointer;
+  color:white;
+  background:linear-gradient(135deg,#f065a5,#8b6bdc);
+  box-shadow:0 6px 16px rgba(121,76,156,.2);
+}
+
+body.hub-view .hub-stage-caption-static .hub-gate-actions{
+  margin-top:5px!important;
+  gap:6px!important;
+}
+
+/* Never let the image sit on top of its controls. */
+body.hub-view .hub-stage-image{z-index:1!important}
+body.hub-view .hub-stage-shade{z-index:2!important}
+
+/* Initial home card stays over the school image. */
+body.hub-view .hub-school-gate .hub-welcome-card{
+  position:absolute!important;
+  z-index:30!important;
+  display:block!important;
+  visibility:visible!important;
+  opacity:1!important;
+}
+
+@media(max-width:520px){
+  body.hub-view .hub-screen-wrap{padding-inline:4px!important}
+  body.hub-view .hub-stage-caption.hub-stage-caption-static{
+    width:calc(100% - 4px)!important;
+    margin-top:5px!important;
     padding:7px 8px!important;
   }
-  body.hub-view .hub-stage:not(.corridor-stage) .hub-stage-caption>strong{
-    font-size:.82rem!important;
-  }
-  body.hub-view .hub-stage:not(.corridor-stage) .hub-stage-caption>small{
-    font-size:.56rem!important;
-  }
-  body.hub-view .hub-stage:not(.corridor-stage) .hub-room-line b{
+  body.hub-view .hub-stage-caption-static > strong{font-size:.82rem!important}
+  body.hub-view .hub-stage-caption-static > small{font-size:.56rem!important}
+  body.hub-view .hub-stage-caption-static .hub-room-line b{
     font-size:.86rem!important;
     padding:4px 6px!important;
   }
-  body.hub-view .hub-stage:not(.corridor-stage) .hub-wait-note{
+  body.hub-view .hub-stage-caption-static .hub-wait-note{
     margin:3px!important;
     font-size:.64rem!important;
   }
