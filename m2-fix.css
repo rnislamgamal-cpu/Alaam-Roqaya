@@ -1,0 +1,261 @@
+
+/* =========================================================
+   مدرسة + عالم رقية — M2 responsive hotfix
+   الصور الأصلية كلها 1536 × 1404.
+   الهدف: الصورة كاملة بدون قص أو Zoom + منع تداخل عناصر التحكم.
+   ========================================================= */
+
+body.hub-view{
+  --hub-top:56px;
+  background:#f7eef8!important;
+  overflow-x:hidden;
+}
+
+/* شريط الاتصال ثابت لكن أصغر، والصورة تبدأ تحته بدل ما يركب فوقها */
+body.hub-view .header{
+  position:fixed!important;
+  z-index:120!important;
+  top:max(4px,env(safe-area-inset-top))!important;
+  left:6px!important;
+  right:6px!important;
+  margin:0!important;
+  min-height:44px!important;
+  padding:4px 6px!important;
+  gap:4px!important;
+  border-radius:14px!important;
+}
+body.hub-view .brand{display:none!important}
+body.hub-view .connection{font-size:.57rem!important;padding:3px 5px!important}
+body.hub-view .sound-toggle{
+  min-height:34px!important;
+  padding:5px 8px!important;
+  font-size:.66rem!important;
+  border-radius:12px!important;
+}
+body.hub-view .call-controls{
+  flex-basis:auto!important;
+  width:auto!important;
+  flex:1!important;
+  position:static!important;
+  margin:0!important;
+}
+body.hub-view .call-main-btn{
+  min-height:34px!important;
+  padding:4px 9px!important;
+  font-size:.70rem!important;
+  gap:5px!important;
+}
+body.hub-view .call-main-icon{width:24px!important;height:24px!important}
+body.hub-view .call-modern-pill{
+  min-width:0!important;
+  max-width:min(100%,470px)!important;
+  padding:5px 7px!important;
+  gap:6px!important;
+}
+body.hub-view .call-icon-btn{width:32px!important;height:32px!important}
+
+/* رسالة نسخ الرابط لم تعد بانر ضخم يغطي نصف الصورة */
+body.hub-view #message{
+  position:fixed!important;
+  z-index:130!important;
+  top:calc(max(4px,env(safe-area-inset-top)) + 48px)!important;
+  left:50%!important;
+  right:auto!important;
+  transform:translateX(-50%)!important;
+  width:max-content!important;
+  max-width:calc(100vw - 20px)!important;
+  padding:6px 10px!important;
+  margin:0!important;
+  border-radius:999px!important;
+  font-size:.68rem!important;
+  line-height:1.25!important;
+  text-align:center!important;
+  box-shadow:0 6px 18px rgba(65,45,80,.16)!important;
+}
+
+/* مساحة آمنة تحت شريط المكالمة */
+body.hub-view #screen{
+  min-height:100svh!important;
+  padding-top:calc(max(4px,env(safe-area-inset-top)) + var(--hub-top))!important;
+  background:#f7eef8!important;
+}
+
+/* أهم تعديل:
+   لا cover ولا fill.
+   المقاس يحافظ على نسبة 1536:1404 ويختار أصغر مقاس يناسب العرض والارتفاع.
+   بالتالي الصورة تظهر كاملة على الموبايل والتابلت. */
+body.hub-view .hub-stage{
+  position:relative!important;
+  display:block!important;
+  width:min(100vw,calc((100svh - 68px) * 1.094017094))!important;
+  max-width:1536px!important;
+  min-height:0!important;
+  height:auto!important;
+  aspect-ratio:1536/1404!important;
+  margin:0 auto!important;
+  overflow:visible!important;
+  background:#f3e9f3!important;
+}
+body.hub-view .hub-stage-image{
+  display:block!important;
+  width:100%!important;
+  height:100%!important;
+  object-fit:contain!important;
+  object-position:center!important;
+  border:0!important;
+}
+body.hub-view .hub-stage-shade{
+  inset:0!important;
+  border-radius:inherit;
+}
+
+/* شاشة البداية فقط: الكارت يظل صغيرًا فوق أسفل الصورة */
+body.hub-view .hub-school-gate{
+  overflow:hidden!important;
+}
+body.hub-view .hub-welcome-card{
+  left:8px!important;
+  right:8px!important;
+  bottom:8px!important;
+  max-width:min(600px,calc(100% - 16px))!important;
+  padding:9px 10px!important;
+  border-radius:17px!important;
+}
+body.hub-view .hub-welcome-card>strong{font-size:.92rem!important}
+body.hub-view .hub-welcome-card>small{font-size:.61rem!important;margin:2px 0 5px!important}
+body.hub-view .hub-home-settings{gap:5px!important;margin:5px 0!important}
+body.hub-view .hub-home-settings label{font-size:.58rem!important}
+body.hub-view .hub-home-settings .input{
+  min-height:32px!important;
+  padding:5px 7px!important;
+  font-size:.70rem!important;
+}
+body.hub-view .hub-entry-actions{gap:5px!important}
+body.hub-view .hub-entry-actions .btn,
+body.hub-view .hub-join-row .code-input{
+  min-height:34px!important;
+  padding:5px 8px!important;
+  font-size:.70rem!important;
+}
+
+/* صفحات العربي/الحساب/الإنجليزي/القرآن/عالم رقية:
+   صندوق الأزرار يخرج أسفل الصورة بدلاً من تغطية تفاصيلها */
+body.hub-view .hub-stage:not(.hub-school-gate):not(.corridor-stage){
+  margin-bottom:108px!important;
+}
+body.hub-view .hub-stage-caption{
+  top:calc(100% + 7px)!important;
+  bottom:auto!important;
+  left:8px!important;
+  right:8px!important;
+  max-width:min(600px,calc(100% - 16px))!important;
+  padding:8px 9px!important;
+  border-radius:16px!important;
+  box-shadow:0 10px 28px rgba(59,32,77,.13)!important;
+}
+body.hub-view .hub-stage-caption>strong{font-size:.91rem!important}
+body.hub-view .hub-stage-caption>small{font-size:.60rem!important;margin:2px 0 5px!important}
+body.hub-view .hub-stage-caption .btn{
+  min-height:33px!important;
+  padding:5px 8px!important;
+  font-size:.69rem!important;
+}
+body.hub-view .hub-room-line{margin:3px 0!important;font-size:.61rem!important}
+body.hub-view .hub-room-line b{padding:3px 6px!important;font-size:.83rem!important}
+body.hub-view .hub-mini-btn{min-height:29px!important;padding:4px 7px!important;font-size:.65rem!important}
+body.hub-view .hub-wait-note{font-size:.62rem!important;margin:3px!important}
+body.hub-view .hub-control-note{font-size:.55rem!important;margin-top:2px!important}
+
+/* الطرقة: الصورة نفسها هي الواجهة.
+   مناطق الضغط شفافة تمامًا ولا نكرر أسماء المواد فوق الكتابة الموجودة بالصورة. */
+body.hub-view .corridor-stage{
+  width:min(100vw,calc((100svh - 68px) * 1.094017094))!important;
+  min-height:0!important;
+  height:auto!important;
+  aspect-ratio:1536/1404!important;
+  margin:0 auto!important;
+  overflow:hidden!important;
+}
+body.hub-view .corridor-stage .hub-stage-image{
+  width:100%!important;
+  height:100%!important;
+  object-fit:contain!important;
+}
+body.hub-view .corridor-hotspot{
+  border:0!important;
+  background:transparent!important;
+  box-shadow:none!important;
+  animation:none!important;
+  border-radius:12px!important;
+}
+body.hub-view .corridor-hotspot span{display:none!important}
+body.hub-view .corridor-hotspot:not(:disabled):active{
+  background:rgba(255,255,255,.18)!important;
+}
+
+/* زر الرجوع لا يغطي لوحات المواد: موجود أسفل منتصف الطرقة */
+body.hub-view .corridor-topbar{
+  top:auto!important;
+  bottom:6px!important;
+  left:50%!important;
+  right:auto!important;
+  transform:translateX(-50%)!important;
+  justify-content:center!important;
+}
+body.hub-view .corridor-topbar span{display:none!important}
+body.hub-view .corridor-topbar .hub-mini-btn{
+  min-width:34px!important;
+  background:rgba(255,255,255,.88)!important;
+}
+body.hub-view .hub-guest-lock{
+  bottom:6px!important;
+  font-size:.57rem!important;
+  padding:4px 7px!important;
+}
+
+/* فصل العربي داخل iframe يبدأ بعد شريط الاتصال */
+body.school-frame-view #screen{
+  padding-top:calc(max(4px,env(safe-area-inset-top)) + var(--hub-top))!important;
+}
+body.school-frame-view .school-frame-shell{
+  min-height:calc(100svh - 60px)!important;
+  padding-top:0!important;
+}
+body.school-frame-view .school-frame-bar{
+  top:0!important;
+  height:40px!important;
+  padding:3px 6px!important;
+}
+body.school-frame-view .school-frame-bar .btn{
+  min-height:31px!important;
+  padding:4px 7px!important;
+  font-size:.64rem!important;
+}
+body.school-frame-view #school-frame{
+  height:calc(100svh - 100px)!important;
+}
+
+@media(max-width:520px){
+  body.hub-view{--hub-top:50px}
+  body.hub-view .header{left:4px!important;right:4px!important;padding:3px 4px!important}
+  body.hub-view .connection{font-size:.53rem!important}
+  body.hub-view .sound-toggle{font-size:.60rem!important;padding:4px 6px!important}
+  body.hub-view .call-main-btn{font-size:.64rem!important;padding:4px 7px!important}
+  body.hub-view #message{font-size:.63rem!important;padding:5px 8px!important}
+  body.hub-view .hub-stage,
+  body.hub-view .corridor-stage{
+    width:min(100vw,calc((100svh - 60px) * 1.094017094))!important;
+  }
+  body.hub-view .hub-welcome-card{left:6px!important;right:6px!important;bottom:6px!important;padding:7px 8px!important}
+}
+
+@media(min-width:700px) and (orientation:landscape){
+  body.hub-view #screen{
+    display:block!important;
+    padding-inline:12px!important;
+  }
+  body.hub-view .hub-stage{
+    border-radius:18px!important;
+    box-shadow:0 12px 38px rgba(70,42,84,.14)!important;
+  }
+}
