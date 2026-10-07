@@ -8,7 +8,7 @@ const screen = $('#screen');
 const message = $('#message');
 const connection = $('#connection');
 const LETTERS = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789';
-const APP_VERSION = 'M1.0';
+const APP_VERSION = 'M4.0';
 const HUB_GAMES = new Set(['school-gate','corridor','school-arabic-gate','school-math','school-english','school-quran','school-arabic','world-gate']);
 const HUB_ASSETS = {
   schoolGate:'assets/school-gate.jpg',
@@ -102,7 +102,7 @@ const GAME_LABELS = {
   numberline:['🔢','الرقم الناقص','كمّلي تسلسل الأرقام'],
   snakes:['🐍','السلم والثعبان','نرد متحرك • خطوات حقيقية • سلالم وثعابين'],
   coloring:['🎨','كتاب التلوين','اختاري لون واضغطي لتلوين الرسمة'],
-  jigsaw:['🧩','البازل المصغّر','ركّبي ٤ أو ٦ قطع في مكانها'],
+  jigsaw:['🧩','البازل','٤ / ١٠ / ٢٠ / ٥٠ قطعة • لكل لاعب بازل مستقل'],
   sorting:['🧺','فرز الألوان والأشكال','اسحبي كل عنصر للصندوق المناسب'],
   phonics:['🔤','الحروف والصور','وصّلي الحرف بالصورة التي تبدأ به']
 };
@@ -113,21 +113,33 @@ const LADDERS = {4:25,13:46,33:49,42:63,50:69,62:81,74:92};
 const DICE_FACES = ['','⚀','⚁','⚂','⚃','⚄','⚅'];
 const COLOR_PALETTE = ['#ef5350','#42a5f5','#fdd835','#66bb6a','#ec6fa9','#ff9800','#8e6bd8','#26c6da'];
 const COLORING_PAGES = [
-  {id:'kitten',name:'القطة المرِحة',parts:15},
-  {id:'car',name:'السيارة السعيدة',parts:14},
-  {id:'butterfly',name:'فراشة الحديقة',parts:14},
-  {id:'flower',name:'زهرة جميلة',parts:12},
-  {id:'house',name:'البيت اللطيف',parts:13},
-  {id:'fish',name:'السمكة المرحة',parts:12}
+  {id:'sun-face',name:'الشمس المرِحة',src:'assets/coloring/sun-face.webp',level:'سهل'},
+  {id:'flower',name:'الزهرة المرِحة',src:'assets/coloring/flower.webp',level:'سهل'},
+  {id:'butterfly-simple',name:'الفراشة',src:'assets/coloring/butterfly-simple.webp',level:'سهل'},
+  {id:'sun-flowers',name:'الشمس والزهور',src:'assets/coloring/sun-flowers.webp',level:'سهل'},
+  {id:'teddy-balloon',name:'الدبدوب والبالونة',src:'assets/coloring/teddy-balloon.webp',level:'متوسط'},
+  {id:'fish-line',name:'السمكة تحت البحر',src:'assets/coloring/fish-line.webp',level:'متوسط'},
+  {id:'unicorn-line',name:'اليونيكورن',src:'assets/coloring/unicorn-line.webp',level:'متوسط'},
+  {id:'butterfly-flowers',name:'الفراشة والزهور',src:'assets/coloring/butterfly-flowers.webp',level:'متوسط'},
+  {id:'rabbit-garden',name:'الأرنب في الحديقة',src:'assets/coloring/rabbit-garden.webp',level:'متوسط'},
+  {id:'house-garden',name:'البيت والحديقة',src:'assets/coloring/house-garden.webp',level:'صعب'},
+  {id:'princess-castle-line',name:'الأميرة والقلعة',src:'assets/coloring/princess-castle-line.webp',level:'صعب'},
+  {id:'princess-unicorn-detail',name:'الأميرة واليونيكورن',src:'assets/coloring/princess-unicorn-detail.webp',level:'خبير'},
+  {id:'fairy-garden-detail',name:'الجنية والحديقة',src:'assets/coloring/fairy-garden-detail.webp',level:'خبير'}
 ];
 const PUZZLE_PICTURES=[
-  {id:'farm',name:'عائلة البقر'},
-  {id:'pond',name:'السمكة المرحة'},
-  {id:'garden',name:'حديقة الفراشة'},
-  {id:'car-trip',name:'نزهة السيارة'},
-  {id:'castle',name:'قصر الأحلام'},
-  {id:'dino',name:'الديناصور اللطيف'}
+  {id:'farm',name:'المزرعة المرِحة',src:'assets/puzzles/farm.webp'},
+  {id:'dinosaurs',name:'عالم الديناصورات',src:'assets/puzzles/dinosaurs.webp'},
+  {id:'unicorn',name:'يونيكورن قوس قزح',src:'assets/puzzles/unicorn.webp'},
+  {id:'ocean',name:'عالم البحر',src:'assets/puzzles/ocean.webp'},
+  {id:'candy',name:'أرض الحلوى',src:'assets/puzzles/candy.webp'},
+  {id:'school-bus',name:'باص المدرسة',src:'assets/puzzles/school-bus.webp'},
+  {id:'teddy-picnic',name:'نزهة الدبدوب',src:'assets/puzzles/teddy-picnic.webp'},
+  {id:'princess',name:'الأميرة والقلعة',src:'assets/puzzles/princess.webp'},
+  {id:'jungle',name:'حيوانات الغابة',src:'assets/puzzles/jungle.webp'},
+  {id:'space',name:'رحلة الفضاء',src:'assets/puzzles/space.webp'}
 ];
+const PUZZLE_LEVELS=[4,10,20,50];
 const SORT_COLORS={red:'#ef5350',blue:'#42a5f5'};
 const SORTING_POOL=[
   {icon:'🍎',label:'تفاحة'},{icon:'🚗',label:'سيارة'},{icon:'🐠',label:'سمكة'},{icon:'🦋',label:'فراشة'},
@@ -371,6 +383,7 @@ function artPicture(id,scene=false) {
   return `<img class="art-image" alt="${scene?SCENE_LABELS[id]:PICTURE_AR[id]}" src="data:image/svg+xml,${encodeURIComponent(artSvg(id,scene))}">`;
 }
 function renderOption(option,q) {
+  if(q?.visual==='odd-hard'){const [base,variant]=String(option).split('::');const art=artPicture(base);return `<span class="odd-detail-card ${variant?'odd-'+variant:''}">${art}${variant?'<i aria-hidden="true"></i>':''}</span>`;}
   if(q?.visual==='sizes' || q?.visual==='size-order') {
     const [,sizeRaw,objectId]=option.split(':');
     const size=Number(sizeRaw);
@@ -398,14 +411,12 @@ function newQuestion(which,previousIndex=-1,age=6,numberSettings={}) {
   const pick=(length)=>{let n=Math.floor(Math.random()*length);if(length>1 && n===previousIndex)n=(n+1)%length;return n;};
   const pickNumber=(min=rangeMin,max=rangeMax,avoid=null)=>{let n=min+Math.floor(Math.random()*(max-min+1));if(max>min&&n===avoid)n=n===max?min:n+1;return n;};
   if(which==='odd') {
-    // Original cartoon-style illustrations: three matching pictures and one different picture.
-    // The pictures change each round to keep the exercise varied.
-    const n=pick(PICTURE_IDS.length*3);
+    const n=pick(PICTURE_IDS.length*5);
     const base=PICTURE_IDS[n%PICTURE_IDS.length];
-    let odd=PICTURE_IDS[(n*5+7)%PICTURE_IDS.length];
-    if(odd===base) odd=PICTURE_IDS[(PICTURE_IDS.indexOf(base)+1)%PICTURE_IDS.length];
+    const variant=age<=5?'dot':age<=7?'micro':'micro2';
+    const odd=`${base}::${variant}`;
     const options=shuffle([base,base,base,odd]);
-    return {index:n,prompt:'اختاري الصورة المختلفة عن الثلاث صور المتشابهة',visual:'pictures',options,correct:options.indexOf(odd)};
+    return {index:n,prompt:age>=8?'ركّزي في أدق تفصيلة… مين المختلف؟':'اختاري الصورة المختلفة',visual:'odd-hard',optionVisual:'odd-hard',options,correct:options.indexOf(odd)};
   }
   if(which==='count') {
     const n=pickNumber(rangeMin,rangeMax,previousIndex);
@@ -462,7 +473,7 @@ function newQuestion(which,previousIndex=-1,age=6,numberSettings={}) {
     return {index:n,prompt:`اقرئي الكلمة واختاري الصورة: ${READ_BANK[n].word}`,options,correct:options.indexOf(answer),visual:'pictures'};
   }
   if(which==='english') {
-    const limit=age<=5?35:age<=7?75:ENGLISH_BANK.length;
+    const limit=Math.max(1,Math.min(ENGLISH_BANK.length,Number(englishWordLimitPreference)||20));
     const bank=ENGLISH_BANK.slice(0,limit);
     const n=pick(bank.length),[en,ar]=bank[n];
     const wrongCount=age>=8?3:2;
@@ -509,7 +520,7 @@ function newQuestion(which,previousIndex=-1,age=6,numberSettings={}) {
     }
     for(let candidate=1;choices.size<3&&candidate<=20;candidate++) if(candidate!==missing) choices.add(candidate);
     const options=shuffle([...choices].slice(0,3).map(String));
-    return {index:start*10+step,prompt:`ما الرقم الناقص؟ (من ${rangeMin} إلى ${rangeMax})`,display:`${start}  ←  ❓  ←  ${start+step*2}`,options,correct:options.indexOf(String(missing))};
+    return {index:start*10+step,prompt:`ما الرقم الناقص؟ (من ${rangeMin} إلى ${rangeMax})`,display:`<span class="math-equation" dir="rtl">${start} ← ❓ ← ${start+step*2}</span>`,options,correct:options.indexOf(String(missing))};
   }
   const doubles=training.mode==='doubles';
   const allowSubtract=training.mode==='mixed' && age>=8;
@@ -523,7 +534,7 @@ function newQuestion(which,previousIndex=-1,age=6,numberSettings={}) {
   const distractors=[];
   for(let distance=1;distractors.length<2;distance++) for(const candidate of [result-distance,result+distance]) if(candidate>=0&&candidate!==result&&!distractors.includes(candidate)){distractors.push(candidate);if(distractors.length===2)break;}
   const options=shuffle([String(result),...distractors.slice(0,2).map(String)]);
-  return {index:a*100+b+(subtract?10000:0),prompt:doubles?'كم ناتج جمع العددين المتماثلين؟':subtract?'كم ناتج الطرح؟':'كم ناتج الجمع؟',display:`${first} ${subtract?'−':'+'} ${second} = ❓`,options,correct:options.indexOf(String(result))};
+  return {index:a*100+b+(subtract?10000:0),prompt:doubles?'كم ناتج جمع العددين المتماثلين؟':subtract?'كم ناتج الطرح؟':'كم ناتج الجمع؟',display:`<span class="math-equation" dir="rtl">${first} ${subtract?'−':'+'} ${second} = ❓</span>`,options,correct:options.indexOf(String(result))};
 }
 let memoryPreference = 'random';
 let agePreference = 6;
@@ -531,6 +542,8 @@ let childNamePreference = 'رقية';
 let numberMinPreference = 1;
 let numberMaxPreference = 10;
 let mathModePreference = 'addition';
+let englishWordLimitPreference = 20;
+let puzzlePiecePreference = 10;
 function parseTrainingNumber(value){
   const normalized=String(value??'').replace(/[٠-٩]/g,d=>String('٠١٢٣٤٥٦٧٨٩'.indexOf(d))).replace(/[۰-۹]/g,d=>String('۰۱۲۳۴۵۶۷۸۹'.indexOf(d))).trim();
   if(!/^\d{1,2}$/.test(normalized)) return NaN;
@@ -546,6 +559,10 @@ function normalizeNumberTraining(settings={}){
 }
 function currentNumberTraining(){return normalizeNumberTraining({min:numberMinPreference,max:numberMaxPreference,mode:mathModePreference});}
 function saveNumberTraining(){try{localStorage.setItem('roqaya-number-min',String(numberMinPreference));localStorage.setItem('roqaya-number-max',String(numberMaxPreference));localStorage.setItem('roqaya-math-mode',mathModePreference);}catch(_){}}
+function normalizeEnglishLimit(value){const n=Number(value);const steps=[10,20,30,40,50,75,100,ENGLISH_BANK.length];return steps.find(x=>x>=n)||ENGLISH_BANK.length;}
+function saveEnglishLimit(){try{localStorage.setItem('roqaya-english-limit',String(englishWordLimitPreference));}catch(_){}}
+function normalizePuzzlePieces(value){const n=Number(value);return PUZZLE_LEVELS.includes(n)?n:10;}
+function savePuzzlePieces(){try{localStorage.setItem('roqaya-puzzle-pieces',String(puzzlePiecePreference));}catch(_){}}
 // The adult chooses a first name or nickname; no names are sent to analytics.
 function normalizeChildName(value) {
   const candidate=String(value??'').normalize('NFC').trim().replace(/\s+/gu,' ');
@@ -578,7 +595,7 @@ new MutationObserver(personalizeUi).observe(document.querySelector('.shell'),{ch
 let soundEnabled = true;
 let audioContext = null;
 let lastAudioFeedback = null;
-try { soundEnabled = localStorage.getItem('roqaya-sound') !== 'off'; memoryPreference = localStorage.getItem('roqaya-memory') || 'random'; agePreference=normalizeAge(localStorage.getItem('roqaya-child-age')); childNamePreference=normalizeChildName(localStorage.getItem('roqaya-child-name'))||'رقية'; const savedTraining=normalizeNumberTraining({min:localStorage.getItem('roqaya-number-min')??1,max:localStorage.getItem('roqaya-number-max')??10,mode:localStorage.getItem('roqaya-math-mode')||'addition'}); numberMinPreference=savedTraining.min;numberMaxPreference=savedTraining.max;mathModePreference=savedTraining.mode; } catch (_) {}
+try { soundEnabled = localStorage.getItem('roqaya-sound') !== 'off'; memoryPreference = localStorage.getItem('roqaya-memory') || 'random'; agePreference=normalizeAge(localStorage.getItem('roqaya-child-age')); childNamePreference=normalizeChildName(localStorage.getItem('roqaya-child-name'))||'رقية'; const savedTraining=normalizeNumberTraining({min:localStorage.getItem('roqaya-number-min')??1,max:localStorage.getItem('roqaya-number-max')??10,mode:localStorage.getItem('roqaya-math-mode')||'addition'}); numberMinPreference=savedTraining.min;numberMaxPreference=savedTraining.max;mathModePreference=savedTraining.mode; englishWordLimitPreference=normalizeEnglishLimit(localStorage.getItem('roqaya-english-limit')||20); puzzlePiecePreference=normalizePuzzlePieces(localStorage.getItem('roqaya-puzzle-pieces')||10); } catch (_) {}
 function sound(type='tap') {
   if (!soundEnabled) return;
   try {
@@ -858,7 +875,7 @@ async function switchVoiceInput(deviceId){
     voiceLocalStream=new MediaStream([newTrack]);voiceSelectedInputId=deviceId;
     newTrack.enabled=voicePushToTalk?(voicePttTalking&&!voiceMicMuted):!voiceMicMuted;
     if(old){for(const track of old.getTracks())if(track!==newTrack)try{track.stop();}catch(_){}}
-    await refreshVoiceAudioDevices();renderVoiceCallControls();
+    await refreshVoiceAudioDevices();renderVoiceCallControls();info('✅ تم تغيير الميكروفون');
   }catch(error){console.warn('switch voice input',error);info('مش قادر أغيّر الميكروفون. تأكد إن البلوتوث متصل واسمح للمتصفح باستخدام الميكروفون.');}
 }
 async function switchVoiceOutput(deviceId){
@@ -870,7 +887,7 @@ async function switchVoiceOutput(deviceId){
     }
     await audio.setSinkId(deviceId||'default');voiceSelectedOutputId=deviceId||'default';
     if(audio.srcObject&&!voiceSpeakerMuted)audio.play().catch(()=>{});
-    renderVoiceCallControls();
+    renderVoiceCallControls();info('✅ تم تغيير مخرج الصوت');
   }catch(error){console.warn('switch voice output',error);info('تعذر تحويل الصوت للسماعة دي. جرّب توصيل البلوتوث قبل بدء المكالمة.');}
 }
 function voiceOutputRoutingSupported(){
@@ -884,12 +901,12 @@ function voiceDevicePanel(){
   const outputOptions=['<option value="default">🔊 تلقائي / صوت الهاتف</option>',...outputs.map((d,i)=>`<option value="${d.deviceId}" ${voiceSelectedOutputId===d.deviceId?'selected':''}>${voiceDeviceIcon(d)} ${voiceDeviceLabel(d,i)}</option>`)].join('');
   const outputControl=voiceOutputRoutingSupported()
     ? `<label>الصوت الخارج<select class="call-device-select" data-call-device="output">${outputOptions}</select></label>`
-    : `<div class="call-device-fallback"><span>🔊 مخرج الصوت</span><small>اختياره من الهاتف/البلوتوث لأن المتصفح لا يدعم التحويل المباشر.</small></div>`;
-  return `<div class="call-device-panel">
-    <div class="call-device-head"><strong>🎧 أجهزة المكالمة</strong><button class="call-device-refresh" data-call-action="devices-refresh" aria-label="تحديث الأجهزة">↻</button></div>
+    : `<div class="call-device-fallback"><span>🔊 مخرج الصوت</span><small>غيّره من لوحة الصوت أو البلوتوث في الهاتف؛ المتصفح الحالي لا يدعم تحويله مباشرة.</small></div>`;
+  return `<button class="call-device-backdrop" data-call-action="devices-close" aria-label="إغلاق قائمة أجهزة المكالمة"></button><div class="call-device-panel" role="dialog" aria-modal="true" aria-label="أجهزة المكالمة">
+    <div class="call-device-head"><strong>🎧 أجهزة المكالمة</strong><div><button class="call-device-refresh" data-call-action="devices-refresh" aria-label="تحديث الأجهزة">↻</button><button class="call-device-close" data-call-action="devices-close" aria-label="إغلاق">✕</button></div></div>
     <label>الميكروفون<select class="call-device-select" data-call-device="input">${inputOptions}</select></label>
     ${outputControl}
-    <small class="call-device-note">وصّل سماعة البلوتوث قبل فتح القائمة. لو ظهرت هنا تقدر تختارها مباشرة.</small>
+    <small class="call-device-note">لو سماعة البلوتوث متصلة وظهرت في القائمة اختارها هنا. التغيير يتطبق فورًا.</small>
   </div>`;
 }
 async function ensureVoiceLocalStream(){
@@ -1165,7 +1182,8 @@ function renderVoiceCallControls(){
 }
 
 
-function info(text) { message.hidden = !text; message.textContent = text || ''; }
+let infoDismissTimer=null;
+function info(text,delay=2600) { if(infoDismissTimer){clearTimeout(infoDismissTimer);infoDismissTimer=null;} message.hidden = !text; message.textContent = text || ''; if(text&&delay>0)infoDismissTimer=setTimeout(()=>{if(message.textContent===text){message.hidden=true;message.textContent='';}},delay); }
 function humanError(error) {
   console.error(error);
   const code = error?.code || '';
@@ -1194,11 +1212,11 @@ function canPlay() { return Boolean(meta?.guestUid); }
 function isTurn(player) { return player === role; }
 function scorePanel() {
   const a = state?.scores?.host || 0, b = state?.scores?.guest || 0;
-  const statusA = presence[meta?.hostUid] ? '🟢 متصل' : '⚪ غير متصل';
-  const statusB = presence[meta?.guestUid] ? '🟢 متصلة' : '⚪ غير متصلة';
+  const dotA = presence[meta?.hostUid] ? '🟢' : '🔴';
+  const dotB = presence[meta?.guestUid] ? '🟢' : '🔴';
   return `<div class="scoreboard">
-    <div class="score"><span>👨 بابا • ${statusA}</span><strong>${a} ⭐</strong></div>
-    <div class="score rose"><span>👧 ${childName()} • ${statusB}</span><strong>${b} ⭐</strong></div>
+    <div class="score"><span>👨 بابا ${dotA}</span><strong>⭐ ${arabicDigits(a)}</strong></div>
+    <div class="score rose"><span>👧 ${childName()} ${dotB}</span><strong>⭐ ${arabicDigits(b)}</strong></div>
   </div>`;
 }
 function renderHome() {
@@ -1221,9 +1239,8 @@ function renderHome() {
   </div>`;
 }
 
-function hubRoleNote(){
-  return role==='host' ? 'أنت المتحكم في التنقل' : 'بابا هو اللي بيختار المكان';
-}
+function hubRoleNote(){ return role==='guest' ? 'بابا هو اللي بيختار المكان' : ''; }
+
 function hubStage(image,title,subtitle,actions=''){
   return `<div class="hub-stage"><img src="${image}" alt="${title}" class="hub-stage-image" />
     <div class="hub-stage-shade"></div>
@@ -1250,7 +1267,7 @@ function renderCorridor(){
   const disabled=role!=='host'?'disabled':'';
   screen.innerHTML=`<div class="hub-stage corridor-stage">
     <img src="${HUB_ASSETS.corridor}" alt="طرقة مدرسة رقية وبها أبواب المواد وعالم رقية" class="hub-stage-image" />
-    <div class="corridor-topbar"><button class="hub-mini-btn" data-hub-target="school-gate" ${disabled}>↩ باب المدرسة</button><span>${role==='host'?'اختار المكان':'بابا بيختار المكان'}</span></div>
+    <div class="corridor-topbar"><button class="hub-mini-btn corridor-school-icon" data-hub-target="school-gate" ${disabled} aria-label="الرجوع لباب المدرسة">🏫</button><span>${role==='host'?'اختار المكان':'بابا بيختار المكان'}</span></div>
     <button class="corridor-hotspot hs-english" data-hub-target="school-english" ${disabled} aria-label="اللغة الإنجليزية"><span>English</span></button>
     <button class="corridor-hotspot hs-math" data-hub-target="school-math" ${disabled} aria-label="الحساب"><span>الحساب</span></button>
     <button class="corridor-hotspot hs-arabic" data-hub-target="school-arabic-gate" ${disabled} aria-label="اللغة العربية"><span>العربي</span></button>
@@ -1273,7 +1290,7 @@ function renderSubjectGate(kind){
 }
 function renderWorldGate(){
   const disabled=role!=='host'?'disabled':'';
-  screen.innerHTML=hubStage(HUB_ASSETS.worldGate,'عالم رقية','من هنا ندخل الألعاب والملاهي',`<div class="hub-gate-actions"><button class="btn soft" data-hub-target="corridor" ${disabled}>↩ المدرسة</button><button class="btn primary" data-hub-target="lobby" ${disabled}>🎡 ندخل عالم رقية</button></div><small class="hub-control-note">${hubRoleNote()}</small>`);
+  screen.innerHTML=hubStage(HUB_ASSETS.worldGate,'عالم رقية','من هنا ندخل الألعاب والملاهي',`<div class="hub-gate-actions"><button class="btn soft hub-school-icon-btn" data-hub-target="corridor" ${disabled} aria-label="الرجوع للمدرسة">🏫</button><button class="btn primary hub-world-enter-btn" data-hub-target="lobby" ${disabled}><span>🎡</span><strong>دخول عالم رقية</strong></button></div><small class="hub-control-note">${hubRoleNote()}</small>`);
 }
 function renderSchoolArabic(){
   const existing=document.querySelector('#school-frame');
@@ -1291,17 +1308,7 @@ function renderLobby() {
   const childAge=normalizeAge(state?.childAge);
   const available=gamesForAge(childAge);
   screen.innerHTML = `<div class="panel center lobby-panel">
-    <div class="lobby-hero-row">
-      <div class="lobby-status-icon" aria-hidden="true">🎪</div>
-      <div class="lobby-status-copy">
-        <h2>${waiting ? `في انتظار ${childName()} 💌` : 'يلا نلعب! 🎉'}</h2>
-        <p>${waiting ? `خلي ${childName()} تدخل بالكود.` : `اختار اللعبة وابدأ مع ${childName()}.`}</p>
-      </div>
-    </div>
-    <div class="room-strip">
-      <div class="room-code-block"><span>الغرفة</span><div class="room-code" aria-label="رمز الغرفة">${roomCode}</div></div>
-      <button class="btn soft lobby-copy-btn" data-action="copy">🔗 نسخ</button>
-    </div>
+    ${role==='host'?'<div class="lobby-top-actions"><button class="btn soft lobby-school-top" data-hub-target="corridor" aria-label="الرجوع للمدرسة">🏫 <span>المدرسة</span></button></div>':''}
     ${scorePanel()}
     <div class="lobby-settings-grid">
       <div class="age-settings lobby-setting">
@@ -1313,16 +1320,19 @@ function renderLobby() {
         ${role==='host'?`<select id="child-age-lobby" class="input">${ageOptions(childAge)}</select>`:`<div class="age-view">${childAge} سنوات</div>`}
       </div>
     </div>
-    ${role==='host'?'<div class="hub-world-back"><button class="btn soft" data-hub-target="corridor">🏫 الرجوع للمدرسة</button></div>':''}
     <div class="games-heading-row"><h3 class="game-title">🎮 الألعاب</h3><span>${available.length} لعبة</span></div>
     <div class="game-grid lobby-game-grid">
-      ${available.map(key=>`<button class="game-choice" data-game="${key}" ${role !== 'host' || waiting ? 'disabled':''}><span class="emoji">${GAME_LABELS[key][0]}</span>${GAME_LABELS[key][1]}<small>${GAME_LABELS[key][2]}</small></button>`).join('')}
+      ${available.map((key,i)=>`<button class="game-choice game-card-${key}" data-game="${key}" ${role !== 'host' || waiting ? 'disabled':''}><span class="game-card-art"><span class="emoji">${GAME_LABELS[key][0]}</span></span><strong>${GAME_LABELS[key][1]}</strong><small>${GAME_LABELS[key][2]}</small></button>`).join('')}
     </div>
     ${role === 'guest' ? '<p class="hint lobby-bottom-hint">استني بابا يختار اللعبة 🎠</p>' : ''}
+    <div class="room-strip lobby-room-bottom">
+      <div class="room-code-block"><span>الغرفة</span><div class="room-code" aria-label="رمز الغرفة">${roomCode}</div></div>
+      <button class="btn soft lobby-copy-btn" data-action="copy">🔗 نسخ</button>
+    </div>
   </div>`;
 }
 function gameHeading(icon, title) {
-  return `<div class="topline"><span class="tag">${icon} ${title}</span><div class="topline-actions"><button class="btn soft voice-replay" data-action="welcome" ${!soundEnabled?'disabled':''}>🔊 اسمع الترحيب</button>${role === 'host' ? '<button class="btn soft" data-action="lobby">🎡 المدينة</button>' : '<span class="tag green">غرفة خاصة 🔒</span>'}</div></div>${scorePanel()}`;
+  return `<div class="topline compact-game-nav"><span class="tag game-name-tag">${icon} ${title}</span><div class="topline-actions"><button class="btn soft voice-replay" data-action="welcome" ${!soundEnabled?'disabled':''}>🔊 <span>اسمع الترحيب</span></button>${role === 'host' ? '<button class="btn soft" data-action="lobby">🎡 <span>المدينة</span></button>' : '<span class="tag green">🔒</span>'}</div></div>${scorePanel()}`;
 }
 function memorySettingsInsideGame() {
   if (role !== 'host') return '';
@@ -1336,6 +1346,18 @@ function memorySettingsInsideGame() {
     <p class="hint">التطبيق يبدأ جولة ذاكرة جديدة فورًا.</p>
   </div>`;
 }
+function englishSettingsInsideGame(){
+  if(role!=='host')return '';
+  const max=ENGLISH_BANK.length;
+  const steps=[10,20,30,40,50,75,100,max].filter((n,i,a)=>n<=max&&a.indexOf(n)===i);
+  const chosen=Math.min(englishWordLimitPreference,max);
+  return `<div class="in-game-settings english-settings compact-settings"><label for="english-limit-game">🔤 الكلمات المتاحة</label><div class="settings-action-row"><select id="english-limit-game" class="input">${steps.map(n=>`<option value="${n}" ${chosen===n?'selected':''}>أول ${arabicDigits(n)} كلمة</option>`).join('')}</select><button class="btn soft settings-apply" data-action="apply-english-settings">طبّق</button></div></div>`;
+}
+function puzzleSettingsInsideGame(){
+  if(role!=='host')return '';
+  const chosen=normalizePuzzlePieces(state?.jigsaw?.pieceCount||puzzlePiecePreference);
+  return `<div class="in-game-settings puzzle-settings compact-settings"><label for="puzzle-size-game">🧩 صعوبة البازل</label><div class="puzzle-level-row">${PUZZLE_LEVELS.map(n=>`<button class="puzzle-level ${chosen===n?'selected':''}" data-puzzle-level="${n}">${arabicDigits(n)}</button>`).join('')}</div><small>كل لاعب له بازل مستقل بنفس الصورة.</small></div>`;
+}
 function numberSettingsInsideGame(gameKey) {
   if (role !== 'host' || !['count','math','numberline','compare'].includes(gameKey)) return '';
   const cfg=currentNumberTraining();
@@ -1343,7 +1365,7 @@ function numberSettingsInsideGame(gameKey) {
   const rangeHint=gameKey==='compare'?'اختار مدى فيه ٣ أرقام على الأقل عشان تظهر أسئلة التصاعدي والتنازلي والمقارنة.':'اختار أي مدى من ١ إلى ٢٠. الإعداد يفضل محفوظ على جهاز بابا.';
   return `<div class="in-game-settings number-settings compact-settings">
     <label>🔢 اختار الأرقام اللي هنتدرّب عليها</label>
-    <div class="number-range-row"><label>من <input id="number-min-game" class="input number-input" type="text" inputmode="numeric" maxlength="2" value="${arabicDigits(cfg.min)}" aria-label="أول رقم في التدريب"></label><label>إلى <input id="number-max-game" class="input number-input" type="text" inputmode="numeric" maxlength="2" value="${arabicDigits(cfg.max)}" aria-label="آخر رقم في التدريب"></label></div>
+    <div class="number-range-row rtl-numbers"><label>من <input id="number-min-game" class="input number-input" type="text" inputmode="numeric" maxlength="2" value="${arabicDigits(cfg.min)}" aria-label="أول رقم في التدريب"></label><label>إلى <input id="number-max-game" class="input number-input" type="text" inputmode="numeric" maxlength="2" value="${arabicDigits(cfg.max)}" aria-label="آخر رقم في التدريب"></label></div>
     ${mathMode}
     <button class="btn soft settings-apply" data-action="apply-number-settings">طبّق وابدأ سؤال جديد</button>
     <p class="hint">${rangeHint}</p>
@@ -1412,8 +1434,7 @@ function renderDraw() {
   const wrongGuesses=(game.guesses||[]).filter(emoji=>emoji!==item.emoji);
   const wrongAnswer=wrongGuesses.length?`<div class="answer-feedback is-wrong" role="status"><strong>❌ ${wrongGuesses.length>1?'الاختيارات دي غلط':'الإجابة دي غلط'}:</strong><div class="feedback-answer">${wrongGuesses.join('، ')}</div>${state.phase==='playing'?'<p>جرّب اختيار تاني 💪</p>':''}</div>`:'';
   screen.innerHTML = `<div class="panel">${gameHeading('🎨','ارسم وخمّن')}
-    <h2 class="game-title center">${drawer?'🖍️ دورك ترسم':'👀 دورك تخمّن'}</h2>
-    <p class="status">${caption}</p>
+    <div class="draw-prompt-compact"><strong>${drawer?'✏️ دورك ترسم':'👀 دورك تخمّن'}</strong><span>${drawer?`${item.name} ${item.emoji}`:caption}</span></div>
     <div class="drawing-wrap ${drawer && state.phase==='playing'?'':'readonly'}"><canvas id="drawing" width="800" height="600" aria-label="لوحة الرسم المشتركة"></canvas></div>
     ${drawer && state.phase==='playing' ? '<p class="hint center">استخدم صباعك للرسم على اللوحة ✏️</p>' : ''}
     ${!drawer && state.phase==='playing' ? `<div class="choices">${options}</div>` : ''}
@@ -1455,11 +1476,11 @@ function renderQuiz() {
   }).join('');
   const result=answered ? `<div class="finish" role="status"><strong>${state.result==='correct'?'🎉 برافو! إجابة صح':'💜 نتعلّم سوا!'}</strong>${state.result==='incorrect'&&selected!==null&&q.options[selected]!==undefined?answerFeedback('إجابتك غلط:',q.options[selected],q):''}${answerFeedback('الإجابة الصحيحة:',q.options[q.correct],q,true)}</div>` : '';
   screen.innerHTML=`<div class="panel">${gameHeading(...GAME_LABELS[key].slice(0,2))}
-    ${numberSettingsInsideGame(key)}
+    ${numberSettingsInsideGame(key)}${key==='english'?englishSettingsInsideGame():''}
     <h2 class="game-title center">${q.prompt}</h2>
-    ${renderQuestionDisplay(q)}
+    <div class="${['math','numberline','compare'].includes(key)?'rtl-math-zone':''}">${renderQuestionDisplay(q)}</div>
     <p class="status">${state.phase==='finished'?'الجولة خلصت 🎉':canAnswer?'دورك دلوقتي! ✨':`دور ${nameOf(quiz.turn)} ⏳`}</p>
-    <div class="quiz-options ${q.visual==='photos'?'photo-options':q.visual==='number-compare'?'number-compare-options':q.visual==='sizes'&&q.options.length===2?'two-size-options':''}">${buttons}</div>
+    <div class="quiz-options ${q.visual==='photos'?'photo-options':q.visual==='odd-hard'?'odd-hard-options':q.visual==='number-compare'?'number-compare-options':q.visual==='sizes'&&q.options.length===2?'two-size-options':''}">${buttons}</div>
     ${role==='host'&&state.phase==='finished'?'<div class="btn-row quiz-next-row"><button class="btn primary" data-action="restart">🔁 سؤال جديد</button></div>':''}
     ${result}
     <p class="rule center">إجابة صحيحة = ⭐ نقطتين • الدور بيتبدّل كل سؤال</p>
@@ -1600,110 +1621,36 @@ function renderSnakes(){
   if(phase==='rolling')startDiceVisual(g);
   if(phase==='moving')runSnakeMoveAnimation(g);
 }
-function coloringSvg(pageId,fills={}){
-  const fill=i=>fills?.[i]||'#ffffff';
-  const part=(i,markup)=>markup.replace('data-part',`data-color-part="${i}"`).replace(/FILL/g,fill(i));
-  const common='stroke="#24174d" stroke-width="4.8" stroke-linejoin="round" stroke-linecap="round"';
-  let parts=[];
-  if(pageId==='kitten') parts=[
-    `<circle data-part cx="38" cy="36" r="16" fill="FILL" ${common}/>` ,
-    `<path data-part d="M115 27 Q139 8 163 27 Q158 47 139 57 Q120 47 115 27Z" fill="FILL" ${common}/>` ,
-    `<path data-part d="M140 44 C90 36 54 50 39 84 C28 111 43 153 77 170 C107 185 146 177 166 149 C183 125 180 90 159 67 C152 58 147 51 140 44Z" fill="FILL" ${common}/>` ,
-    `<path data-part d="M81 52 L96 24 L112 51Z" fill="FILL" ${common}/>` ,
-    `<path data-part d="M124 48 L144 20 L160 49Z" fill="FILL" ${common}/>` ,
-    `<ellipse data-part cx="89" cy="123" rx="44" ry="36" fill="FILL" ${common}/>` ,
-    `<path data-part d="M54 139 Q35 144 30 159 Q49 168 66 156Z" fill="FILL" ${common}/>` ,
-    `<path data-part d="M117 154 Q135 166 157 159 Q154 144 134 141Z" fill="FILL" ${common}/>` ,
-    `<path data-part d="M56 126 Q21 118 19 146 Q18 168 42 172" fill="FILL" ${common}/>` ,
-    `<path data-part d="M168 129 Q184 135 185 149 Q184 165 165 171" fill="FILL" ${common}/>` ,
-    `<path data-part d="M85 44 Q93 57 105 46 Q96 34 85 44Z" fill="FILL" ${common}/>` ,
-    `<circle data-part cx="100" cy="73" r="8" fill="FILL" ${common}/>` ,
-    `<circle data-part cx="132" cy="74" r="8" fill="FILL" ${common}/>` ,
-    `<path data-part d="M26 164 Q43 148 56 168 Q40 186 26 164Z" fill="FILL" ${common}/>` ,
-    `<path data-part d="M143 171 Q161 152 176 171 Q160 187 143 171Z" fill="FILL" ${common}/>`
-  ];
-  else if(pageId==='car') parts=[
-    `<circle data-part cx="162" cy="30" r="18" fill="FILL" ${common}/>` ,
-    `<path data-part d="M26 37 Q48 12 72 37 Q54 53 26 37Z" fill="FILL" ${common}/>` ,
-    `<path data-part d="M20 122 L50 84 Q60 72 81 72 H122 Q143 73 156 95 L179 122 V150 H18 V122Z" fill="FILL" ${common}/>` ,
-    `<path data-part d="M74 79 H99 V109 H50Z" fill="FILL" ${common}/>` ,
-    `<path data-part d="M104 79 H126 Q139 79 149 110 H104Z" fill="FILL" ${common}/>` ,
-    `<circle data-part cx="56" cy="150" r="21" fill="FILL" ${common}/>` ,
-    `<circle data-part cx="142" cy="150" r="21" fill="FILL" ${common}/>` ,
-    `<circle data-part cx="56" cy="150" r="8" fill="FILL" ${common}/>` ,
-    `<circle data-part cx="142" cy="150" r="8" fill="FILL" ${common}/>` ,
-    `<path data-part d="M13 170 Q62 139 119 156 Q163 168 192 160" fill="none" stroke="FILL" stroke-width="10" stroke-linecap="round"/>` ,
-    `<path data-part d="M160 130 V72" fill="none" stroke="FILL" stroke-width="8" stroke-linecap="round"/>` ,
-    `<circle data-part cx="160" cy="61" r="19" fill="FILL" ${common}/>` ,
-    `<path data-part d="M24 163 Q36 146 52 163 Q41 179 24 163Z" fill="FILL" ${common}/>` ,
-    `<path data-part d="M54 164 Q67 146 83 163 Q70 181 54 164Z" fill="FILL" ${common}/>`
-  ];
-  else if(pageId==='butterfly') parts=[
-    `<circle data-part cx="33" cy="32" r="15" fill="FILL" ${common}/>` ,
-    `<path data-part d="M27 178 Q56 134 82 176" fill="none" stroke="FILL" stroke-width="11" stroke-linecap="round"/>` ,
-    `<ellipse data-part cx="87" cy="92" rx="28" ry="38" fill="FILL" ${common}/>` ,
-    `<ellipse data-part cx="127" cy="92" rx="28" ry="38" fill="FILL" ${common}/>` ,
-    `<ellipse data-part cx="92" cy="137" rx="24" ry="29" fill="FILL" ${common}/>` ,
-    `<ellipse data-part cx="124" cy="137" rx="24" ry="29" fill="FILL" ${common}/>` ,
-    `<ellipse data-part cx="108" cy="113" rx="10" ry="35" fill="FILL" ${common}/>` ,
-    `<ellipse data-part cx="40" cy="162" rx="18" ry="18" fill="FILL" ${common}/>` ,
-    `<ellipse data-part cx="72" cy="162" rx="18" ry="18" fill="FILL" ${common}/>` ,
-    `<circle data-part cx="40" cy="162" r="6" fill="FILL" ${common}/>` ,
-    `<circle data-part cx="72" cy="162" r="6" fill="FILL" ${common}/>` ,
-    `<path data-part d="M140 176 Q160 140 183 176" fill="none" stroke="FILL" stroke-width="11" stroke-linecap="round"/>` ,
-    `<ellipse data-part cx="140" cy="160" rx="18" ry="18" fill="FILL" ${common}/>` ,
-    `<ellipse data-part cx="183" cy="160" rx="18" ry="18" fill="FILL" ${common}/>`
-  ];
-  else if(pageId==='house') parts=[
-    `<rect data-part x="43" y="89" width="116" height="78" rx="7" fill="FILL" ${common}/>` ,
-    `<path data-part d="M28 93 L101 28 L176 93 Z" fill="FILL" ${common}/>` ,
-    `<rect data-part x="90" y="119" width="27" height="48" rx="6" fill="FILL" ${common}/>` ,
-    `<rect data-part x="58" y="108" width="22" height="21" rx="4" fill="FILL" ${common}/>` ,
-    `<rect data-part x="123" y="108" width="22" height="21" rx="4" fill="FILL" ${common}/>` ,
-    `<rect data-part x="24" y="167" width="154" height="13" rx="7" fill="FILL" ${common}/>` ,
-    `<circle data-part cx="24" cy="42" r="16" fill="FILL" ${common}/>` ,
-    `<circle data-part cx="177" cy="43" r="16" fill="FILL" ${common}/>` ,
-    `<path data-part d="M154 59 V30 H169 V76" fill="FILL" ${common}/>` ,
-    `<circle data-part cx="35" cy="148" r="13" fill="FILL" ${common}/>` ,
-    `<circle data-part cx="164" cy="148" r="13" fill="FILL" ${common}/>` ,
-    `<path data-part d="M31 178 Q47 157 65 178" fill="none" stroke="FILL" stroke-width="11" stroke-linecap="round"/>` ,
-    `<path data-part d="M139 178 Q155 157 173 178" fill="none" stroke="FILL" stroke-width="11" stroke-linecap="round"/>`
-  ];
-  else if(pageId==='fish') parts=[
-    `<ellipse data-part cx="97" cy="101" rx="56" ry="34" fill="FILL" ${common}/>` ,
-    `<path data-part d="M147 100 L184 71 L185 130 Z" fill="FILL" ${common}/>` ,
-    `<path data-part d="M92 68 Q110 43 131 69Z" fill="FILL" ${common}/>` ,
-    `<circle data-part cx="79" cy="93" r="7" fill="FILL" ${common}/>` ,
-    `<path data-part d="M76 111 Q95 123 114 111" fill="none" stroke="FILL" stroke-width="5" stroke-linecap="round"/>` ,
-    `<path data-part d="M42 145 Q70 133 96 145" fill="none" stroke="FILL" stroke-width="10" stroke-linecap="round"/>` ,
-    `<path data-part d="M109 149 Q140 132 168 149" fill="none" stroke="FILL" stroke-width="10" stroke-linecap="round"/>` ,
-    `<circle data-part cx="36" cy="44" r="14" fill="FILL" ${common}/>` ,
-    `<circle data-part cx="168" cy="38" r="12" fill="FILL" ${common}/>` ,
-    `<circle data-part cx="149" cy="166" r="12" fill="FILL" ${common}/>` ,
-    `<path data-part d="M23 172 Q36 157 49 172" fill="none" stroke="FILL" stroke-width="10" stroke-linecap="round"/>` ,
-    `<path data-part d="M166 178 Q180 162 193 178" fill="none" stroke="FILL" stroke-width="10" stroke-linecap="round"/>`
-  ];
-  else parts=[
-    `<circle data-part cx="103" cy="52" r="20" fill="FILL" ${common}/>` ,
-    `<ellipse data-part cx="103" cy="17" rx="17" ry="22" fill="FILL" ${common}/>` ,
-    `<ellipse data-part cx="137" cy="32" rx="17" ry="22" transform="rotate(52 137 32)" fill="FILL" ${common}/>` ,
-    `<ellipse data-part cx="144" cy="70" rx="17" ry="22" transform="rotate(118 144 70)" fill="FILL" ${common}/>` ,
-    `<ellipse data-part cx="66" cy="73" rx="17" ry="22" transform="rotate(60 66 73)" fill="FILL" ${common}/>` ,
-    `<ellipse data-part cx="61" cy="35" rx="17" ry="22" transform="rotate(122 61 35)" fill="FILL" ${common}/>` ,
-    `<path data-part d="M102 75 V156 H90 L102 75Z" fill="FILL" ${common}/>` ,
-    `<path data-part d="M99 112 Q60 97 50 126 Q74 142 97 131Z" fill="FILL" ${common}/>` ,
-    `<path data-part d="M110 128 Q141 109 154 129 Q136 149 113 141Z" fill="FILL" ${common}/>` ,
-    `<rect data-part x="85" y="156" width="35" height="10" rx="5" fill="FILL" ${common}/>` ,
-    `<circle data-part cx="27" cy="160" r="15" fill="FILL" ${common}/>` ,
-    `<circle data-part cx="173" cy="160" r="15" fill="FILL" ${common}/>`
-  ];
-  return `<svg class="coloring-canvas" viewBox="0 0 200 190" role="img" aria-label="رسمة للتلوين">${parts.map((s,i)=>part(i,s)).join('')}</svg>`;
+function coloringPage(){return COLORING_PAGES[(state?.coloring?.pageIndex||0)%COLORING_PAGES.length]||COLORING_PAGES[0];}
+function coloringHexToRgb(hex){const m=/^#?([0-9a-f]{2})([0-9a-f]{2})([0-9a-f]{2})$/i.exec(hex);return m?[parseInt(m[1],16),parseInt(m[2],16),parseInt(m[3],16)]:[239,83,80];}
+function floodFillColoring(ctx,x,y,color){
+  const w=ctx.canvas.width,h=ctx.canvas.height;if(x<0||y<0||x>=w||y>=h)return;
+  const img=ctx.getImageData(0,0,w,h),d=img.data,idx=(y*w+x)*4;
+  const sr=d[idx],sg=d[idx+1],sb=d[idx+2];
+  // Do not paint black outlines or already strongly colored pixels.
+  if(sr+sg+sb<210)return;
+  const [rr,rg,rb]=coloringHexToRgb(color),stack=[[x,y]],seen=new Uint8Array(w*h),tol=52;
+  let filled=0;
+  while(stack.length&&filled<w*h*.42){const [cx,cy]=stack.pop(),pos=cy*w+cx;if(seen[pos])continue;seen[pos]=1;const i=pos*4;const dr=Math.abs(d[i]-sr)+Math.abs(d[i+1]-sg)+Math.abs(d[i+2]-sb);if(dr>tol||d[i]+d[i+1]+d[i+2]<260)continue;d[i]=rr;d[i+1]=rg;d[i+2]=rb;d[i+3]=255;filled++;if(cx>0)stack.push([cx-1,cy]);if(cx<w-1)stack.push([cx+1,cy]);if(cy>0)stack.push([cx,cy-1]);if(cy<h-1)stack.push([cx,cy+1]);}
+  if(filled>20)ctx.putImageData(img,0,0);
+}
+async function initColoringCanvas(){
+  const canvas=document.querySelector('#coloring-canvas'),page=coloringPage();if(!canvas||!page)return;
+  const img=new Image();img.decoding='async';img.src=page.src;
+  try{await img.decode();}catch(_){await new Promise((resolve,reject)=>{img.onload=resolve;img.onerror=reject;});}
+  const max=900,scale=Math.min(1,max/Math.max(img.naturalWidth||1,img.naturalHeight||1));canvas.width=Math.max(1,Math.round(img.naturalWidth*scale));canvas.height=Math.max(1,Math.round(img.naturalHeight*scale));
+  const ctx=canvas.getContext('2d',{willReadFrequently:true});ctx.fillStyle='#fff';ctx.fillRect(0,0,canvas.width,canvas.height);ctx.drawImage(img,0,0,canvas.width,canvas.height);
+  for(const op of state?.coloring?.ops||[])floodFillColoring(ctx,Math.round(op.x*canvas.width),Math.round(op.y*canvas.height),op.color);
+  canvas.onclick=async ev=>{if(state?.game!=='coloring'||state.phase!=='playing')return;const r=canvas.getBoundingClientRect(),x=(ev.clientX-r.left)/r.width,y=(ev.clientY-r.top)/r.height;if(x<0||y<0||x>1||y>1)return;await colorAt(x,y);};
 }
 function renderColoring(){
-  const g=state.coloring;if(!g)return;const page=COLORING_PAGES[g.pageIndex%COLORING_PAGES.length];
-  const palette=COLOR_PALETTE.map(c=>`<button class="palette-color ${c===coloringSelectedColor?'selected':''}" data-color-pick="${c}" style="--palette:${c}" aria-label="اختيار لون"></button>`).join('');
-  const filled=Object.keys(g.fills||{}).length;
-  screen.innerHTML=`<div class="panel">${gameHeading('🎨','كتاب التلوين')}<h2 class="game-title center">لوّني ${page.name} بالضغط على الأجزاء</h2><div class="coloring-wrap premium">${coloringSvg(page.id,g.fills)}</div><div class="color-palette" aria-label="لوحة الألوان">${palette}</div><p class="status">تم تلوين ${arabicDigits(filled)} من ${arabicDigits(page.parts)} أجزاء</p>${state.phase==='finished'?celebration(`أحسنتِ يا ${childName()}! اكتملت الرسمة 🎨`):''}<div class="btn-row">${role==='host'?'<button class="btn soft" data-action="reset-coloring">🧽 مسح وإعادة</button><button class="btn primary" data-action="next-coloring">➡️ الرسمة التالية</button>':''}</div><p class="rule center">رسومات أوضح وأجمل للتلوين • اختاري لونًا ثم اضغطي داخل أي جزء • عند الاكتمال تظهر نجوم الاحتفال</p></div>`;
+  const page=coloringPage();
+  const palette=COLOR_PALETTE.map(color=>`<button class="palette-color ${color===coloringSelectedColor?'selected':''}" data-color-pick="${color}" style="--palette:${color}" aria-label="اختيار لون"></button>`).join('');
+  screen.innerHTML=`<div class="panel coloring-panel">${gameHeading('🎨','كتاب التلوين')}<div class="coloring-title-row"><div><h2 class="game-title">${page.name}</h2><small>${page.level}</small></div>${role==='host'?'<button class="btn soft" data-action="next-coloring">🖼️ صورة جديدة</button>':''}</div><div class="color-palette">${palette}</div><div class="coloring-wrap raster"><canvas id="coloring-canvas" aria-label="صورة تلوين"></canvas></div><p class="rule center">اختاري لون واضغطي داخل المساحة البيضاء • التلوين يظهر عندكم أنتم الاتنين</p></div>`;
+  initColoringCanvas().catch(()=>info('تعذر تحميل صورة التلوين. جرّب تحديث الصفحة.'));
+}
+async function colorAt(x,y){
+  await mutateState(old=>{if(old.game!=='coloring'||old.phase!=='playing'||!old.coloring)return;const ops=[...(old.coloring.ops||[])];ops.push({x:Math.round(x*10000)/10000,y:Math.round(y*10000)/10000,color:coloringSelectedColor});if(ops.length>260)ops.shift();return {...old,feedback:addFeedback(old,'tap'),coloring:{...old.coloring,ops}};});
 }
 function puzzleSceneSvg(id){
   const common=`<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512">`;
@@ -1713,19 +1660,37 @@ function puzzleSceneSvg(id){
   if(id==='dino')return `${common}<rect width="512" height="512" fill="#dcf4ff"/><rect y="338" width="512" height="174" fill="#98da71"/><circle cx="429" cy="90" r="36" fill="#ffd966"/><g fill="#fff"><ellipse cx="143" cy="83" rx="57" ry="23"/><ellipse cx="273" cy="60" rx="52" ry="20"/></g><g><path d="M160 303Q128 149 283 138Q386 132 405 228Q420 300 367 337Q323 368 262 357Q186 344 160 303Z" fill="#7fd278" stroke="#2e6b4a" stroke-width="10"/><path d="M110 290Q67 272 66 229Q74 194 130 219" fill="#7fd278" stroke="#2e6b4a" stroke-width="10" stroke-linejoin="round"/><circle cx="307" cy="187" r="13" fill="#fff"/><circle cx="311" cy="186" r="7" fill="#243058"/><path d="M343 220Q314 249 286 220" stroke="#243058" stroke-width="8" fill="none" stroke-linecap="round"/><path d="M228 354V420M319 355V420" stroke="#2e6b4a" stroke-width="18" stroke-linecap="round"/><path d="M390 284Q426 279 441 303Q428 326 392 319" fill="#7fd278" stroke="#2e6b4a" stroke-width="10" stroke-linejoin="round"/><g fill="#f7f3ff"><path d="M195 146L210 113L228 147Z"/><path d="M233 138L249 102L267 140Z"/><path d="M274 136L289 102L307 139Z"/></g></g><g fill="#ff87aa"><circle cx="81" cy="421" r="15"/><circle cx="109" cy="421" r="15"/><circle cx="95" cy="396" r="15"/></g></svg>`;
   return `${common}<defs><linearGradient id="roadSky" x1="0" x2="0" y1="0" y2="1"><stop offset="0" stop-color="#b8ecff"/><stop offset="1" stop-color="#f7fdff"/></linearGradient></defs><rect width="512" height="512" fill="url(#roadSky)"/><rect y="322" width="512" height="190" fill="#8fd16a"/><path d="M0 510Q158 386 318 406Q430 418 512 374V512Z" fill="#55566a"/><path d="M198 443L266 425M316 408L388 391M428 378L480 362" stroke="#fff3b0" stroke-width="15" stroke-linecap="round"/><circle cx="412" cy="85" r="41" fill="#ffd966"/><g fill="#fff"><ellipse cx="118" cy="81" rx="63" ry="25"/><ellipse cx="241" cy="112" rx="51" ry="21"/></g><g><rect x="92" y="221" width="295" height="111" rx="53" fill="#ff6b62"/><path d="M160 221Q205 145 299 145Q350 145 387 221Z" fill="#ff7f72"/><rect x="190" y="165" width="90" height="72" rx="18" fill="#b8ecff"/><rect x="286" y="165" width="72" height="72" rx="18" fill="#b8ecff"/><circle cx="176" cy="329" r="41" fill="#30344f"/><circle cx="318" cy="329" r="41" fill="#30344f"/><circle cx="176" cy="329" r="20" fill="#f2f2fb"/><circle cx="318" cy="329" r="20" fill="#f2f2fb"/><circle cx="350" cy="255" r="9" fill="#fff"/><circle cx="193" cy="255" r="9" fill="#fff"/><path d="M240 279Q274 302 307 279" stroke="#813734" stroke-width="10" fill="none" stroke-linecap="round"/></g><g fill="#53af63"><circle cx="440" cy="241" r="47"/><rect x="432" y="241" width="17" height="74" fill="#86664d"/></g></svg>`;
 }
-function puzzleImageUrl(id){
-  if(id==='farm')return 'puzzle_farm.jpg';
-  return `data:image/svg+xml,${encodeURIComponent(puzzleSceneSvg(id))}`;
+function puzzlePicture(id){return PUZZLE_PICTURES.find(x=>x.id===id)||PUZZLE_PICTURES[0];}
+function puzzleImageUrl(id){return puzzlePicture(id).src;}
+function puzzleGridFor(total){if(total===4)return [2,2];if(total===10)return [2,5];if(total===20)return [4,5];return [5,10];}
+function puzzleEdgeSign(r,c,edge){
+  if(edge==='top')return r===0?0:(((r-1)*17+c*11)%2?1:-1);
+  if(edge==='bottom')return r===state?.jigsaw?.rows-1?0:((r*17+c*11)%2?-1:1);
+  if(edge==='left')return c===0?0:((r*13+(c-1)*7)%2?1:-1);
+  if(edge==='right')return c===state?.jigsaw?.cols-1?0:((r*13+c*7)%2?-1:1);
+  return 0;
+}
+function jigsawPath(piece,rows,cols){
+  const r=Math.floor(piece/cols),c=piece%cols,edge=(where)=>{if(where==='top')return r===0?0:(((r-1)*17+c*11)%2?1:-1);if(where==='bottom')return r===rows-1?0:((r*17+c*11)%2?-1:1);if(where==='left')return c===0?0:((r*13+(c-1)*7)%2?1:-1);return c===cols-1?0:((r*13+c*7)%2?-1:1);};
+  const bumpH=(sign,y)=>sign===0?`L100 ${y}`:`L62 ${y} C58 ${y} 58 ${y+sign*16} 50 ${y+sign*16} C42 ${y+sign*16} 42 ${y} 38 ${y} L0 ${y}`;
+  const top=edge('top'),right=edge('right'),bottom=edge('bottom'),left=edge('left');
+  let d='M0 0 ';
+  d+=top===0?'L100 0 ':`L38 0 C42 0 42 ${top*16} 50 ${top*16} C58 ${top*16} 58 0 62 0 L100 0 `;
+  d+=right===0?'L100 100 ':`L100 38 C100 42 ${100+right*16} 42 ${100+right*16} 50 C${100+right*16} 58 100 58 100 62 L100 100 `;
+  d+=bottom===0?'L0 100 ':`L62 100 C58 100 58 ${100+bottom*16} 50 ${100+bottom*16} C42 ${100+bottom*16} 42 100 38 100 L0 100 `;
+  d+=left===0?'L0 0 Z':`L0 62 C0 58 ${left*16} 58 ${left*16} 50 C${left*16} 42 0 42 0 38 L0 0 Z`;
+  return d;
 }
 function puzzleTile(id,piece,rows,cols,extra=''){
-  const x=piece%cols,y=Math.floor(piece/cols),px=cols===1?0:(x/(cols-1))*100,py=rows===1?0:(y/(rows-1))*100;
-  return `<span class="puzzle-tile ${extra}" style="background-image:url('${puzzleImageUrl(id)}');background-size:${cols*100}% ${rows*100}%;background-position:${px}% ${py}%"></span>`;
+  const x=piece%cols,y=Math.floor(piece/cols),path=jigsawPath(piece,rows,cols),url=puzzleImageUrl(id);
+  return `<svg class="puzzle-tile jigsaw-svg ${extra}" viewBox="-18 -18 136 136" aria-hidden="true"><defs><clipPath id="clip-${piece}-${rows}-${cols}"><path d="${path}"/></clipPath></defs><g clip-path="url(#clip-${piece}-${rows}-${cols})"><image href="${url}" x="${-x*100}" y="${-y*100}" width="${cols*100}" height="${rows*100}" preserveAspectRatio="none"/></g><path d="${path}" fill="none" stroke="rgba(89,63,148,.45)" stroke-width="1.7"/></svg>`;
 }
 function renderJigsaw(){
-  const g=state.jigsaw;if(!g)return;const total=g.rows*g.cols,placed=g.placed||{};
-  const slots=Array.from({length:total},(_,i)=>`<button class="puzzle-slot ${placed[i]?'filled':''}" data-puzzle-slot="${i}" ${placed[i]?'disabled':''} aria-label="مكان القطعة ${i+1}">${placed[i]?puzzleTile(g.pictureId,i,g.rows,g.cols):'<span>＋</span>'}</button>`).join('');
-  const tray=(g.order||[]).filter(i=>!placed[i]).map(i=>`<button class="puzzle-piece ${puzzleSelectedPiece===i?'selected':''}" data-puzzle-piece="${i}" aria-label="قطعة بازل">${puzzleTile(g.pictureId,i,g.rows,g.cols)}</button>`).join('');
-  screen.innerHTML=`<div class="panel">${gameHeading('🧩','البازل المصغّر')}<div class="jigsaw-head"><div><h2 class="game-title">ركّبي صورة ${g.pictureName||'ممتعة'} في مكانها</h2><p class="hint">اسحبي القطعة للمكان الصحيح، أو اضغطي القطعة ثم مكانها.</p></div><img class="puzzle-reference" src="${puzzleImageUrl(g.pictureId)}" alt="الصورة المرجعية"></div><div class="puzzle-board" style="--pcols:${g.cols}">${slots}</div><div class="puzzle-tray premium">${tray||'<span class="hint">كل القطع اتركبت ✅</span>'}</div>${state.phase==='finished'?celebration('أحسنتِ يا بطلة! اكتملت الصورة 🧩'):''}${role==='host'&&state.phase==='finished'?'<div class="btn-row"><button class="btn primary" data-action="restart">🧩 بازل جديد</button></div>':''}<p class="rule center">صور ملوّنة وجذابة للأطفال • كل قطعة صحيحة = ⭐ • إكمال الصورة يعطي نجمتين إضافيتين</p></div>`;
+  const g=state.jigsaw;if(!g)return;const total=g.pieceCount||g.rows*g.cols,placed=(g.placedBy?.[role]||{}),order=(g.orderBy?.[role]||g.order||[]),mineDone=Boolean(g.completed?.[role]);
+  const hostPlaced=Object.keys(g.placedBy?.host||{}).length,guestPlaced=Object.keys(g.placedBy?.guest||{}).length;
+  const slots=Array.from({length:total},(_,i)=>`<button class="puzzle-slot ${placed[i]?'filled':''}" data-puzzle-slot="${i}" ${placed[i]||mineDone?'disabled':''} aria-label="مكان القطعة ${i+1}">${placed[i]?puzzleTile(g.pictureId,i,g.rows,g.cols):'<span>＋</span>'}</button>`).join('');
+  const tray=order.filter(i=>!placed[i]).map(i=>`<button class="puzzle-piece ${puzzleSelectedPiece===i?'selected':''}" data-puzzle-piece="${i}" ${mineDone?'disabled':''} aria-label="قطعة بازل">${puzzleTile(g.pictureId,i,g.rows,g.cols)}</button>`).join('');
+  screen.innerHTML=`<div class="panel jigsaw-panel">${gameHeading('🧩','البازل')}${puzzleSettingsInsideGame()}<div class="jigsaw-head"><div><h2 class="game-title">${g.pictureName||'بازل ممتع'} • ${arabicDigits(total)} قطعة</h2><p class="hint">بازلِك مستقل عن بازل ${role==='host'?childName():'بابا'}.</p></div><img class="puzzle-reference" src="${puzzleImageUrl(g.pictureId)}" alt="الصورة المرجعية"></div><div class="puzzle-progress-duo"><span>👨 ${arabicDigits(hostPlaced)}/${arabicDigits(total)}</span><span>👧 ${arabicDigits(guestPlaced)}/${arabicDigits(total)}</span></div><div class="puzzle-board jigsaw-board pieces-${total}" style="--pcols:${g.cols};--piece-aspect:${g.rows}/${g.cols}">${slots}</div><div class="puzzle-tray premium">${tray||(mineDone?'<strong>✅ خلصت بازلِك!</strong>':'<span class="hint">كل القطع اتركبت ✅</span>')}</div>${mineDone&&state.phase==='playing'?'<div class="finish mini-finish">🎉 ممتاز! استنى اللاعب التاني يكمّل.</div>':''}${state.phase==='finished'?celebration('اكتمل البازلين! 🧩'):''}${role==='host'&&state.phase==='finished'?'<div class="btn-row"><button class="btn primary" data-action="restart">🧩 بازل جديد</button></div>':''}</div>`;
   bindPuzzleDrag();
 }
 function sortingObject(item){
@@ -1852,13 +1817,13 @@ function newGame(which, old, previousDraw) {
   if (which === 'snakes') return {...common,game:which,phase:'playing',scores,round,snakes:{positions:{host:1,guest:1},turn:round%2===0?'guest':'host',phase:'ready',dice:null,pendingDice:null,rollId:0,moveId:0,move:null,lastRoll:null}};
   if (which === 'coloring') {
     const previous=old?.game==='coloring'?old.coloring?.pageIndex:-1,pageIndex=(Number(previous)+1)%COLORING_PAGES.length;
-    return {...common,game:which,phase:'playing',scores,round,coloring:{pageIndex,fills:{}}};
+    return {...common,game:which,phase:'playing',scores,round,coloring:{pageIndex,ops:[]}};
   }
   if (which === 'jigsaw') {
-    const rows=2,cols=childAge<=6?2:3,total=rows*cols;
+    const pieceCount=normalizePuzzlePieces(puzzlePiecePreference),[rows,cols]=puzzleGridFor(pieceCount),total=pieceCount;
     const oldPic=old?.game==='jigsaw'?old.jigsaw?.pictureId:null;
     const choices=PUZZLE_PICTURES.filter(x=>x.id!==oldPic),picture=choices[Math.floor(Math.random()*choices.length)]||PUZZLE_PICTURES[0];
-    return {...common,game:which,phase:'playing',scores,round,jigsaw:{pictureId:picture.id,pictureName:picture.name,rows,cols,order:shuffle(Array.from({length:total},(_,i)=>i)),placed:{}}};
+    return {...common,game:which,phase:'playing',scores,round,jigsaw:{pictureId:picture.id,pictureName:picture.name,pieceCount,rows,cols,orderBy:{host:shuffle(Array.from({length:total},(_,i)=>i)),guest:shuffle(Array.from({length:total},(_,i)=>i))},placedBy:{host:{},guest:{}},completed:{host:false,guest:false}}};
   }
   if (which === 'sorting') {
     const goal=normalizeAge(childAge)<=5?8:12,items=[];
@@ -2018,23 +1983,15 @@ async function finishSnakeMove(moveId){
     return {...old,scores,feedback:addFeedback(old,finished?'win':'tap'),phase:finished?'finished':'playing',...(finished?{result:role}:{}),snakes:{...g,positions,turn:finished?g.turn:other(role),phase:finished?'done':'ready',dice:null,pendingDice:null,move:null,lastRoll:{player:role,dice:m.dice,jump:m.jumpType,landing:m.destination}}};
   });
 }
-async function colorPart(index){
-  if(!Number.isInteger(index)||!COLOR_PALETTE.includes(coloringSelectedColor))return;
-  await mutateState(old=>{
-    if(old.game!=='coloring'||old.phase!=='playing'||!old.coloring)return;
-    const page=COLORING_PAGES[old.coloring.pageIndex%COLORING_PAGES.length];if(index<0||index>=page.parts)return;
-    const fills={...(old.coloring.fills||{}),[index]:coloringSelectedColor},finished=Object.keys(fills).length>=page.parts,scores={...old.scores};if(finished)scores[role]+=3;
-    return {...old,scores,feedback:addFeedback(old,finished?'win':'tap'),phase:finished?'finished':'playing',...(finished?{result:'complete'}:{}),coloring:{...old.coloring,fills}};
-  });
-}
+async function colorPart(index){ return; }
 async function placePuzzle(piece,slot,source){
   if(!Number.isInteger(piece)||!Number.isInteger(slot))return;
   if(piece!==slot){sound('bad');source?.classList.add('shake');setTimeout(()=>source?.classList.remove('shake'),420);return;}
   puzzleSelectedPiece=null;
   await mutateState(old=>{
-    if(old.game!=='jigsaw'||old.phase!=='playing'||!old.jigsaw)return;const g=old.jigsaw,total=g.rows*g.cols;if(piece<0||piece>=total||g.placed?.[piece])return;
-    const placed={...(g.placed||{}),[piece]:true},finished=Object.keys(placed).length>=total,scores={...old.scores,[role]:(old.scores?.[role]||0)+1+(finished?2:0)};
-    return {...old,scores,feedback:addFeedback(old,finished?'win':'good'),phase:finished?'finished':'playing',...(finished?{result:'complete'}:{}),jigsaw:{...g,placed}};
+    if(old.game!=='jigsaw'||old.phase!=='playing'||!old.jigsaw)return;const g=old.jigsaw,total=g.pieceCount||g.rows*g.cols,placed={...(g.placedBy?.[role]||{})};if(piece<0||piece>=total||placed[piece]||g.completed?.[role])return;
+    placed[piece]=true;const mineDone=Object.keys(placed).length>=total,placedBy={...(g.placedBy||{}),[role]:placed},completed={...(g.completed||{}),[role]:mineDone};const both=Boolean(completed.host&&completed.guest);const scores={...old.scores};if(mineDone)scores[role]=(scores[role]||0)+3;
+    return {...old,scores,feedback:addFeedback(old,both?'win':'good'),phase:both?'finished':'playing',...(both?{result:'complete'}:{}),jigsaw:{...g,placedBy,completed}};
   });
 }
 async function chooseSorting(bin,source){
@@ -2256,10 +2213,15 @@ screen.addEventListener('click',async e=>{
   if (action==='lobby') return goLobby();
   if (action==='roll-dice') return rollDice();
   if (action==='move-snakes') return startSnakeMove();
-  if (action==='reset-coloring'&&role==='host'&&state?.game==='coloring') return mutateState(old=>old.game==='coloring'?{...old,phase:'playing',coloring:{...old.coloring,fills:{}}}:undefined);
+  if (action==='reset-coloring'&&role==='host'&&state?.game==='coloring') return mutateState(old=>old.game==='coloring'?{...old,phase:'playing',coloring:{...old.coloring,ops:[]}}:undefined);
   if (action==='next-coloring'&&role==='host'&&state?.game==='coloring') return mutateState(old=>old.game==='coloring'?newGame('coloring',old):undefined);
   if (action==='alphabet-music') {toggleAlphabetMusic();render();return;}
   if (button.dataset.colorPick) {coloringSelectedColor=button.dataset.colorPick;document.querySelectorAll('.palette-color').forEach(x=>x.classList.toggle('selected',x.dataset.colorPick===coloringSelectedColor));return;}
+  if (button.dataset.puzzleLevel!==undefined) {
+    if(role!=='host'||state?.game!=='jigsaw')return;
+    puzzlePiecePreference=normalizePuzzlePieces(button.dataset.puzzleLevel);savePuzzlePieces();info(`🧩 مستوى ${arabicDigits(puzzlePiecePreference)} قطعة`);
+    return mutateState(old=>old.game==='jigsaw'?newGame('jigsaw',old):undefined);
+  }
   if (button.dataset.puzzlePiece!==undefined) {puzzleSelectedPiece=Number(button.dataset.puzzlePiece);document.querySelectorAll('.puzzle-piece').forEach(x=>x.classList.toggle('selected',Number(x.dataset.puzzlePiece)===puzzleSelectedPiece));return;}
   if (button.dataset.puzzleSlot!==undefined&&puzzleSelectedPiece!==null) return placePuzzle(puzzleSelectedPiece,Number(button.dataset.puzzleSlot),document.querySelector(`[data-puzzle-piece="${puzzleSelectedPiece}"]`));
   if (button.dataset.sortItem!==undefined) {sortingDragSelected=!sortingDragSelected;button.classList.toggle('selected',sortingDragSelected);return;}
@@ -2273,6 +2235,11 @@ screen.addEventListener('click',async e=>{
     try{localStorage.setItem('roqaya-memory',memoryPreference);}catch(_){}
     info('');
     return mutateState(old=>old.game==='memory'?newGame('memory',old):undefined);
+  }
+  if (action==='apply-english-settings') {
+    if(role!=='host'||state?.game!=='english')return;
+    englishWordLimitPreference=normalizeEnglishLimit(document.querySelector('#english-limit-game')?.value||20);saveEnglishLimit();info('✅ تم تحديث مجموعة الكلمات');
+    return mutateState(old=>old.game==='english'?newGame('english',old):undefined);
   }
   if (action==='apply-number-settings') {
     if(role!=='host'||!['count','math','numberline','compare'].includes(state?.game))return;
@@ -2309,6 +2276,7 @@ document.querySelector('#call-controls')?.addEventListener('click',async e=>{
   if(action==='retry')return retryVoiceCall();
   if(action==='devices'){voiceDevicePanelOpen=!voiceDevicePanelOpen;if(voiceDevicePanelOpen)await refreshVoiceAudioDevices();return renderVoiceCallControls();}
   if(action==='devices-refresh'){await refreshVoiceAudioDevices();return renderVoiceCallControls();}
+  if(action==='devices-close'){voiceDevicePanelOpen=false;return renderVoiceCallControls();}
 });
 const callControls=document.querySelector('#call-controls');
 callControls?.addEventListener('change',async e=>{
