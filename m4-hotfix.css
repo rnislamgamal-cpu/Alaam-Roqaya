@@ -1,7 +1,9 @@
-/* M4.1 — School gate mobile/tablet hotfix
-   Keeps the room code + invitation/enter controls visible over the school image.
-*/
-body.hub-view .hub-school-gate .hub-stage-caption{
+/* M4.2 — shared hub-screen layout hotfix */
+body.hub-view .hub-stage:not(.corridor-stage){
+  margin-bottom:0!important;
+  overflow:hidden!important;
+}
+body.hub-view .hub-stage:not(.corridor-stage) .hub-stage-caption{
   top:auto!important;
   bottom:max(10px, env(safe-area-inset-bottom))!important;
   left:10px!important;
@@ -17,38 +19,47 @@ body.hub-view .hub-school-gate .hub-stage-caption{
   box-shadow:0 10px 28px rgba(59,32,77,.22)!important;
   z-index:20!important;
 }
-body.hub-view .hub-school-gate .hub-stage-caption>strong{
+body.hub-view .hub-stage:not(.corridor-stage) .hub-stage-caption>strong{
   font-size:.9rem!important;
 }
-body.hub-view .hub-school-gate .hub-stage-caption>small{
+body.hub-view .hub-stage:not(.corridor-stage) .hub-stage-caption>small{
   font-size:.62rem!important;
   margin:2px 0 4px!important;
 }
-body.hub-view .hub-school-gate .hub-room-line{
+body.hub-view .hub-stage:not(.corridor-stage) .hub-room-line{
   margin:4px 0!important;
 }
-body.hub-view .hub-school-gate .hub-enter-btn{
+body.hub-view .hub-stage:not(.corridor-stage) .hub-enter-btn{
   min-height:38px!important;
   padding:7px 10px!important;
   margin-top:4px!important;
 }
-body.hub-view .hub-school-gate{
-  overflow:hidden!important;
+body.hub-view .hub-stage:not(.corridor-stage) .hub-gate-actions{
+  margin-top:4px!important;
+  gap:5px!important;
+}
+body.hub-view .hub-stage:not(.corridor-stage) .hub-gate-actions .btn{
+  min-height:36px!important;
+  padding:6px 10px!important;
 }
 
 @media (max-width:420px){
-  body.hub-view .hub-school-gate .hub-stage-caption{
-    bottom:8px!important;
+  body.hub-view .hub-stage:not(.corridor-stage) .hub-stage-caption{
+    bottom:max(7px, env(safe-area-inset-bottom))!important;
     padding:7px 8px!important;
   }
-  body.hub-view .hub-school-gate .hub-stage-caption>strong{
+  body.hub-view .hub-stage:not(.corridor-stage) .hub-stage-caption>strong{
     font-size:.82rem!important;
   }
-  body.hub-view .hub-school-gate .hub-stage-caption>small{
+  body.hub-view .hub-stage:not(.corridor-stage) .hub-stage-caption>small{
     font-size:.56rem!important;
   }
-  body.hub-view .hub-school-gate .hub-room-line b{
+  body.hub-view .hub-stage:not(.corridor-stage) .hub-room-line b{
     font-size:.86rem!important;
     padding:4px 6px!important;
+  }
+  body.hub-view .hub-stage:not(.corridor-stage) .hub-wait-note{
+    margin:3px!important;
+    font-size:.64rem!important;
   }
 }
