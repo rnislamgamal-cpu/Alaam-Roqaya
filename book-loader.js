@@ -1,0 +1,3 @@
+'use strict';
+const bookImageLoads={};
+function loadBookImages(page){if(window.BOOK_IMAGES?.[page])return Promise.resolve();const part=Math.ceil(page/26);if(bookImageLoads[part])return bookImageLoads[part];bookImageLoads[part]=new Promise((resolve,reject)=>{const script=document.createElement('script');script.src='book-pages-'+part+'.js?v=7.0';script.onload=()=>{if(window.BOOK_IMAGES?.[page])resolve();else{delete bookImageLoads[part];reject(Error('Missing images'));}};script.onerror=()=>{delete bookImageLoads[part];script.remove();reject(Error('Image load failed'));};document.head.append(script);});return bookImageLoads[part];}
