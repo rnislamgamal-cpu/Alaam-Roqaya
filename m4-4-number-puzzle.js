@@ -18,6 +18,7 @@ let unsubMeta = null;
 let unsubState = null;
 let uiBusy = false;
 let uiQueued = false;
+let uiForce = false;
 let clockTimer = null;
 
 const arabicDigits = value => String(value ?? '').replace(/[0-9]/g, d => EASTERN[d.charCodeAt(0)-48]);
@@ -188,12 +189,12 @@ function bindRoom(){
   const next=currentRoomCode();
   if(next===roomCode && unsubMeta && unsubState) return;
   cleanupRoom(); roomCode=next;
-  if(!db || !uid || !roomCode){ scheduleUi(); return; }
+  if(!db || !uid || !roomCode){ scheduleUi(true); return; }
   unsubMeta=onValue(ref(db,`rooms/${roomCode}/meta`),snap=>{
-    meta=snap.val(); updateRole(); scheduleUi();
+    meta=snap.val(); updateRole(); scheduleUi(true);
   });
   unsubState=onValue(ref(db,`rooms/${roomCode}/state`),snap=>{
-    shared=snap.val(); updateRole(); scheduleUi();
+    shared=snap.val(); updateRole(); scheduleUi(true);
   });
 }
 function gameCard(){
@@ -213,9 +214,11 @@ function ensureLobbyCard(){
     grid.insertAdjacentHTML('beforeend',gameCard());
     card=grid.querySelector('.roqaya-number-puzzle-card');
   }
-  if(card) card.disabled=role!=='host'||!meta?.guestUid;
+  const shouldDisable=role!=='host'||!meta?.guestUid;
+  if(card && card.disabled!==shouldDisable) card.disabled=shouldDisable;
   const count=screen.querySelector('.games-heading-row span');
-  if(count) count.textContent=`${arabicDigits(grid.querySelectorAll('.game-choice').length)} لعبة`;
+  const wanted=`${arabicDigits(grid.querySelectorAll('.game-choice').length)} لعبة`;
+  if(count && count.textContent!==wanted) count.textContent=wanted;
 }
 function tileMarkup(board,n){
   return board.map((value,index)=>{
@@ -299,13 +302,19 @@ function ensureUi(){
     }
   }finally{ uiBusy=false; }
 }
-function scheduleUi(){
+function scheduleUi(force=false){
+  if(force) uiForce=true;
   if(uiQueued) return;
   uiQueued=true;
   queueMicrotask(()=>{
     uiQueued=false;
-    if(shared?.game==='number-puzzle') renderGame();
-    else ensureUi();
+    const forceRender=uiForce;
+    uiForce=false;
+    if(shared?.game==='number-puzzle'){
+      if(forceRender || !screen?.querySelector('.number-puzzle-panel')) renderGame();
+    }else{
+      ensureUi();
+    }
   });
 }
 
@@ -341,8 +350,8 @@ addEventListener('keydown',event=>{
 
 const observer=new MutationObserver(()=>scheduleUi());
 if(screen) observer.observe(screen,{childList:true,subtree:true});
-addEventListener('hashchange',()=>{ bindRoom(); scheduleUi(); });
-addEventListener('pageshow',()=>{ bindRoom(); scheduleUi(); });
+addEventListener('hashchange',()=>{ bindRoom(); scheduleUi(true); });
+addEventListener('pageshow',()=>{ bindRoom(); scheduleUi(true); });
 
 async function boot(){
   // app.js initializes the default Firebase app first. Wait for it rather than
@@ -355,10 +364,10 @@ async function boot(){
   auth=getAuth(app); db=getDatabase(app);
   onAuthStateChanged(auth,user=>{
     uid=user?.uid||'';
-    bindRoom(); scheduleUi();
+    bindRoom(); scheduleUi(true);
   });
   bindRoom();
   clockTimer=setInterval(updateClock,1000);
-  scheduleUi();
+  scheduleUi(true);
 }
 boot();

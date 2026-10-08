@@ -16,8 +16,8 @@
     if (!card) return;
     const title = card.querySelector('strong');
     const desc = card.querySelector('small');
-    if (title) title.textContent = 'لعبة تكوين الصور';
-    if (desc) desc.textContent = '٩ / ١٦ / ٢٥ قطعة • Jigsaw حقيقي';
+    if (title && title.textContent !== 'لعبة تكوين الصور') title.textContent = 'لعبة تكوين الصور';
+    if (desc && desc.textContent !== '٩ / ١٦ / ٢٥ قطعة • Jigsaw حقيقي') desc.textContent = '٩ / ١٦ / ٢٥ قطعة • Jigsaw حقيقي';
   }
 
   function hostCanReturn() {
