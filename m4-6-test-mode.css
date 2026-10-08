@@ -1,0 +1,80 @@
+/* M4.6 — Papa Solo Test Mode */
+.solo-test-start{
+  display:grid!important;
+  place-items:center!important;
+  gap:1px!important;
+  width:100%!important;
+  min-height:42px!important;
+  margin-top:2px!important;
+  border:1px dashed #9d83cd!important;
+  background:rgba(248,244,255,.95)!important;
+  color:#5d4284!important;
+}
+.solo-test-start strong{font-size:.76rem}
+.solo-test-start small{font-size:.54rem;font-weight:700;color:#7a6b8e}
+
+.solo-test-open{
+  width:100%!important;
+  min-height:36px!important;
+  margin:5px 0 2px!important;
+  border:1px dashed #9d83cd!important;
+  background:#f7f2ff!important;
+  color:#5b4083!important;
+  font-size:.66rem!important;
+}
+
+.solo-test-badge{
+  position:fixed;
+  z-index:220;
+  left:8px;
+  bottom:max(8px,env(safe-area-inset-bottom));
+  display:flex;
+  align-items:center;
+  gap:5px;
+  max-width:calc(100vw - 16px);
+  padding:5px 6px;
+  border:1px solid rgba(143,107,196,.35);
+  border-radius:13px;
+  background:rgba(255,255,255,.95);
+  backdrop-filter:blur(12px);
+  -webkit-backdrop-filter:blur(12px);
+  box-shadow:0 7px 24px rgba(72,48,104,.18);
+  color:#5b4083;
+  font-size:.59rem;
+  font-weight:900;
+}
+.solo-test-badge>span{white-space:nowrap}
+.solo-test-badge button{
+  border:0;
+  border-radius:9px;
+  min-height:28px;
+  padding:4px 7px;
+  background:#efe8fb;
+  color:#553b7d;
+  font:inherit;
+  font-weight:900;
+}
+
+.test-guest-badge{
+  position:fixed;
+  z-index:250;
+  left:8px;
+  bottom:max(8px,env(safe-area-inset-bottom));
+  max-width:calc(100vw - 16px);
+  padding:6px 9px;
+  border-radius:12px;
+  background:rgba(66,45,88,.91);
+  color:#fff;
+  box-shadow:0 7px 24px rgba(20,12,30,.22);
+  font-size:.58rem;
+  font-weight:850;
+  pointer-events:none;
+}
+.test-guest-badge strong{font-size:.65rem}
+.test-guest-badge small{display:block;opacity:.82;margin-top:1px}
+
+@media(max-width:420px){
+  .solo-test-badge{left:4px;right:4px;max-width:none;justify-content:center}
+  .solo-test-badge>span{font-size:.54rem}
+  .solo-test-badge button{padding:4px 5px}
+}

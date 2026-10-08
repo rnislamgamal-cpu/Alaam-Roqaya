@@ -4,8 +4,7 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover" />
   <meta name="theme-color" content="#6953d7" />
-  <meta name="description" content="مدرسة وعالم رقية: نتعلم ونلعب معًا في غرفة عائلية خاصة" />
-  <link rel="manifest" href="manifest.webmanifest" />
+  <meta name="robots" content="noindex,nofollow" />
   <link rel="icon" type="image/png" href="icon-192.png" />
   <link rel="stylesheet" href="style.css?v=merge1" />
   <link rel="stylesheet" href="m2-fix.css?v=2" />
@@ -14,26 +13,29 @@
   <link rel="stylesheet" href="m4-4-number-puzzle.css?v=1" />
   <link rel="stylesheet" href="m4-5-jigsaw-replace.css?v=1" />
   <link rel="stylesheet" href="m4-6-test-mode.css?v=1" />
-  <title>مدرسة وعالم رقية 👑</title>
+  <title>🧪 رقية التجريبية</title>
 </head>
 <body>
   <main class="shell">
     <header class="header">
-      <div class="brand"><span class="brand-icon" aria-hidden="true">👑</span><div><h1>مدرسة وعالم رقية</h1><p>نتعلم ونلعب سوا 💜</p></div></div>
+      <div class="brand"><span class="brand-icon" aria-hidden="true">🧪</span><div><h1>رقية التجريبية</h1><p>وضع اختبار بابا</p></div></div>
       <span id="connection" class="connection" aria-live="polite">⏳ جاري التجهيز</span>
       <div id="call-controls" class="call-controls" hidden aria-live="polite"></div>
     </header>
     <div id="message" class="message" role="status" aria-live="polite" hidden></div>
-    <section id="screen" aria-live="polite"><div class="panel center"><div class="big-emoji">🏫</div><h2>بنجهّز مدرسة رقية…</h2></div></section>
-    <footer>مدرسة وعالم رقية • مساحة عائلية خاصة</footer>
+    <section id="screen" aria-live="polite"><div class="panel center"><div class="big-emoji">🧪</div><h2>بنجهّز رقية التجريبية…</h2></div></section>
+    <footer>وضع اختبار محلي • مدرسة وعالم رقية</footer>
   </main>
+
+  <div id="test-guest-status" class="test-guest-badge">
+    <strong>🧪 رقية التجريبية</strong>
+    <small>هتدخل غرفة بابا تلقائيًا</small>
+  </div>
+
   <audio id="remote-audio" autoplay playsinline></audio>
   <script src="m3-fix.js?v=3"></script>
   <script src="m4-3-fix.js?v=1"></script>
-  <script type="module" src="app.js?v=m4"></script>
-  <script type="module" src="m4-4-number-puzzle.js?v=1"></script>
   <script src="m4-5-jigsaw-replace.js?v=1"></script>
-  <script src="m4-6-test-mode.js?v=1"></script>
-  <!-- Cloudflare Web Analytics --><script type='module' src='https://static.cloudflareinsights.com/beacon.min.js' data-cf-beacon='{"token": "3422c2fccf1f49e8bf5ec6b12aee623d"}'></script><!-- End Cloudflare Web Analytics -->
+  <script type="module" src="test-guest-bootstrap.js?v=1"></script>
 </body>
 </html>
