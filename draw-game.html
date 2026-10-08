@@ -1,0 +1,94 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>ارسم وخمّن</title>
+<style>
+:root{--bg:#e6f0ff;--ink:#1e1b4b;--acc:#6d4ce0;--p1:#2563eb;--p2:#db2777}
+*{box-sizing:border-box}html,body{margin:0;min-height:0}
+body{min-height:100vh;display:flex;flex-direction:column;align-items:center;gap:8px;padding:9px 8px 24px;overflow-x:hidden;background:var(--bg);color:var(--ink);font-family:system-ui,"Segoe UI",Tahoma,sans-serif;-webkit-tap-highlight-color:transparent}
+header{width:min(100%,560px);display:flex;align-items:center;justify-content:space-between;gap:8px}
+h1{margin:0;font-size:1.35rem}.hd{display:flex;align-items:center;gap:5px;font-weight:800}
+.ib{width:38px;height:38px;padding:0;border:0;border-radius:50%;background:#fff;font-size:1rem;cursor:pointer;box-shadow:0 3px 0 #c9d6ef}
+#roundControls{display:none;width:min(100%,560px);grid-template-columns:1fr auto;gap:6px}
+#roundControls label{display:flex;align-items:center;justify-content:center;gap:7px;background:#fff;border-radius:11px;padding:6px 8px;font-size:.7rem;font-weight:800}
+#roundControls select{font:inherit;border:0;border-radius:8px;padding:4px 7px;background:#e0e7ff;color:var(--ink)}
+#newGame{display:block;background:#2f6fb1}
+#score{width:min(100%,560px);display:grid;grid-template-columns:1fr 1fr;gap:7px}
+.pc{display:flex;flex-direction:column;align-items:center;padding:5px 7px;border:3px solid var(--c);border-radius:14px;background:#fff;line-height:1.2}
+.pc b{color:var(--c);font-size:.76rem}.pc span{font-size:1rem;font-weight:900}.pc small{font-weight:800;font-size:.66rem;min-height:1.2em}
+.pc.on{background:var(--c);color:#fff}.pc.on b{color:#fff}
+#status{margin:0;min-height:1.45em;font-weight:900;text-align:center;font-size:.85rem}
+#word{display:none;width:min(100%,560px);padding:7px 10px;border-radius:13px;background:#fff8cf;text-align:center;font-weight:900}
+#word.show{display:block}
+#paper{padding:7px;border-radius:19px;background:#fff;border:4px solid var(--acc);box-shadow:0 5px 0 #c4b5f5}
+canvas{display:block;border-radius:12px;touch-action:none;cursor:crosshair;background:#fffef7}
+#tools{display:none;flex-wrap:wrap;gap:6px;justify-content:center;width:min(100%,560px)}
+.sw{width:34px;height:34px;padding:0;border:3px solid #fff;border-radius:50%;background:var(--c);box-shadow:0 0 0 2px #cbd5e1;font-size:.9rem;cursor:pointer}
+.sw.on,.sz.on{box-shadow:0 0 0 4px var(--acc)}
+.sz{width:38px;height:38px;border:0;border-radius:10px;background:#fff;display:grid;place-items:center;cursor:pointer;box-shadow:0 2px 0 #c9d6ef}
+.sz i{display:block;border-radius:50%;background:#1f2937}
+.tb{height:38px;padding:0 10px;border:0;border-radius:10px;background:#fff;color:var(--ink);font:inherit;font-size:.72rem;font-weight:800;cursor:pointer;box-shadow:0 2px 0 #c9d6ef}
+.big{display:none;font:inherit;border:0;border-radius:14px;padding:10px 22px;background:var(--acc);color:#fff;font-size:.92rem;font-weight:900;cursor:pointer;box-shadow:0 4px 0 #4a30b0}
+.big:disabled,.ib:disabled,.tb:disabled{opacity:.48;cursor:default}
+#opts{display:none;grid-template-columns:1fr 1fr;gap:8px;width:min(100%,560px)}
+.opt{display:flex;flex-direction:column;align-items:center;gap:2px;padding:8px 5px;border:0;border-radius:16px;background:#fff;color:var(--ink);font:inherit;font-weight:900;font-size:.9rem;cursor:pointer;box-shadow:0 4px 0 #c9d6ef}
+.opt span{font-size:2rem;line-height:1.05}.opt.bad{background:#fee2e2;opacity:.62;box-shadow:none}.opt.ok{background:#bbf7d0;opacity:1;box-shadow:0 0 0 4px #16a34a}.opt:disabled{cursor:default}
+#fb{display:none;margin:0;min-height:1.4em;font-weight:900;text-align:center;font-size:.8rem}
+#final{display:none;width:min(100%,560px);padding:10px;border-radius:16px;background:#fff8cf;text-align:center;font-weight:900}
+.tip{margin:0;color:#5b5a86;font-size:.69rem;text-align:center;max-width:560px;line-height:1.5}
+[data-host=yes] #roundControls{display:grid}[data-ph=draw] #tools{display:flex}[data-ph=draw] #done{display:block}
+[data-ph=guess] #opts,[data-ph=result] #opts{display:grid}[data-ph=guess] #fb,[data-ph=result] #fb{display:block}[data-ph=end] #final{display:block}
+@media(max-width:430px){body{gap:6px;padding-inline:5px}h1{font-size:1.15rem}.ib{width:34px;height:34px}.pc{padding:4px 5px}.pc b{font-size:.66rem}.pc span{font-size:.86rem}.pc small{font-size:.57rem}#status{font-size:.74rem}.sw{width:30px;height:30px}.sz{width:34px;height:34px}.tb{height:34px;padding:0 8px;font-size:.64rem}.big{padding:9px 18px;font-size:.8rem}.opt{font-size:.78rem}.opt span{font-size:1.75rem}}
+</style>
+</head>
+<body>
+<header><h1>🎨 ارسم وخمّن</h1><div class="hd"><span id="rnd"></span><button id="snd" class="ib" aria-label="الصوت">🔊</button><button id="city" class="ib" aria-label="المدينة">🎡</button></div></header>
+<div id="roundControls"><label>عدد الجولات <select id="rounds"><option value="4">٤</option><option value="6" selected>٦</option><option value="8">٨</option><option value="10">١٠</option></select></label><button id="newGame" class="tb">🔄 لعبة جديدة</button></div>
+<div id="score"><div id="hostPc" class="pc" style="--c:var(--p1)"><b>بابا</b><span>⭐ ٠</span><small></small></div><div id="guestPc" class="pc" style="--c:var(--p2)"><b>رقية</b><span>⭐ ٠</span><small></small></div></div>
+<p id="status" aria-live="polite">جاري تجهيز اللعبة…</p><div id="word"></div>
+<div id="paper"><canvas id="cv"></canvas></div><div id="tools"></div><button id="done" class="big">خلصت الرسم ✓</button>
+<div id="opts"></div><p id="fb" aria-live="polite"></p><button id="next" class="big">الجولة اللي بعدها ◀</button><div id="final"></div>
+<p class="tip">الصح من أول اختيار = ٢ ⭐ • من المحاولة التانية أو التالتة = ١ ⭐ • الرسم يظهر للطرف الثاني مباشرة</p>
+<script>
+const $=s=>document.querySelector(s),cv=$('#cv'),ctx=cv.getContext('2d');
+const PAL=['#1f2937','#e63946','#f59e0b','#facc15','#22c55e','#2563eb','#9333ea','#92400e','#fffef7'],SIZES=[4,9,16],E='٠١٢٣٤٥٦٧٨٩',ar=v=>String(v).replace(/[0-9]/g,d=>E[d.charCodeAt(0)-48]),dpr=Math.min(devicePixelRatio||1,2);
+let cfg={role:'guest',childName:'رقية',phase:'draw',roundNo:1,total:6,drawer:'host',scores:{host:0,guest:0},answer:null,options:[],guesses:[],lastPoints:0,result:null,winner:null,roundId:0,correctOption:-1};
+let ci=0,si=1,W=520,H=390,sound=true,ac=null,cur=null,seq=0,stack=[],lines=new Map(),pending=new Map();
+const nameOf=r=>r==='host'?'بابا':(cfg.childName||'رقية'),drawer=()=>cfg.drawer===cfg.role,guesser=()=>!drawer(),canDraw=()=>cfg.phase==='draw'&&drawer();
+function tone(f,a,d,t,v,f2){if(!sound)return;try{ac=ac||new(window.AudioContext||window.webkitAudioContext)();if(ac.state==='suspended')ac.resume();const o=ac.createOscillator(),g=ac.createGain(),s=ac.currentTime+a;o.type=t;o.frequency.setValueAtTime(f,s);if(f2)o.frequency.exponentialRampToValueAtTime(f2,s+d);g.gain.setValueAtTime(v,s);g.gain.exponentialRampToValueAtTime(.001,s+d);o.connect(g);g.connect(ac.destination);o.start(s);o.stop(s+d)}catch{}}
+const sfx={ok:()=>[660,880,1100].forEach((f,k)=>tone(f,k*.09,.2,'triangle',.19)),bad:()=>tone(220,0,.3,'sawtooth',.13,110),win:()=>[523,659,784,1047,784,1047].forEach((f,k)=>tone(f,k*.14,.25,'square',.08))};
+$('#snd').onclick=()=>{sound=!sound;$('#snd').textContent=sound?'🔊':'🔇'};
+const sig=l=>[l.x1,l.y1,l.x2,l.y2,l.c,l.s].map(v=>Number(v).toFixed(4)).join('|');
+function seg(l){ctx.strokeStyle=PAL[l.c]||PAL[0];ctx.lineWidth=(SIZES[l.s]||SIZES[1])*W/520;ctx.lineCap=ctx.lineJoin='round';ctx.beginPath();ctx.moveTo(l.x1*W,l.y1*H);ctx.lineTo(l.x2*W,l.y2*H);ctx.stroke()}
+function redraw(){ctx.fillStyle='#fffef7';ctx.fillRect(0,0,W,H);for(const l of lines.values())seg(l)}
+function fit(){W=Math.max(250,Math.min(innerWidth-42,520));H=Math.round(W*.75);cv.style.width=W+'px';cv.style.height=H+'px';cv.width=Math.round(W*dpr);cv.height=Math.round(H*dpr);ctx.setTransform(dpr,0,0,dpr,0,0);redraw()}
+const pt=e=>{const r=cv.getBoundingClientRect();return{x:Math.max(0,Math.min(1,(e.clientX-r.left)/r.width)),y:Math.max(0,Math.min(1,(e.clientY-r.top)/r.height))}};
+function sendLine(q){pending.set(sig(q),(pending.get(sig(q))||0)+1);seg(q);parent.postMessage({type:'roqaya-draw-segment',line:q,roundId:cfg.roundId},location.origin)}
+cv.onpointerdown=e=>{if(!canDraw())return;e.preventDefault();cv.setPointerCapture?.(e.pointerId);const p=pt(e),id=`${Date.now().toString(36)}-${++seq}`;cur={id,last:p};stack.push(id);sendLine({x1:p.x,y1:p.y,x2:Math.min(1,p.x+.001),y2:p.y,c:ci,s:si,strokeId:id})};
+cv.onpointermove=e=>{if(!cur||!canDraw())return;e.preventDefault();const p=pt(e),a=cur.last;if(Math.hypot(p.x-a.x,p.y-a.y)<.003)return;cur.last=p;sendLine({x1:a.x,y1:a.y,x2:p.x,y2:p.y,c:ci,s:si,strokeId:cur.id})};
+const stop=e=>{if(!cur)return;if(e?.type==='pointerup'&&canDraw()){const p=pt(e),a=cur.last;if(Math.hypot(p.x-a.x,p.y-a.y)>.001)sendLine({x1:a.x,y1:a.y,x2:p.x,y2:p.y,c:ci,s:si,strokeId:cur.id})}cur=null};cv.onpointerup=cv.onpointercancel=stop;
+$('#tools').innerHTML=PAL.map((c,i)=>`<button class="sw${i?'':' on'}" style="--c:${c}" data-c="${i}">${i===PAL.length-1?'🧽':''}</button>`).join('')+SIZES.map((s,i)=>`<button class="sz${i===1?' on':''}" data-s="${i}"><i style="width:${s+4}px;height:${s+4}px"></i></button>`).join('')+'<button class="tb" id="undo">↩️ تراجع</button><button class="tb" id="clr">🗑️ امسح</button>';
+$('#tools').onclick=e=>{const b=e.target.closest('button');if(!b||!canDraw())return;if(b.dataset.c!==undefined){ci=+b.dataset.c;document.querySelectorAll('.sw').forEach(x=>x.classList.toggle('on',x===b))}else if(b.dataset.s!==undefined){si=+b.dataset.s;document.querySelectorAll('.sz').forEach(x=>x.classList.toggle('on',x===b))}else if(b.id==='undo'){const id=stack.pop();if(id)parent.postMessage({type:'roqaya-draw-undo',strokeId:id,roundId:cfg.roundId},location.origin)}else if(b.id==='clr'){stack=[];parent.postMessage({type:'roqaya-draw-clear',roundId:cfg.roundId},location.origin)}};
+function render(){
+ document.body.dataset.ph=cfg.phase||'';document.body.dataset.host=cfg.role==='host'?'yes':'no';$('#rnd').textContent=cfg.roundNo?`الجولة ${ar(cfg.roundNo)}/${ar(cfg.total)}`:'';$('#rounds').value=String(cfg.total||6);$('#city').disabled=cfg.role!=='host';
+ const hp=$('#hostPc'),gp=$('#guestPc');hp.classList.toggle('on',cfg.drawer==='host'&&cfg.phase!=='end');gp.classList.toggle('on',cfg.drawer==='guest'&&cfg.phase!=='end');hp.querySelector('span').textContent=`⭐ ${ar(cfg.scores?.host||0)}`;gp.querySelector('span').textContent=`⭐ ${ar(cfg.scores?.guest||0)}`;gp.querySelector('b').textContent=cfg.childName||'رقية';hp.querySelector('small').textContent=cfg.phase==='end'?'':cfg.drawer==='host'?'✏️ يرسم':'🤔 يخمّن';gp.querySelector('small').textContent=cfg.phase==='end'?'':cfg.drawer==='guest'?'✏️ ترسم':'🤔 تخمّن';
+ const word=$('#word'),status=$('#status');word.classList.toggle('show',Boolean(cfg.answer&&drawer()&&['draw','guess'].includes(cfg.phase)));word.textContent=cfg.answer?`ارسم: ${cfg.answer.emoji} ${cfg.answer.name}`:'';
+ if(cfg.phase==='draw')status.textContent=drawer()?`دورك ترسم يا ${nameOf(cfg.role)} ✏️`:`👀 ${nameOf(cfg.drawer)} بيرسم…`;else if(cfg.phase==='guess')status.textContent=guesser()?`دورك تخمّن يا ${nameOf(cfg.role)} 🤔`:`👀 ${nameOf(otherRole())} بيخمّن رسمتك…`;else if(cfg.phase==='result')status.textContent=cfg.result==='correct'?`✅ إجابة صحيحة +${ar(cfg.lastPoints||0)} ⭐`:'😅 خلصت المحاولات';else if(cfg.phase==='end')status.textContent=cfg.winner==='draw'?'🤝 تعادل!':`🏆 ${nameOf(cfg.winner)} كسب!`;else status.textContent='جاري تجهيز الجولة…';
+ $('#done').disabled=!canDraw();$('#tools').querySelectorAll('button').forEach(b=>b.disabled=!canDraw());
+ const show=guesser()&&['guess','result'].includes(cfg.phase);$('#opts').innerHTML=show?(cfg.options||[]).map((o,i)=>{const wrong=(cfg.guesses||[]).includes(i)&&i!==cfg.correctOption,correct=cfg.phase==='result'&&i===cfg.correctOption;return `<button class="opt ${wrong?'bad':''} ${correct?'ok':''}" data-i="${i}" ${cfg.phase!=='guess'||wrong?'disabled':''}><span>${o.emoji}</span>${o.name}</button>`}).join(''):'';
+ if(cfg.phase==='guess'&&guesser())$('#fb').textContent=`المحاولة ${ar((cfg.guesses?.length||0)+1)} من ٣`;else if(cfg.phase==='result'&&guesser())$('#fb').textContent=cfg.result==='correct'?`صح! ✅ +${ar(cfg.lastPoints||0)} ⭐`:'خلصت المحاولات 😅';else $('#fb').textContent='';
+ const next=$('#next');next.style.display=((cfg.phase==='result'||cfg.phase==='end')&&cfg.role==='host')?'block':'none';next.textContent=cfg.phase==='end'?'العب تاني 🔄':cfg.roundNo>=cfg.total?'شوف النتيجة 🏆':'الجولة اللي بعدها ◀';
+ const final=$('#final');if(cfg.phase==='end'){const hs=cfg.scores?.host||0,gs=cfg.scores?.guest||0;final.textContent=cfg.winner==='draw'?`🤝 تعادل! بابا ${ar(hs)} ⭐ • ${nameOf('guest')} ${ar(gs)} ⭐`:`🏆 ${nameOf(cfg.winner)} كسب! بابا ${ar(hs)} ⭐ • ${nameOf('guest')} ${ar(gs)} ⭐`;if(!cfg._winSound){cfg._winSound=true;sfx.win()}}
+}
+const otherRole=()=>cfg.role==='host'?'guest':'host';
+$('#done').onclick=()=>{if(!canDraw())return;if(lines.size===0&&pending.size===0){cv.animate([{transform:'translateX(-6px)'},{transform:'translateX(6px)'},{transform:'none'}],{duration:250});return}parent.postMessage({type:'roqaya-draw-done',roundId:cfg.roundId},location.origin)};
+$('#opts').onclick=e=>{const b=e.target.closest('.opt');if(!b||cfg.phase!=='guess'||!guesser()||b.disabled)return;parent.postMessage({type:'roqaya-draw-guess',index:+b.dataset.i,roundId:cfg.roundId},location.origin)};
+$('#next').onclick=()=>{if(cfg.role!=='host')return;if(cfg.phase==='end')parent.postMessage({type:'roqaya-draw-new',total:+$('#rounds').value||6},location.origin);else if(cfg.phase==='result')parent.postMessage({type:'roqaya-draw-next',roundId:cfg.roundId},location.origin)};
+$('#newGame').onclick=()=>{if(cfg.role==='host')parent.postMessage({type:'roqaya-draw-new',total:+$('#rounds').value||6},location.origin)};$('#city').onclick=()=>{if(cfg.role==='host')parent.postMessage({type:'roqaya-draw-city'},location.origin)};
+addEventListener('message',e=>{if(e.origin!==location.origin)return;const d=e.data||{};if(d.type==='roqaya-draw-config'){const old=cfg.phase;cfg={...cfg,...d.config};if(old!=='result'&&cfg.phase==='result')(cfg.result==='correct'?sfx.ok:sfx.bad)();render()}else if(d.type==='roqaya-draw-lines'){lines.clear();pending.clear();for(const l of d.lines||[])lines.set(l.key,l);redraw()}else if(d.type==='roqaya-draw-line'){const l=d.line;if(!l)return;const s=sig(l),n=pending.get(s)||0;lines.set(l.key,l);if(n>0){if(n===1)pending.delete(s);else pending.set(s,n-1)}else seg(l)}else if(d.type==='roqaya-draw-remove'){if(lines.delete(d.key))redraw()}else if(d.type==='roqaya-draw-clear'){lines.clear();pending.clear();stack=[];redraw()}});
+addEventListener('resize',fit);fit();render();parent.postMessage({type:'roqaya-draw-ready'},location.origin);
+</script>
+</body>
+</html>
