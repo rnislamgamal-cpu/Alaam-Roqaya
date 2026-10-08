@@ -1,0 +1,79 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>السلم والثعبان</title>
+<style>
+:root{--s:min(94vw,560px);--bg:#0f2a4a;--card:#1c4373;--accent:#ffb703;--p1:#e63946;--p2:#7b3fe4}
+*{box-sizing:border-box}html,body{margin:0;min-height:0}
+body{display:flex;flex-direction:column;align-items:center;gap:10px;padding:10px 8px 24px;background:var(--bg);color:#fff;font-family:system-ui,"Segoe UI",Tahoma,sans-serif}
+h1{margin:0;font-size:1.45rem}#status{margin:0;min-height:1.6em;font-weight:800;text-align:center}
+.row{display:flex;gap:10px;align-items:center;justify-content:center;flex-wrap:wrap}
+.players{width:min(94vw,560px);display:grid;grid-template-columns:1fr 1fr;gap:7px}
+.player{background:var(--card);border:1px solid rgba(255,255,255,.13);border-radius:11px;padding:6px 8px;display:flex;justify-content:space-between;align-items:center;font-size:.72rem;font-weight:800}
+.player.turn{outline:2px solid var(--accent)}
+#dice{width:62px;height:62px;padding:9px;border-radius:14px;background:#fff;display:grid;grid-template:repeat(3,1fr)/repeat(3,1fr);place-items:center;box-shadow:0 4px 0 #b9c3d3;cursor:pointer;user-select:none;-webkit-tap-highlight-color:transparent}
+#dice i{width:10px;height:10px;border-radius:50%;background:#1b2a41;visibility:hidden}#dice i.on{visibility:visible}
+#dice.roll{animation:shake .25s infinite}@keyframes shake{50%{transform:rotate(14deg) scale(1.08)}}
+button{font:inherit;padding:9px 14px;border:0;border-radius:11px;cursor:pointer;background:var(--card);color:#fff}
+button:disabled{opacity:.48;cursor:default}#roll{background:var(--accent);color:#1b2a41;font-weight:900;font-size:1.02rem}
+#board{position:relative;width:var(--s);aspect-ratio:1;direction:ltr;margin-bottom:calc(var(--s)*.09);border-radius:12px;box-shadow:0 0 0 5px var(--accent),0 10px 30px rgba(0,0,0,.45);touch-action:manipulation}
+#svg{display:block;width:100%;height:100%;border-radius:12px}
+.tok{position:absolute;width:6%;aspect-ratio:1;border-radius:50%;border:2px solid #fff;box-shadow:0 2px 5px rgba(0,0,0,.5);transform:translate(-50%,-50%);transition:left .2s,top .2s;display:grid;place-items:center;font-size:calc(var(--s)*.032);line-height:1;font-weight:800;color:#fff}
+.tok.jump{transition:left .7s ease-in-out,top .7s ease-in-out}.fl{pointer-events:none;animation:fade .5s forwards}@keyframes fade{from{opacity:.7}to{opacity:0}}
+.actions{width:min(94vw,560px);display:grid;grid-template-columns:1fr 1fr;gap:7px}#new{background:#2a6f9e;font-weight:850}#city{background:#6443a8;font-weight:850}
+.tip{margin:0;color:#a9c0dc;font-size:.78rem;text-align:center;max-width:var(--s);line-height:1.55}
+@media(max-width:420px){body{gap:7px;padding-inline:5px}h1{font-size:1.25rem}#dice{width:56px;height:56px}.player{font-size:.64rem;padding:5px 6px}#status{font-size:.76rem}.tip{font-size:.68rem}button{padding:8px 10px;font-size:.72rem}}
+@media(prefers-reduced-motion:reduce){#dice.roll{animation:none}.tok,.tok.jump{transition:none}}
+</style>
+</head>
+<body>
+<h1>🎲 السلم والثعبان</h1>
+<p id="status" aria-live="polite">جاري تجهيز اللعبة…</p>
+<div class="players">
+  <div id="hostP" class="player"><span>👨 بابا</span><b>٠</b></div>
+  <div id="guestP" class="player"><span>👧 رقية</span><b>٠</b></div>
+</div>
+<div class="row"><div id="dice" role="img" aria-label="النرد"></div><button id="roll">🎲 ارمي النرد</button></div>
+<div id="board"><svg id="svg" viewBox="0 0 100 100"></svg></div>
+<div class="actions"><button id="new">🔄 لعبة جديدة</button><button id="city">🎡 المدينة</button></div>
+<p class="tip">اضغط على النرد يلف، واضغط تاني يقف. بعدين عدّ الخطوات واضغط على المربع الصح. السلم بيطلّعك والثعبان بينزّلك، ولازم توصل ١٠٠ بالظبط. لو جبت ٦ بتلعب تاني.</p>
+<script>
+const $=s=>document.querySelector(s),board=$('#board');
+const LAD={1:38,4:14,9:31,21:42,28:84,36:44,51:67,71:91,80:100};
+const SNK={16:6,47:26,49:11,56:53,62:19,64:60,87:24,93:73,95:75,98:78};
+const COLS=['#2e9e44','#f08a24','#8e44ad','#16a6b6','#e75480','#c9a227','#3b82f6','#d9480f','#0f9d8a','#7c4dff'];
+const PIPS=[[4],[0,8],[0,4,8],[0,2,6,8],[0,2,4,6,8],[0,2,3,5,6,8]];
+const EASTERN='٠١٢٣٤٥٦٧٨٩',ar=v=>String(v).replace(/[0-9]/g,d=>EASTERN[d.charCodeAt(0)-48]);
+let cfg={role:'guest',childName:'رقية',positions:{host:0,guest:0},turn:'host',phase:'ready',dice:null,spinId:0,roundId:0,winner:null,lastEvent:null,move:null,soundEnabled:true};
+let spinTimer=0,cur=1,animating=false,initialized=false,seenMoveId=0,seenEventId=0,eventText='',eventTimer=0,ac=null;
+const rc=n=>{const i=n-1,r=i/10|0;return[r%2?9-i%10:i%10,r]},ctr=n=>{const[c,r]=rc(n);return[c*10+5,(9-r)*10+5]},nameOf=r=>r==='host'?'بابا':(cfg.childName||'رقية'),myTurn=()=>cfg.turn===cfg.role&&!cfg.winner,wait=ms=>new Promise(r=>setTimeout(r,ms));
+function ladder(a,b){const[x1,y1]=ctr(a),[x2,y2]=ctr(b),dx=x2-x1,dy=y2-y1,L=Math.hypot(dx,dy),ux=dx/L,uy=dy/L,px=-uy*1.7,py=ux*1.7,ln=(ax,ay,bx,by,c,w)=>`<line x1="${ax}" y1="${ay}" x2="${bx}" y2="${by}" stroke="${c}" stroke-width="${w}" stroke-linecap="round"/>`;let s=ln(x1+px,y1+py,x2+px,y2+py,'#7a4b1e',1.2)+ln(x1-px,y1-py,x2-px,y2-py,'#7a4b1e',1.2);for(let d=3;d<L-2;d+=4.2){const cx=x1+ux*d,cy=y1+uy*d;s+=ln(cx+px,cy+py,cx-px,cy-py,'#c58a4a',1)}return s}
+function snake(a,b,col){const[x1,y1]=ctr(a),[x2,y2]=ctr(b),dx=x2-x1,dy=y2-y1,nx=-dy*.18,ny=dx*.18,d=`M${x1} ${y1}C${x1+dx*.33+nx} ${y1+dy*.33+ny} ${x1+dx*.66-nx} ${y1+dy*.66-ny} ${x2} ${y2}`,p=(w,c,x='')=>`<path d="${d}" fill="none" stroke="${c}" stroke-width="${w}" stroke-linecap="round" ${x}/>`,e=(ex,r,c)=>`<circle cx="${x1+ex}" cy="${y1-.7}" r="${r}" fill="${c}"/>`;return p(3.6,'rgba(0,0,0,.35)')+p(2.8,col)+p(1,'#fff','stroke-dasharray="0.1 2.4" opacity=".7"')+`<circle cx="${x1}" cy="${y1}" r="2.4" fill="${col}"/>`+e(-.9,.8,'#fff')+e(.9,.8,'#fff')+e(-.9,.4,'#111')+e(.9,.4,'#111')}
+function draw(){let s='';for(let n=1;n<=100;n++){const[c,r]=rc(n),[x,y]=ctr(n);s+=`<rect x="${x-5}" y="${y-5}" width="10" height="10" fill="${n===100?'#ffd166':(c+r)%2?'#cfe9d6':'#e8f4fa'}"/>`+`<text x="${x-4.4}" y="${y-2.3}" font-size="3" font-weight="700" fill="#4a6275">${n}</text>`}for(const a in LAD)s+=ladder(+a,LAD[a]);Object.keys(SNK).forEach((a,i)=>s+=snake(+a,SNK[a],COLS[i]));$('#svg').innerHTML=s}
+const dice=$('#dice');dice.innerHTML='<i></i>'.repeat(9);const face=v=>[...dice.children].forEach((e,k)=>e.classList.toggle('on',PIPS[v-1].includes(k)));
+const toks=['host','guest'].map((r,i)=>{const d=document.createElement('div');d.className='tok';d.dataset.role=r;d.style.background=`var(--p${i+1})`;d.textContent=i+1;board.append(d);return d});
+function placeRole(role,pos=cfg.positions?.[role]||0){const i=role==='host'?0:1,[x,y]=pos?ctr(pos):[5+i*8,108],same=pos&&cfg.positions?.host===cfg.positions?.guest,sh=same?(i?2:-2):0,t=toks[i];t.style.left=x+sh+'%';t.style.top=y+'%'}
+function placeAll(){placeRole('host');placeRole('guest')}
+function unlock(){if(!cfg.soundEnabled)return;try{ac=ac||new(window.AudioContext||window.webkitAudioContext)();if(ac.state==='suspended')ac.resume()}catch{}}
+function tone(f,at,dur,type,vol,f2){if(!cfg.soundEnabled)return;try{unlock();if(!ac)return;const o=ac.createOscillator(),g=ac.createGain(),t=ac.currentTime+at;o.type=type;o.frequency.setValueAtTime(f,t);if(f2)o.frequency.exponentialRampToValueAtTime(f2,t+dur);g.gain.setValueAtTime(vol,t);g.gain.exponentialRampToValueAtTime(.001,t+dur);o.connect(g);g.connect(ac.destination);o.start(t);o.stop(t+dur)}catch{}}
+const sfx={ladder:()=>[523,659,784,1047].forEach((f,k)=>tone(f,k*.09,.2,'triangle',.22)),snake:()=>{tone(700,0,.75,'triangle',.22,100);tone(350,0,.75,'sawtooth',.05,50)},win:()=>[[523,0,.12],[659,.12,.12],[784,.24,.12],[1047,.36,.25],[784,.66,.1],[1047,.78,.1],[1319,.9,.6]].forEach(([f,a,d])=>tone(f,a,d,'square',.11)),bad:()=>{tone(220,0,.3,'sawtooth',.18,110);try{navigator.vibrate?.(120)}catch{}}};
+function startSpin(){if(spinTimer)return;dice.classList.add('roll');spinTimer=setInterval(()=>{cur=cur%6+1;face(cur)},100)}
+function stopSpin(show=cfg.dice){clearInterval(spinTimer);spinTimer=0;dice.classList.remove('roll');if(Number.isInteger(show))face(show)}
+function flash(n){const[x,y]=ctr(n),r=document.createElementNS('http://www.w3.org/2000/svg','rect');r.setAttribute('x',x-5);r.setAttribute('y',y-5);r.setAttribute('width',10);r.setAttribute('height',10);r.setAttribute('fill','#e63946');r.setAttribute('class','fl');$('#svg').append(r);setTimeout(()=>r.remove(),500)}
+function setEvent(text,ms=1700){eventText=text;clearTimeout(eventTimer);eventTimer=setTimeout(()=>{eventText='';renderStatus()},ms);renderStatus()}
+function checkEvent(){const ev=cfg.lastEvent,id=Number(ev?.id)||0;if(!initialized){seenEventId=id;return}if(id<=seenEventId)return;seenEventId=id;if(ev.type==='overshoot')setEvent(`😅 ${nameOf(ev.player)} محتاج رقم بالظبط عشان يوصل ١٠٠`);if(ev.type==='six')setEvent(`🎉 ${nameOf(ev.player)} جاب ٦ — دور إضافي!`);if(ev.type==='win'){setEvent(`🏆 ${nameOf(ev.player)} كسب!`,3500);sfx.win()}}
+function renderStatus(){const s=$('#status');if(eventText){s.textContent=eventText;return}if(cfg.winner){s.textContent=`🎉 ${nameOf(cfg.winner)} كسب!`;return}if(animating||cfg.phase==='moving'){s.textContent=`👣 ${nameOf(cfg.turn)} بيتحرك…`;return}if(cfg.phase==='spinning'){s.textContent=myTurn()?'النرد بيلف! اضغط عليه عشان يقف ✋':`${nameOf(cfg.turn)} بيرمي النرد 🎲`;return}if(cfg.phase==='choose'){s.textContent=myTurn()?`طلع ${ar(cfg.dice)}! عدّ ${ar(cfg.dice)} مربعات واضغط المربع الصح 👆`:`${nameOf(cfg.turn)} طلع له ${ar(cfg.dice)} وبيعد الخطوات…`;return}s.textContent=myTurn()?'دورك! ارمي النرد 🎲':`دور ${nameOf(cfg.turn)} — استنى دورك 👀`}
+function renderControls(){const ready=cfg.phase==='ready',spinning=cfg.phase==='spinning',active=myTurn()&&!animating,roll=$('#roll');roll.disabled=!(active&&(ready||spinning));roll.textContent=spinning&&active?'✋ وقّف النرد':'🎲 ارمي النرد';dice.style.pointerEvents=roll.disabled?'none':'auto';$('#new').disabled=cfg.role!=='host';$('#city').disabled=cfg.role!=='host';$('#hostP').classList.toggle('turn',cfg.turn==='host'&&!cfg.winner);$('#guestP').classList.toggle('turn',cfg.turn==='guest'&&!cfg.winner);$('#hostP').querySelector('b').textContent=ar(cfg.positions?.host||0);$('#guestP').querySelector('b').textContent=ar(cfg.positions?.guest||0);$('#guestP').querySelector('span').textContent=`👧 ${cfg.childName||'رقية'}`}
+function render(){renderControls();renderStatus();if(cfg.phase==='spinning')startSpin();else stopSpin(cfg.dice||1)}
+async function animateMove(move){if(!move||Number(move.id)<=seenMoveId)return;seenMoveId=Number(move.id);animating=true;render();const role=move.player,start=Number(move.from)||0,target=Number(move.target)||start;placeRole(role,start);for(let p=start+1;p<=target;p++){placeRole(role,p);await wait(210)}if(move.jumpType){setEvent(move.jumpType==='ladder'?'🪜 سلم! طلعت فوق':'🐍 ثعبان! نزلت تحت',1100);await wait(360);toks[role==='host'?0:1].classList.add('jump');move.jumpType==='ladder'?sfx.ladder():sfx.snake();placeRole(role,move.destination);await wait(760);toks[role==='host'?0:1].classList.remove('jump')}animating=false;placeAll();render();parent.postMessage({type:'roqaya-snakes-move-done',moveId:Number(move.id),roundId:Number(cfg.roundId)},location.origin)}
+function applyConfig(next){const first=!initialized;cfg={...cfg,...next};if(first){initialized=true;seenMoveId=Number(cfg.move?.id)||0;seenEventId=Number(cfg.lastEvent?.id)||0;placeAll()}else{checkEvent();if(cfg.phase==='moving'&&cfg.move&&Number(cfg.move.id)>seenMoveId)animateMove(cfg.move).catch(()=>{animating=false;placeAll();render()});else if(!animating)placeAll()}render()}
+function pressRoll(){if(animating||!myTurn())return;unlock();if(cfg.phase==='ready')parent.postMessage({type:'roqaya-snakes-roll-start',roundId:cfg.roundId},location.origin);else if(cfg.phase==='spinning')parent.postMessage({type:'roqaya-snakes-roll-stop',roundId:cfg.roundId},location.origin)}
+board.onclick=e=>{if(animating||!myTurn()||cfg.phase!=='choose')return;const b=board.getBoundingClientRect(),c=Math.floor((e.clientX-b.left)/b.width*10),w=9-Math.floor((e.clientY-b.top)/b.height*10);if(c<0||c>9||w<0||w>9)return;const n=w*10+(w%2?9-c:c)+1,target=(Number(cfg.positions?.[cfg.role])||0)+Number(cfg.dice||0);if(n!==target){sfx.bad();flash(n);setEvent(`❌ غلط! عدّ ${ar(cfg.dice)} مربعات وجرّب تاني`,1400);return}setEvent('تمام! 👍',700);parent.postMessage({type:'roqaya-snakes-square',square:n,roundId:cfg.roundId},location.origin)};
+$('#roll').onclick=dice.onclick=pressRoll;$('#new').onclick=()=>parent.postMessage({type:'roqaya-snakes-new'},location.origin);$('#city').onclick=()=>parent.postMessage({type:'roqaya-snakes-city'},location.origin);
+addEventListener('message',e=>{if(e.origin===location.origin&&e.data?.type==='roqaya-snakes-config')applyConfig(e.data.config)});
+draw();face(1);placeAll();render();parent.postMessage({type:'roqaya-snakes-ready'},location.origin);
+</script>
+</body>
+</html>
