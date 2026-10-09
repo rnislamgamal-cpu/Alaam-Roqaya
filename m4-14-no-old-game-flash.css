@@ -1,0 +1,41 @@
+/* M4.14 — prevent legacy game UI from flashing before the replacement loads */
+
+/* Modern-browser path: these selectors hide the legacy renderer before paint. */
+#screen:has(.memory-grid),
+#screen:has(.snakes-panel),
+#screen:has(.jigsaw-panel),
+#screen:has(.drawing-wrap){
+  visibility:hidden!important;
+  pointer-events:none!important;
+}
+
+/* JS fallback / transition state. */
+#screen.external-game-transition{
+  visibility:hidden!important;
+  pointer-events:none!important;
+}
+
+.game-switch-cover{
+  display:none;
+  width:100%;
+  min-height:220px;
+  align-items:center;
+  justify-content:center;
+  text-align:center;
+  padding:28px 16px;
+}
+.game-switch-cover.show{display:flex}
+.game-switch-cover-card{
+  display:grid;
+  place-items:center;
+  gap:7px;
+  min-width:min(82vw,280px);
+  padding:20px 18px;
+  border-radius:22px;
+  background:rgba(255,255,255,.96);
+  box-shadow:0 10px 30px rgba(54,42,104,.14);
+  color:#4f3c78;
+  font-weight:900;
+}
+.game-switch-cover-card span{font-size:2rem}
+.game-switch-cover-card small{font-size:.78rem;color:#796a9c}

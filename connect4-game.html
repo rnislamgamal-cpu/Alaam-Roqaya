@@ -1,0 +1,142 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>4 في صف</title>
+<style>
+:root{--bg:#e6f0ff;--ink:#1e1b4b;--p1:#e63946;--p2:#fbbf24;--blue:#1d4ed8}
+*{box-sizing:border-box}
+html,body{margin:0;min-height:0}
+body{min-height:100vh;display:flex;flex-direction:column;align-items:center;gap:10px;padding:10px 8px 24px;background:var(--bg);color:var(--ink);font-family:system-ui,"Segoe UI",Tahoma,sans-serif;-webkit-tap-highlight-color:transparent}
+h1{margin:0;font-size:1.45rem}
+#hud{width:min(94vw,440px);display:grid;grid-template-columns:1fr 1fr;gap:8px}
+.pl{display:flex;align-items:center;gap:7px;min-width:0;padding:7px 9px;border:3px solid transparent;border-radius:14px;background:#fff;font-weight:850}
+.pl.on{border-color:var(--ink);transform:scale(1.025)}
+.pl b{overflow:hidden;text-overflow:ellipsis;white-space:nowrap;font-size:.76rem}
+.pl span{margin-inline-start:auto;font-size:1.05rem;font-weight:900}
+.dot{flex:none;width:17px;height:17px;border-radius:50%}.p1 .dot{background:var(--p1)}.p2 .dot{background:var(--p2)}
+#st{margin:0;min-height:1.5em;font-size:.9rem;font-weight:900;text-align:center}
+#bw{width:min(94vw,440px)}
+#arrows{display:grid;grid-template-columns:repeat(7,1fr);padding:0 6px;direction:ltr}
+.ar{height:34px;border:0;background:none;color:var(--c);font-size:1.3rem;cursor:pointer}
+.ar:disabled{opacity:.22;cursor:default}
+#board{display:grid;grid-template-columns:repeat(7,1fr);padding:6px;overflow:hidden;direction:ltr;border-radius:16px;background:var(--blue);box-shadow:0 6px 0 #1e3a8a}
+.cell{position:relative;aspect-ratio:1;padding:0;border:0;background:none;cursor:pointer}
+.cell::before{content:'';position:absolute;inset:8%;border-radius:50%;background:var(--bg)}
+.disc{position:absolute;inset:8%;border-radius:50%;box-shadow:inset 0 -4px 0 rgba(0,0,0,.18)}
+.disc.last{animation:drop .42s cubic-bezier(.5,0,.8,.6) both}
+.disc.p1{background:var(--p1)}.disc.p2{background:var(--p2)}
+.disc.w{transform:scale(1.08);box-shadow:0 0 0 4px #fff,inset 0 -4px 0 rgba(0,0,0,.18)}
+@keyframes drop{from{transform:translateY(calc((var(--r) + 1) * -120%))}}
+.row{display:flex;gap:7px;flex-wrap:wrap;justify-content:center}
+.btn{padding:9px 14px;border:0;border-radius:12px;background:#6d4ce0;color:#fff;font:inherit;font-size:.78rem;font-weight:850;cursor:pointer;box-shadow:0 3px 0 #4a30b0}
+.btn.alt{background:#fff;color:var(--ink);border:2px solid #c7d2fe;box-shadow:0 3px 0 #c9d6ef}
+.btn:disabled{opacity:.45;cursor:default}
+#again{display:none}#again.show{display:inline-block}
+.tip{margin:0;max-width:440px;color:#4c4a7a;font-size:.72rem;text-align:center;line-height:1.5}
+#result{display:none;width:min(94vw,440px);padding:8px 10px;border-radius:13px;background:#fff8cf;text-align:center;font-weight:900}
+#result.show{display:block}
+@media(max-width:420px){body{gap:7px;padding-inline:5px}h1{font-size:1.2rem}.pl{padding:5px 7px}.pl b{font-size:.66rem}.pl span{font-size:.9rem}#st{font-size:.78rem}.ar{height:30px;font-size:1.15rem}.btn{padding:8px 11px;font-size:.68rem}.tip{font-size:.64rem}}
+@media(prefers-reduced-motion:reduce){.disc.last{animation:none}.pl{transform:none!important}}
+</style>
+</head>
+<body>
+<h1>🔴🟡 4 في صف</h1>
+
+<div id="hud">
+  <div id="p1" class="pl p1"><i class="dot"></i><b>بابا</b><span>٠</span></div>
+  <div id="p2" class="pl p2"><i class="dot"></i><b>رقية</b><span>٠</span></div>
+</div>
+
+<p id="st" aria-live="polite">جاري تجهيز اللعبة…</p>
+
+<div id="bw">
+  <div id="arrows"></div>
+  <div id="board"></div>
+</div>
+
+<div id="result"></div>
+
+<div class="row">
+  <button id="again" class="btn">🔄 جولة جديدة</button>
+  <button id="city" class="btn alt">🎡 المدينة</button>
+  <button id="snd" class="btn alt" aria-label="الصوت">🔊</button>
+</div>
+
+<p class="tip">اسقط القرص في أي عمود. أول واحد يعمل ٤ أقراص متصلة أفقيًا أو رأسيًا أو مائلًا يكسب. بداية الجولة تتبدل بين بابا ورقية.</p>
+
+<script>
+const $=s=>document.querySelector(s),board=$('#board');
+const ROWS=6,COLS=7,E='٠١٢٣٤٥٦٧٨٩',ar=v=>String(v).replace(/[0-9]/g,d=>E[d.charCodeAt(0)-48]);
+let cfg={role:'guest',childName:'رقية',board:Array(42).fill(0),turn:'host',starter:'host',winner:null,wins:{host:0,guest:0},lastMove:null,winningCells:[],gameNo:1};
+let sound=true,ac=null,lastSeq=0,ready=false;
+const nameOf=r=>r==='host'?'بابا':(cfg.childName||'رقية');
+const meNum=()=>cfg.role==='host'?1:2;
+const roleNum=r=>r==='host'?1:2;
+const mine=()=>!cfg.winner&&cfg.turn===cfg.role;
+const unlock=()=>{try{ac=ac||new(window.AudioContext||window.webkitAudioContext)();if(ac.state==='suspended')ac.resume()}catch{}};
+document.addEventListener('pointerdown',unlock,{passive:true});
+function tone(f,at,d,type,v,f2){if(!sound||!ac)return;try{const o=ac.createOscillator(),g=ac.createGain(),t=ac.currentTime+at;o.type=type;o.frequency.setValueAtTime(f,t);if(f2)o.frequency.exponentialRampToValueAtTime(f2,t+d);g.gain.setValueAtTime(v,t);g.gain.exponentialRampToValueAtTime(.001,t+d);o.connect(g);g.connect(ac.destination);o.start(t);o.stop(t+d)}catch{}}
+const sfx={drop:()=>tone(320,0,.12,'sine',.22,140),win:()=>[523,659,784,1047,784,1047].forEach((f,k)=>tone(f,k*.13,.24,'square',.085)),lose:()=>{tone(330,0,.25,'triangle',.16,260);tone(262,.25,.35,'triangle',.16,200)}};
+$('#snd').onclick=()=>{sound=!sound;$('#snd').textContent=sound?'🔊':'🔇'};
+function cell(r,c){return board.children[r*COLS+c]}
+function buildBoard(){
+  const win=new Set(cfg.winningCells||[]),last=Number(cfg.lastMove?.index);
+  board.innerHTML=(cfg.board||Array(42).fill(0)).map((p,i)=>{
+    const r=Math.floor(i/COLS);
+    return `<button class="cell" data-c="${i%COLS}" aria-label="خانة">${p?`<i class="disc p${p} ${win.has(i)?'w':''} ${i===last?'last':''}" style="--r:${r}"></i>`:''}</button>`;
+  }).join('');
+  $('#arrows').innerHTML=Array.from({length:COLS},(_,c)=>`<button class="ar" data-c="${c}" aria-label="عمود ${c+1}">▼</button>`).join('');
+  $('#arrows').style.setProperty('--c',meNum()===1?'#e63946':'#d99e00');
+}
+function render(){
+  $('#p1').classList.toggle('on',!cfg.winner&&cfg.turn==='host');
+  $('#p2').classList.toggle('on',!cfg.winner&&cfg.turn==='guest');
+  $('#p1').querySelector('b').textContent=`بابا${cfg.role==='host'?' (إنت)':''}`;
+  $('#p2').querySelector('b').textContent=`${cfg.childName||'رقية'}${cfg.role==='guest'?' (إنت)':''}`;
+  $('#p1').querySelector('span').textContent=ar(cfg.wins?.host||0);
+  $('#p2').querySelector('span').textContent=ar(cfg.wins?.guest||0);
+
+  const st=$('#st'),result=$('#result');
+  if(cfg.winner){
+    if(cfg.winner==='draw')st.textContent='🤝 تعادل!';
+    else st.textContent=cfg.winner===cfg.role?'🎉 كسبت الجولة!':`${nameOf(cfg.winner)} كسب الجولة! 👏`;
+  }else st.textContent=mine()?'دورك! اختار عمود 👇':`دور ${nameOf(cfg.turn)}…`;
+
+  document.querySelectorAll('.ar').forEach((b,c)=>{
+    b.disabled=!mine()||Boolean(cfg.board?.[c]);
+  });
+  $('#again').classList.toggle('show',Boolean(cfg.winner)&&cfg.role==='host');
+  $('#city').disabled=cfg.role!=='host';
+
+  result.classList.toggle('show',Boolean(cfg.winner));
+  if(cfg.winner){
+    result.textContent=cfg.winner==='draw'
+      ?`🤝 الجولة انتهت بالتعادل`
+      :`🏆 ${nameOf(cfg.winner)} كسب! • بابا ${ar(cfg.wins?.host||0)} — ${cfg.childName||'رقية'} ${ar(cfg.wins?.guest||0)}`;
+  }
+}
+function apply(next){
+  const seq=Number(next?.lastMove?.seq)||0,wasReady=ready;
+  cfg={...cfg,...next};
+  buildBoard();render();
+  if(wasReady&&seq>lastSeq){
+    lastSeq=seq;unlock();sfx.drop();
+    if(cfg.winner&&cfg.winner!=='draw')setTimeout(()=>cfg.winner===cfg.role?sfx.win():sfx.lose(),430);
+  }else lastSeq=Math.max(lastSeq,seq);
+  ready=true;
+}
+$('#bw').onclick=e=>{
+  const b=e.target.closest('[data-c]');
+  if(!b||!mine())return;
+  const c=Number(b.dataset.c);
+  parent.postMessage({type:'roqaya-connect4-drop',column:c,roundId:cfg.roundId},location.origin);
+};
+$('#again').onclick=()=>{if(cfg.role==='host')parent.postMessage({type:'roqaya-connect4-new',roundId:cfg.roundId},location.origin)};
+$('#city').onclick=()=>{if(cfg.role==='host')parent.postMessage({type:'roqaya-connect4-city'},location.origin)};
+addEventListener('message',e=>{if(e.origin===location.origin&&e.data?.type==='roqaya-connect4-config')apply(e.data.config)});
+buildBoard();render();parent.postMessage({type:'roqaya-connect4-ready'},location.origin);
+</script>
+</body>
+</html>
