@@ -67,9 +67,9 @@ const MEMORY_SIZES = [4,6,8,12,16,20,24,30];
 // The age is a gameplay setting chosen by the adult, not a date of birth.
 const AGE_GAME_LEVELS = [
   {max:3,games:['memory','count','colors','compare','coloring','sorting'],memory:[4,6]},
-  {max:5,games:['draw','memory','odd','count','pattern','animals','colors','compare','coloring','jigsaw','sorting','phonics'],memory:[6,8,12]},
-  {max:7,games:['draw','memory','ttt','odd','count','pattern','animals','colors','math','treasure','read','english','compare','numberline','snakes','coloring','jigsaw','sorting','phonics'],memory:[8,12,16,20]},
-  {max:10,games:['draw','memory','ttt','odd','count','pattern','animals','colors','math','treasure','read','english','compare','numberline','snakes','coloring','jigsaw','sorting','phonics'],memory:[12,16,20,24,30]}
+  {max:5,games:['draw','memory','numseq','odd','count','pattern','animals','colors','compare','coloring','jigsaw','sorting','phonics'],memory:[6,8,12]},
+  {max:7,games:['draw','memory','numseq','ttt','odd','count','pattern','animals','colors','math','treasure','read','english','compare','numberline','snakes','coloring','jigsaw','sorting','phonics'],memory:[8,12,16,20]},
+  {max:10,games:['draw','memory','numseq','ttt','odd','count','pattern','animals','colors','math','treasure','read','english','compare','numberline','snakes','coloring','jigsaw','sorting','phonics'],memory:[12,16,20,24,30]}
 ];
 function normalizeAge(value) {
   const age=Number(value);
@@ -85,7 +85,7 @@ function effectiveMemoryPreference(age) {
   return memorySizesForAge(age).includes(Number(memoryPreference)) ? memoryPreference : 'random';
 }
 const QUIZ_GAMES = ['odd','count','pattern','animals','colors','math','read','english','compare','numberline'];
-const GAMES = ['draw','memory','ttt',...QUIZ_GAMES,'treasure','snakes','coloring','jigsaw','sorting','phonics'];
+const GAMES = ['draw','memory','ttt',...QUIZ_GAMES,'treasure','snakes','coloring','jigsaw','sorting','phonics','numseq'];
 const GAME_LABELS = {
   draw:['🎨','ارسم وخمّن','واحد يرسم والتاني يخمّن'],
   memory:['🃏','كروت الذاكرة','8–30 كارت أو عدد متغيّر'],
@@ -105,7 +105,8 @@ const GAME_LABELS = {
   coloring:['🎨','كتاب التلوين','اختاري لون واضغطي لتلوين الرسمة'],
   jigsaw:['🧩','البازل','٤ / ١٠ / ٢٠ / ٥٠ قطعة • لكل لاعب بازل مستقل'],
   sorting:['🧺','فرز الألوان والأشكال','اسحبي كل عنصر للصندوق المناسب'],
-  phonics:['🔤','الحروف والصور','وصّلي الحرف بالصورة التي تبدأ به']
+  phonics:['🔤','الحروف والصور','وصّلي الحرف بالصورة التي تبدأ به'],
+  numseq:['🔢','اقلب بالترتيب','من ١ لآخر رقم • لو غلطت الكروت ترجع']
 };
 
 const BOARD_FINAL_CELL = 100;
@@ -623,7 +624,7 @@ function sound(type='tap') {
   } catch (_) { /* Sound is optional on browsers that block audio. */ }
 }
 // Native Arabic speech runs on-device when supported; never sends a child name to analytics.
-const VOICE_GAME_NAMES={draw:'الرَّسْمَ وَالتَّخْمِينَ',memory:'كُرُوتَ الذَّاكِرَةِ',ttt:'إِكْس أَوْ',odd:'اخْتِيَارَ الصُّورَةِ الْمُخْتَلِفَةِ',count:'عَدَّ الصُّوَرِ',pattern:'إِكْمَالَ النَّمَطِ',animals:'بُيُوتَ الْحَيَوَانَاتِ',colors:'الأَلْوَانَ وَالأَشْكَالَ',math:'الْحِسَابَ',treasure:'رِحْلَةَ الْكَنْزِ',read:'الْقِرَاءَةَ',english:'الْعَرَبِيَّةَ وَالْإِنْجِلِيزِيَّةَ',compare:'تَرْتِيبَ وَمُقَارَنَةَ الأَرْقَامِ',numberline:'الرَّقْمَ النَّاقِصَ',snakes:'السُّلَّمَ وَالثُّعْبَانَ',coloring:'التَّلْوِينَ',jigsaw:'تَرْكِيبَ الصُّوَرِ',sorting:'فَرْزَ الأَلْوَانِ وَالأَشْكَالِ',phonics:'مُطَابَقَةَ الْحُرُوفِ وَالصُّوَرِ'};
+const VOICE_GAME_NAMES={numseq:'قَلْبَ الْكُرُوتِ بِالتَّرْتِيبِ',draw:'الرَّسْمَ وَالتَّخْمِينَ',memory:'كُرُوتَ الذَّاكِرَةِ',ttt:'إِكْس أَوْ',odd:'اخْتِيَارَ الصُّورَةِ الْمُخْتَلِفَةِ',count:'عَدَّ الصُّوَرِ',pattern:'إِكْمَالَ النَّمَطِ',animals:'بُيُوتَ الْحَيَوَانَاتِ',colors:'الأَلْوَانَ وَالأَشْكَالَ',math:'الْحِسَابَ',treasure:'رِحْلَةَ الْكَنْزِ',read:'الْقِرَاءَةَ',english:'الْعَرَبِيَّةَ وَالْإِنْجِلِيزِيَّةَ',compare:'تَرْتِيبَ وَمُقَارَنَةَ الأَرْقَامِ',numberline:'الرَّقْمَ النَّاقِصَ',snakes:'السُّلَّمَ وَالثُّعْبَانَ',coloring:'التَّلْوِينَ',jigsaw:'تَرْكِيبَ الصُّوَرِ',sorting:'فَرْزَ الأَلْوَانِ وَالأَشْكَالِ',phonics:'مُطَابَقَةَ الْحُرُوفِ وَالصُّوَرِ'};
 let lastWelcomeKey='';
 function chooseArabicVoice(){
   const voices=window.speechSynthesis?.getVoices()||[];
@@ -1214,8 +1215,8 @@ function isTurn(player) { return player === role; }
 /* ===== V2 presentation layer (home, school hub, world lobby) =====
    Presentation only: every data-action / data-hub-target / data-game hook,
    element id and Firebase write below is identical to the live version. */
-const V2_ICONS = {"ttt": "<svg class=\"ic\" viewBox=\"0 0 64 64\"><rect class=\"fy\" x=\"6\" y=\"6\" width=\"52\" height=\"52\" rx=\"10\"></rect><path d=\"M23 8v48M41 8v48M8 23h48M8 41h48\"></path><path class=\"sr\" d=\"M12 12l9 9m0-9l-9 9\"></path><circle class=\"sb\" cx=\"48.5\" cy=\"48.5\" r=\"5\"></circle></svg>", "snakes": "<svg class=\"ic\" viewBox=\"0 0 64 64\"><path class=\"sk\" d=\"M11 58V8M27 58V8\"></path><path class=\"sn\" d=\"M11 58V8M27 58V8\"></path><path class=\"sk\" style=\"stroke-width:9\" d=\"M11 20h16M11 32h16M11 44h16\"></path><path class=\"sn\" style=\"stroke-width:3.5\" d=\"M11 20h16M11 32h16M11 44h16\"></path><path class=\"sk\" d=\"M50 56c-12 0-16-8-8-12s14-4 12-12-12-6-8-16\"></path><path class=\"sg\" d=\"M50 56c-12 0-16-8-8-12s14-4 12-12-12-6-8-16\"></path><circle class=\"fg\" cx=\"46\" cy=\"13\" r=\"8\"></circle><circle class=\"fw\" cx=\"43\" cy=\"11\" r=\"2.6\" style=\"stroke-width:1.5\"></circle><circle class=\"fw\" cx=\"49\" cy=\"11\" r=\"2.6\" style=\"stroke-width:1.5\"></circle><circle class=\"fk\" cx=\"43.6\" cy=\"11.6\" r=\"1\" stroke=\"none\"></circle><circle class=\"fk\" cx=\"49.6\" cy=\"11.6\" r=\"1\" stroke=\"none\"></circle><path class=\"sr\" style=\"stroke-width:2.5\" d=\"M46 21v4m0 0l-2 3m2-3l2 3\"></path></svg>", "treasure": "<svg class=\"ic\" viewBox=\"0 0 64 64\"><path class=\"fn\" d=\"M6 32C6 18 18 9 32 9s26 9 26 23z\"></path><rect class=\"fn\" x=\"6\" y=\"32\" width=\"52\" height=\"24\" rx=\"3\"></rect><rect class=\"fy\" x=\"26\" y=\"9\" width=\"12\" height=\"47\"></rect><rect class=\"fy\" x=\"25\" y=\"28\" width=\"14\" height=\"13\" rx=\"3\"></rect><circle class=\"fk\" cx=\"32\" cy=\"33.5\" r=\"2\" stroke=\"none\"></circle><path d=\"M32 35v3\" style=\"stroke-width:2.5\"></path></svg>", "animals": "<svg class=\"ic\" viewBox=\"0 0 64 64\"><rect class=\"fy\" x=\"10\" y=\"28\" width=\"44\" height=\"28\" rx=\"2\"></rect><path class=\"fr\" d=\"M4 31L32 8l28 23z\"></path><path d=\"M24 56V44a8 8 0 0 1 16 0v12z\" style=\"fill:#5a3a22\"></path><circle class=\"fs\" cx=\"32\" cy=\"50\" r=\"3.2\" stroke=\"none\"></circle><circle class=\"fs\" cx=\"27.5\" cy=\"45\" r=\"1.6\" stroke=\"none\"></circle><circle class=\"fs\" cx=\"32\" cy=\"43\" r=\"1.6\" stroke=\"none\"></circle><circle class=\"fs\" cx=\"36.5\" cy=\"45\" r=\"1.6\" stroke=\"none\"></circle></svg>", "memory": "<svg class=\"ic\" viewBox=\"0 0 64 64\"><g transform=\"rotate(-14 22 36)\"><rect class=\"fb\" x=\"8\" y=\"14\" width=\"26\" height=\"36\" rx=\"5\"></rect><path class=\"fy\" d=\"M21 24l2.6 5.2 5.8.8-4.2 4 1 5.8-5.2-2.8-5.2 2.8 1-5.8-4.2-4 5.8-.8z\"></path></g><g transform=\"rotate(12 42 34)\"><rect class=\"fw\" x=\"30\" y=\"12\" width=\"26\" height=\"36\" rx=\"5\"></rect><path class=\"fr\" d=\"M43 41l-8-8a5 5 0 0 1 8-6 5 5 0 0 1 8 6z\"></path></g></svg>", "odd": "<svg class=\"ic\" viewBox=\"0 0 64 64\"><path class=\"sk\" d=\"M42 42l15 15\"></path><path class=\"sn\" d=\"M42 42l15 15\"></path><circle class=\"fl\" cx=\"27\" cy=\"27\" r=\"19\"></circle><circle class=\"fb\" cx=\"19\" cy=\"25\" r=\"4.5\"></circle><circle class=\"fb\" cx=\"31\" cy=\"19\" r=\"4.5\"></circle><circle class=\"fr\" cx=\"27\" cy=\"35\" r=\"4.5\"></circle></svg>", "pattern": "<svg class=\"ic\" viewBox=\"0 0 64 64\"><circle class=\"fr\" cx=\"11\" cy=\"19\" r=\"8\"></circle><rect class=\"fb\" x=\"22\" y=\"11\" width=\"16\" height=\"16\" rx=\"3\"></rect><path class=\"fy\" d=\"M42 27h16L50 11z\"></path><circle class=\"fr\" cx=\"11\" cy=\"45\" r=\"8\"></circle><rect class=\"fb\" x=\"22\" y=\"37\" width=\"16\" height=\"16\" rx=\"3\"></rect><path class=\"fw\" d=\"M42 53h16L50 37z\" style=\"stroke-dasharray:3 3\"></path></svg>", "jigsaw": "<svg class=\"ic\" viewBox=\"0 0 64 64\"><path class=\"fb\" transform=\"translate(4 24)\" d=\"M0 0h12a4 4 0 1 1 8 0h12v12a4 4 0 1 1 0 8v12H20a4 4 0 1 0-8 0H0V20a4 4 0 1 0 0-8z\"></path><path class=\"fy\" transform=\"translate(24 6)\" d=\"M0 0h12a4 4 0 1 1 8 0h12v12a4 4 0 1 1 0 8v12H20a4 4 0 1 0-8 0H0V20a4 4 0 1 0 0-8z\"></path></svg>", "draw": "<svg class=\"ic\" viewBox=\"0 0 64 64\"><path class=\"sr\" style=\"stroke-width:4\" d=\"M6 58q5-7 10 0t10 0\"></path><g transform=\"rotate(40 32 30)\"><rect class=\"fp\" x=\"24\" y=\"2\" width=\"16\" height=\"9\" rx=\"2\"></rect><rect class=\"fb\" x=\"24\" y=\"11\" width=\"16\" height=\"5\"></rect><rect class=\"fy\" x=\"24\" y=\"16\" width=\"16\" height=\"26\"></rect><path class=\"fs\" d=\"M24 42h16l-8 14z\"></path><path class=\"fk\" d=\"M29.5 52h5l-2.5 4z\" stroke=\"none\"></path></g></svg>", "colors": "<svg class=\"ic\" viewBox=\"0 0 64 64\"><circle class=\"fy\" cx=\"32\" cy=\"32\" r=\"25\"></circle><path class=\"fr\" d=\"M32 7a25 25 0 0 1 25 25H32z\"></path><path class=\"fb\" d=\"M32 57A25 25 0 0 1 7 32h25z\"></path><ellipse class=\"fw\" cx=\"21\" cy=\"19\" rx=\"6\" ry=\"3.5\" transform=\"rotate(-40 21 19)\" stroke=\"none\"></ellipse><circle class=\"fw\" cx=\"32\" cy=\"32\" r=\"4.5\"></circle><circle cx=\"32\" cy=\"32\" r=\"25\"></circle></svg>", "coloring": "<svg class=\"ic\" viewBox=\"0 0 64 64\"><path class=\"fs\" d=\"M32 7C16 7 5 18 5 31s9 26 23 26c8 0 7-5 4-8s-1-8 5-8h8c8 0 14-5 14-13C59 15 47 7 32 7z\"></path><circle class=\"fr\" cx=\"17\" cy=\"30\" r=\"5\"></circle><circle class=\"fb\" cx=\"27\" cy=\"17\" r=\"5\"></circle><circle class=\"fg\" cx=\"42\" cy=\"17\" r=\"5\"></circle><circle class=\"fy\" cx=\"50\" cy=\"30\" r=\"5\"></circle><circle class=\"fw\" cx=\"20\" cy=\"45\" r=\"4.5\"></circle></svg>", "sorting": "<svg class=\"ic\" viewBox=\"0 0 64 64\"><path class=\"fy\" d=\"M6 17l26 11v31L6 48z\"></path><path class=\"fo\" d=\"M58 17L32 28v31l26-11z\"></path><path class=\"fg\" d=\"M32 6l26 11-26 11L6 17z\"></path><ellipse class=\"fk\" cx=\"32\" cy=\"17\" rx=\"8.5\" ry=\"3.8\" stroke=\"none\"></ellipse><path class=\"fg\" d=\"M18 33l2.2 4.6 5 .7-3.6 3.5.9 5-4.5-2.4-4.5 2.4.9-5-3.6-3.5 5-.7z\"></path><path class=\"fg\" d=\"M45 35l8 13H37z\"></path></svg>", "count": "<svg class=\"ic\" viewBox=\"0 0 64 64\"><rect class=\"fb\" x=\"5\" y=\"36\" width=\"25\" height=\"25\" rx=\"4\"></rect><rect class=\"fr\" x=\"34\" y=\"36\" width=\"25\" height=\"25\" rx=\"4\"></rect><rect class=\"fy\" x=\"19.5\" y=\"7\" width=\"25\" height=\"25\" rx=\"4\"></rect><text class=\"tx\" x=\"17.5\" y=\"56\" font-size=\"20\" text-anchor=\"middle\">1</text><text class=\"tx\" x=\"46.5\" y=\"56\" font-size=\"20\" text-anchor=\"middle\">2</text><text class=\"tx\" x=\"32\" y=\"27\" font-size=\"20\" text-anchor=\"middle\">3</text></svg>", "math": "<svg class=\"ic\" viewBox=\"0 0 64 64\"><circle class=\"fb\" cx=\"32\" cy=\"37\" r=\"22\"></circle><ellipse cx=\"32\" cy=\"10\" rx=\"13\" ry=\"4.5\" style=\"stroke:#f2b705;stroke-width:5\"></ellipse><path d=\"M32 26v22M21 37h22\" style=\"stroke-width:13\"></path><path d=\"M32 26v22M21 37h22\" style=\"stroke:#fff;stroke-width:7\"></path></svg>", "compare": "<svg class=\"ic\" viewBox=\"0 0 64 64\"><ellipse class=\"fr\" cx=\"32\" cy=\"52\" rx=\"24\" ry=\"8\"></ellipse><ellipse class=\"fy\" cx=\"32\" cy=\"42\" rx=\"19\" ry=\"7\"></ellipse><ellipse class=\"fg\" cx=\"32\" cy=\"32\" rx=\"14\" ry=\"6.5\"></ellipse><ellipse class=\"fb\" cx=\"32\" cy=\"23\" rx=\"10\" ry=\"5.5\"></ellipse><circle class=\"fr\" cx=\"32\" cy=\"12\" r=\"6\"></circle></svg>", "numberline": "<svg class=\"ic\" viewBox=\"0 0 64 64\"><rect class=\"fb\" x=\"8\" y=\"14\" width=\"11\" height=\"16\" rx=\"2\"></rect><rect class=\"fr\" x=\"5\" y=\"9\" width=\"17\" height=\"7\" rx=\"3\"></rect><rect class=\"fg\" x=\"4\" y=\"28\" width=\"36\" height=\"20\" rx=\"5\"></rect><rect class=\"fb\" x=\"36\" y=\"17\" width=\"23\" height=\"31\" rx=\"3\"></rect><rect class=\"fr\" x=\"33\" y=\"10\" width=\"29\" height=\"9\" rx=\"3\"></rect><rect class=\"fw\" x=\"41\" y=\"24\" width=\"13\" height=\"13\" rx=\"2\"></rect><text x=\"47.5\" y=\"35\" font-size=\"12\" font-weight=\"800\" text-anchor=\"middle\" style=\"fill:#2b1b17;stroke:none\">؟</text><circle class=\"fr\" cx=\"17\" cy=\"52\" r=\"8\"></circle><circle class=\"fy\" cx=\"17\" cy=\"52\" r=\"3\" style=\"stroke-width:2\"></circle><circle class=\"fr\" cx=\"48\" cy=\"52\" r=\"8\"></circle><circle class=\"fy\" cx=\"48\" cy=\"52\" r=\"3\" style=\"stroke-width:2\"></circle></svg>", "number-puzzle": "<svg class=\"ic\" viewBox=\"0 0 64 64\"><rect class=\"fr\" x=\"6\" y=\"6\" width=\"25\" height=\"25\" rx=\"5\"></rect><rect class=\"fb\" x=\"33\" y=\"6\" width=\"25\" height=\"25\" rx=\"5\"></rect><rect class=\"fg\" x=\"6\" y=\"33\" width=\"25\" height=\"25\" rx=\"5\"></rect><rect class=\"fw\" x=\"33\" y=\"33\" width=\"25\" height=\"25\" rx=\"5\" style=\"stroke-dasharray:4 4\"></rect><text class=\"tx\" x=\"18.5\" y=\"26\" font-size=\"19\" text-anchor=\"middle\">1</text><text class=\"tx\" x=\"45.5\" y=\"26\" font-size=\"19\" text-anchor=\"middle\">2</text><text class=\"tx\" x=\"18.5\" y=\"53\" font-size=\"19\" text-anchor=\"middle\">3</text></svg>", "read": "<svg class=\"ic\" viewBox=\"0 0 64 64\"><path class=\"fb\" d=\"M3 17l29 5 29-5v39l-29 5-29-5z\"></path><path class=\"fw\" d=\"M7 12c9-3 18-2 25 3v40c-7-5-16-6-25-3z\"></path><path class=\"fw\" d=\"M57 12c-9-3-18-2-25 3v40c7-5 16-6 25-3z\"></path><path class=\"fr\" d=\"M30 3h7v21l-3.5-3.5L30 24z\"></path><path d=\"M12 22c4-1 9 0 14 2M12 31c4-1 9 0 14 2M38 24c5-2 10-3 14-2M38 33c5-2 10-3 14-2\" style=\"stroke-width:2\"></path></svg>", "english": "<svg class=\"ic\" viewBox=\"0 0 64 64\"><path class=\"fo\" d=\"M6 10h30a5 5 0 0 1 5 5v16a5 5 0 0 1-5 5H20l-8 7v-7H6a5 5 0 0 1-5-5V15a5 5 0 0 1 5-5z\"></path><path class=\"fb\" d=\"M28 28h30a5 5 0 0 1 5 5v14a5 5 0 0 1-5 5h-4v7l-8-7H28a5 5 0 0 1-5-5V33a5 5 0 0 1 5-5z\"></path><text class=\"tx\" x=\"21\" y=\"31\" font-size=\"22\" text-anchor=\"middle\">ع</text><text class=\"tx\" x=\"43\" y=\"47\" font-size=\"20\" text-anchor=\"middle\">A</text></svg>", "phonics": "<svg class=\"ic\" viewBox=\"0 0 64 64\"><rect class=\"fy\" x=\"4\" y=\"20\" width=\"31\" height=\"31\" rx=\"5\"></rect><text class=\"tx\" x=\"19.5\" y=\"45\" font-size=\"26\" text-anchor=\"middle\">أ</text><circle class=\"fr\" cx=\"47\" cy=\"39\" r=\"14\"></circle><path class=\"sn\" style=\"stroke-width:3\" d=\"M47 26c0-4 1-7 3-9\"></path><path class=\"fg\" d=\"M50 21c3-6 8-6 11-4-2 5-7 6-11 4z\"></path><ellipse class=\"fw\" cx=\"41.5\" cy=\"34\" rx=\"2.5\" ry=\"4\" transform=\"rotate(25 41.5 34)\" stroke=\"none\"></ellipse></svg>"};
-const V2_CATS = {"ttt": "games", "snakes": "games", "treasure": "games", "animals": "games", "memory": "smart", "odd": "smart", "pattern": "smart", "jigsaw": "smart", "draw": "art", "colors": "art", "coloring": "art", "sorting": "art", "count": "numbers", "math": "numbers", "compare": "numbers", "numberline": "numbers", "number-puzzle": "numbers", "read": "letters", "english": "letters", "phonics": "letters"};
+const V2_ICONS = {"ttt": "<svg class=\"ic\" viewBox=\"0 0 64 64\"><rect class=\"fy\" x=\"6\" y=\"6\" width=\"52\" height=\"52\" rx=\"10\"></rect><path d=\"M23 8v48M41 8v48M8 23h48M8 41h48\"></path><path class=\"sr\" d=\"M12 12l9 9m0-9l-9 9\"></path><circle class=\"sb\" cx=\"48.5\" cy=\"48.5\" r=\"5\"></circle></svg>", "snakes": "<svg class=\"ic\" viewBox=\"0 0 64 64\"><path class=\"sk\" d=\"M11 58V8M27 58V8\"></path><path class=\"sn\" d=\"M11 58V8M27 58V8\"></path><path class=\"sk\" style=\"stroke-width:9\" d=\"M11 20h16M11 32h16M11 44h16\"></path><path class=\"sn\" style=\"stroke-width:3.5\" d=\"M11 20h16M11 32h16M11 44h16\"></path><path class=\"sk\" d=\"M50 56c-12 0-16-8-8-12s14-4 12-12-12-6-8-16\"></path><path class=\"sg\" d=\"M50 56c-12 0-16-8-8-12s14-4 12-12-12-6-8-16\"></path><circle class=\"fg\" cx=\"46\" cy=\"13\" r=\"8\"></circle><circle class=\"fw\" cx=\"43\" cy=\"11\" r=\"2.6\" style=\"stroke-width:1.5\"></circle><circle class=\"fw\" cx=\"49\" cy=\"11\" r=\"2.6\" style=\"stroke-width:1.5\"></circle><circle class=\"fk\" cx=\"43.6\" cy=\"11.6\" r=\"1\" stroke=\"none\"></circle><circle class=\"fk\" cx=\"49.6\" cy=\"11.6\" r=\"1\" stroke=\"none\"></circle><path class=\"sr\" style=\"stroke-width:2.5\" d=\"M46 21v4m0 0l-2 3m2-3l2 3\"></path></svg>", "treasure": "<svg class=\"ic\" viewBox=\"0 0 64 64\"><path class=\"fn\" d=\"M6 32C6 18 18 9 32 9s26 9 26 23z\"></path><rect class=\"fn\" x=\"6\" y=\"32\" width=\"52\" height=\"24\" rx=\"3\"></rect><rect class=\"fy\" x=\"26\" y=\"9\" width=\"12\" height=\"47\"></rect><rect class=\"fy\" x=\"25\" y=\"28\" width=\"14\" height=\"13\" rx=\"3\"></rect><circle class=\"fk\" cx=\"32\" cy=\"33.5\" r=\"2\" stroke=\"none\"></circle><path d=\"M32 35v3\" style=\"stroke-width:2.5\"></path></svg>", "animals": "<svg class=\"ic\" viewBox=\"0 0 64 64\"><rect class=\"fy\" x=\"10\" y=\"28\" width=\"44\" height=\"28\" rx=\"2\"></rect><path class=\"fr\" d=\"M4 31L32 8l28 23z\"></path><path d=\"M24 56V44a8 8 0 0 1 16 0v12z\" style=\"fill:#5a3a22\"></path><circle class=\"fs\" cx=\"32\" cy=\"50\" r=\"3.2\" stroke=\"none\"></circle><circle class=\"fs\" cx=\"27.5\" cy=\"45\" r=\"1.6\" stroke=\"none\"></circle><circle class=\"fs\" cx=\"32\" cy=\"43\" r=\"1.6\" stroke=\"none\"></circle><circle class=\"fs\" cx=\"36.5\" cy=\"45\" r=\"1.6\" stroke=\"none\"></circle></svg>", "memory": "<svg class=\"ic\" viewBox=\"0 0 64 64\"><g transform=\"rotate(-14 22 36)\"><rect class=\"fb\" x=\"8\" y=\"14\" width=\"26\" height=\"36\" rx=\"5\"></rect><path class=\"fy\" d=\"M21 24l2.6 5.2 5.8.8-4.2 4 1 5.8-5.2-2.8-5.2 2.8 1-5.8-4.2-4 5.8-.8z\"></path></g><g transform=\"rotate(12 42 34)\"><rect class=\"fw\" x=\"30\" y=\"12\" width=\"26\" height=\"36\" rx=\"5\"></rect><path class=\"fr\" d=\"M43 41l-8-8a5 5 0 0 1 8-6 5 5 0 0 1 8 6z\"></path></g></svg>", "odd": "<svg class=\"ic\" viewBox=\"0 0 64 64\"><path class=\"sk\" d=\"M42 42l15 15\"></path><path class=\"sn\" d=\"M42 42l15 15\"></path><circle class=\"fl\" cx=\"27\" cy=\"27\" r=\"19\"></circle><circle class=\"fb\" cx=\"19\" cy=\"25\" r=\"4.5\"></circle><circle class=\"fb\" cx=\"31\" cy=\"19\" r=\"4.5\"></circle><circle class=\"fr\" cx=\"27\" cy=\"35\" r=\"4.5\"></circle></svg>", "pattern": "<svg class=\"ic\" viewBox=\"0 0 64 64\"><circle class=\"fr\" cx=\"11\" cy=\"19\" r=\"8\"></circle><rect class=\"fb\" x=\"22\" y=\"11\" width=\"16\" height=\"16\" rx=\"3\"></rect><path class=\"fy\" d=\"M42 27h16L50 11z\"></path><circle class=\"fr\" cx=\"11\" cy=\"45\" r=\"8\"></circle><rect class=\"fb\" x=\"22\" y=\"37\" width=\"16\" height=\"16\" rx=\"3\"></rect><path class=\"fw\" d=\"M42 53h16L50 37z\" style=\"stroke-dasharray:3 3\"></path></svg>", "jigsaw": "<svg class=\"ic\" viewBox=\"0 0 64 64\"><path class=\"fb\" transform=\"translate(4 24)\" d=\"M0 0h12a4 4 0 1 1 8 0h12v12a4 4 0 1 1 0 8v12H20a4 4 0 1 0-8 0H0V20a4 4 0 1 0 0-8z\"></path><path class=\"fy\" transform=\"translate(24 6)\" d=\"M0 0h12a4 4 0 1 1 8 0h12v12a4 4 0 1 1 0 8v12H20a4 4 0 1 0-8 0H0V20a4 4 0 1 0 0-8z\"></path></svg>", "draw": "<svg class=\"ic\" viewBox=\"0 0 64 64\"><path class=\"sr\" style=\"stroke-width:4\" d=\"M6 58q5-7 10 0t10 0\"></path><g transform=\"rotate(40 32 30)\"><rect class=\"fp\" x=\"24\" y=\"2\" width=\"16\" height=\"9\" rx=\"2\"></rect><rect class=\"fb\" x=\"24\" y=\"11\" width=\"16\" height=\"5\"></rect><rect class=\"fy\" x=\"24\" y=\"16\" width=\"16\" height=\"26\"></rect><path class=\"fs\" d=\"M24 42h16l-8 14z\"></path><path class=\"fk\" d=\"M29.5 52h5l-2.5 4z\" stroke=\"none\"></path></g></svg>", "colors": "<svg class=\"ic\" viewBox=\"0 0 64 64\"><circle class=\"fy\" cx=\"32\" cy=\"32\" r=\"25\"></circle><path class=\"fr\" d=\"M32 7a25 25 0 0 1 25 25H32z\"></path><path class=\"fb\" d=\"M32 57A25 25 0 0 1 7 32h25z\"></path><ellipse class=\"fw\" cx=\"21\" cy=\"19\" rx=\"6\" ry=\"3.5\" transform=\"rotate(-40 21 19)\" stroke=\"none\"></ellipse><circle class=\"fw\" cx=\"32\" cy=\"32\" r=\"4.5\"></circle><circle cx=\"32\" cy=\"32\" r=\"25\"></circle></svg>", "coloring": "<svg class=\"ic\" viewBox=\"0 0 64 64\"><path class=\"fs\" d=\"M32 7C16 7 5 18 5 31s9 26 23 26c8 0 7-5 4-8s-1-8 5-8h8c8 0 14-5 14-13C59 15 47 7 32 7z\"></path><circle class=\"fr\" cx=\"17\" cy=\"30\" r=\"5\"></circle><circle class=\"fb\" cx=\"27\" cy=\"17\" r=\"5\"></circle><circle class=\"fg\" cx=\"42\" cy=\"17\" r=\"5\"></circle><circle class=\"fy\" cx=\"50\" cy=\"30\" r=\"5\"></circle><circle class=\"fw\" cx=\"20\" cy=\"45\" r=\"4.5\"></circle></svg>", "sorting": "<svg class=\"ic\" viewBox=\"0 0 64 64\"><path class=\"fy\" d=\"M6 17l26 11v31L6 48z\"></path><path class=\"fo\" d=\"M58 17L32 28v31l26-11z\"></path><path class=\"fg\" d=\"M32 6l26 11-26 11L6 17z\"></path><ellipse class=\"fk\" cx=\"32\" cy=\"17\" rx=\"8.5\" ry=\"3.8\" stroke=\"none\"></ellipse><path class=\"fg\" d=\"M18 33l2.2 4.6 5 .7-3.6 3.5.9 5-4.5-2.4-4.5 2.4.9-5-3.6-3.5 5-.7z\"></path><path class=\"fg\" d=\"M45 35l8 13H37z\"></path></svg>", "count": "<svg class=\"ic\" viewBox=\"0 0 64 64\"><rect class=\"fb\" x=\"5\" y=\"36\" width=\"25\" height=\"25\" rx=\"4\"></rect><rect class=\"fr\" x=\"34\" y=\"36\" width=\"25\" height=\"25\" rx=\"4\"></rect><rect class=\"fy\" x=\"19.5\" y=\"7\" width=\"25\" height=\"25\" rx=\"4\"></rect><text class=\"tx\" x=\"17.5\" y=\"56\" font-size=\"20\" text-anchor=\"middle\">1</text><text class=\"tx\" x=\"46.5\" y=\"56\" font-size=\"20\" text-anchor=\"middle\">2</text><text class=\"tx\" x=\"32\" y=\"27\" font-size=\"20\" text-anchor=\"middle\">3</text></svg>", "math": "<svg class=\"ic\" viewBox=\"0 0 64 64\"><circle class=\"fb\" cx=\"32\" cy=\"37\" r=\"22\"></circle><ellipse cx=\"32\" cy=\"10\" rx=\"13\" ry=\"4.5\" style=\"stroke:#f2b705;stroke-width:5\"></ellipse><path d=\"M32 26v22M21 37h22\" style=\"stroke-width:13\"></path><path d=\"M32 26v22M21 37h22\" style=\"stroke:#fff;stroke-width:7\"></path></svg>", "compare": "<svg class=\"ic\" viewBox=\"0 0 64 64\"><ellipse class=\"fr\" cx=\"32\" cy=\"52\" rx=\"24\" ry=\"8\"></ellipse><ellipse class=\"fy\" cx=\"32\" cy=\"42\" rx=\"19\" ry=\"7\"></ellipse><ellipse class=\"fg\" cx=\"32\" cy=\"32\" rx=\"14\" ry=\"6.5\"></ellipse><ellipse class=\"fb\" cx=\"32\" cy=\"23\" rx=\"10\" ry=\"5.5\"></ellipse><circle class=\"fr\" cx=\"32\" cy=\"12\" r=\"6\"></circle></svg>", "numberline": "<svg class=\"ic\" viewBox=\"0 0 64 64\"><rect class=\"fb\" x=\"8\" y=\"14\" width=\"11\" height=\"16\" rx=\"2\"></rect><rect class=\"fr\" x=\"5\" y=\"9\" width=\"17\" height=\"7\" rx=\"3\"></rect><rect class=\"fg\" x=\"4\" y=\"28\" width=\"36\" height=\"20\" rx=\"5\"></rect><rect class=\"fb\" x=\"36\" y=\"17\" width=\"23\" height=\"31\" rx=\"3\"></rect><rect class=\"fr\" x=\"33\" y=\"10\" width=\"29\" height=\"9\" rx=\"3\"></rect><rect class=\"fw\" x=\"41\" y=\"24\" width=\"13\" height=\"13\" rx=\"2\"></rect><text x=\"47.5\" y=\"35\" font-size=\"12\" font-weight=\"800\" text-anchor=\"middle\" style=\"fill:#2b1b17;stroke:none\">؟</text><circle class=\"fr\" cx=\"17\" cy=\"52\" r=\"8\"></circle><circle class=\"fy\" cx=\"17\" cy=\"52\" r=\"3\" style=\"stroke-width:2\"></circle><circle class=\"fr\" cx=\"48\" cy=\"52\" r=\"8\"></circle><circle class=\"fy\" cx=\"48\" cy=\"52\" r=\"3\" style=\"stroke-width:2\"></circle></svg>", "number-puzzle": "<svg class=\"ic\" viewBox=\"0 0 64 64\"><rect class=\"fr\" x=\"6\" y=\"6\" width=\"25\" height=\"25\" rx=\"5\"></rect><rect class=\"fb\" x=\"33\" y=\"6\" width=\"25\" height=\"25\" rx=\"5\"></rect><rect class=\"fg\" x=\"6\" y=\"33\" width=\"25\" height=\"25\" rx=\"5\"></rect><rect class=\"fw\" x=\"33\" y=\"33\" width=\"25\" height=\"25\" rx=\"5\" style=\"stroke-dasharray:4 4\"></rect><text class=\"tx\" x=\"18.5\" y=\"26\" font-size=\"19\" text-anchor=\"middle\">1</text><text class=\"tx\" x=\"45.5\" y=\"26\" font-size=\"19\" text-anchor=\"middle\">2</text><text class=\"tx\" x=\"18.5\" y=\"53\" font-size=\"19\" text-anchor=\"middle\">3</text></svg>", "read": "<svg class=\"ic\" viewBox=\"0 0 64 64\"><path class=\"fb\" d=\"M3 17l29 5 29-5v39l-29 5-29-5z\"></path><path class=\"fw\" d=\"M7 12c9-3 18-2 25 3v40c-7-5-16-6-25-3z\"></path><path class=\"fw\" d=\"M57 12c-9-3-18-2-25 3v40c7-5 16-6 25-3z\"></path><path class=\"fr\" d=\"M30 3h7v21l-3.5-3.5L30 24z\"></path><path d=\"M12 22c4-1 9 0 14 2M12 31c4-1 9 0 14 2M38 24c5-2 10-3 14-2M38 33c5-2 10-3 14-2\" style=\"stroke-width:2\"></path></svg>", "english": "<svg class=\"ic\" viewBox=\"0 0 64 64\"><path class=\"fo\" d=\"M6 10h30a5 5 0 0 1 5 5v16a5 5 0 0 1-5 5H20l-8 7v-7H6a5 5 0 0 1-5-5V15a5 5 0 0 1 5-5z\"></path><path class=\"fb\" d=\"M28 28h30a5 5 0 0 1 5 5v14a5 5 0 0 1-5 5h-4v7l-8-7H28a5 5 0 0 1-5-5V33a5 5 0 0 1 5-5z\"></path><text class=\"tx\" x=\"21\" y=\"31\" font-size=\"22\" text-anchor=\"middle\">ع</text><text class=\"tx\" x=\"43\" y=\"47\" font-size=\"20\" text-anchor=\"middle\">A</text></svg>", "phonics": "<svg class=\"ic\" viewBox=\"0 0 64 64\"><rect class=\"fy\" x=\"4\" y=\"20\" width=\"31\" height=\"31\" rx=\"5\"></rect><text class=\"tx\" x=\"19.5\" y=\"45\" font-size=\"26\" text-anchor=\"middle\">أ</text><circle class=\"fr\" cx=\"47\" cy=\"39\" r=\"14\"></circle><path class=\"sn\" style=\"stroke-width:3\" d=\"M47 26c0-4 1-7 3-9\"></path><path class=\"fg\" d=\"M50 21c3-6 8-6 11-4-2 5-7 6-11 4z\"></path><ellipse class=\"fw\" cx=\"41.5\" cy=\"34\" rx=\"2.5\" ry=\"4\" transform=\"rotate(25 41.5 34)\" stroke=\"none\"></ellipse></svg>", "numseq": "<svg class=\"ic\" viewBox=\"0 0 64 64\" aria-hidden=\"true\"><rect class=\"fb\" x=\"3\" y=\"34\" width=\"17\" height=\"22\" rx=\"3.5\"></rect><rect class=\"fy\" x=\"23\" y=\"22\" width=\"17\" height=\"34\" rx=\"3.5\"></rect><rect class=\"fg\" x=\"43\" y=\"10\" width=\"17\" height=\"46\" rx=\"3.5\"></rect><text class=\"tx\" x=\"11.5\" y=\"50\" font-size=\"15\" text-anchor=\"middle\">1</text><text class=\"tx\" x=\"31.5\" y=\"50\" font-size=\"15\" text-anchor=\"middle\">2</text><text class=\"tx\" x=\"51.5\" y=\"50\" font-size=\"15\" text-anchor=\"middle\">3</text></svg>"};
+const V2_CATS = {"ttt": "games", "snakes": "games", "treasure": "games", "animals": "games", "memory": "smart", "odd": "smart", "pattern": "smart", "jigsaw": "smart", "draw": "art", "colors": "art", "coloring": "art", "sorting": "art", "count": "numbers", "math": "numbers", "compare": "numbers", "numberline": "numbers", "number-puzzle": "numbers", "read": "letters", "english": "letters", "phonics": "letters", "numseq": "numbers"};
 const V2_FILTERS = [['all','الكل'],['numbers','أرقام'],['letters','حروف'],['art','ألوان ورسم'],['smart','ذكاء'],['games','ألعاب']];
 let lastScreenGame = '';
 let lobbyFilter = 'all';
@@ -1392,6 +1393,97 @@ function renderLobby() {
     <div class="game-grid lobby-game-grid v2-grid">${keys.map(k=>lobbyTile(k,disabled)).join('')}</div>
     <div class="v2-roombar"><div><small>الغرفة</small><b class="room-code" dir="ltr">${roomCode}</b></div><button class="v2-round" data-action="copy" aria-label="نسخ رابط الدعوة">📋</button></div>
   </div>`;
+}
+
+/* ===== New game: اقلب بالترتيب (numseq) =====
+   Cards hold the numbers 1..N face-down. A player flips them in order starting from 1;
+   a wrong card is shown to both, then every card flips back and the other player tries.
+   First player to reach the last number wins (+3 stars). */
+const NUMSEQ_PRESETS = [5,8,10,12,15,20,25,30];
+function numseqLimit(age){ return age<=5?10:age<=7?20:30; }
+function numseqDefault(age){ return age<=5?5:age<=7?10:15; }
+let numseqPreference = 0;
+try{ numseqPreference = Number(localStorage.getItem('roqaya-v2-numseq-max'))||0; }catch(_){}
+function saveNumseq(){ try{ localStorage.setItem('roqaya-v2-numseq-max',String(numseqPreference)); }catch(_){} }
+function numseqMaxFor(age){ return Math.max(3,Math.min(numseqLimit(age),numseqPreference||numseqDefault(age))); }
+function newNumseq(common,scores,round){
+  const max=numseqMaxFor(common.childAge);
+  const cards=shuffle(Array.from({length:max},(_,i)=>i+1));
+  return {...common,game:'numseq',phase:'playing',scores,round,numseq:{max,cards,shown:[],wrong:null,locked:false,turn:round%2===0?'guest':'host',attempts:{host:0,guest:0},best:{host:0,guest:0}}};
+}
+async function chooseNumseq(i){
+  await mutateState(old=>{
+    if(old.game!=='numseq'||old.phase!=='playing')return;
+    const g=old.numseq;
+    if(!g||g.turn!==role||g.locked||!Number.isInteger(i)||i<0||i>=g.cards.length||(g.shown||[]).includes(i))return;
+    const shown=g.shown||[];
+    const best={...(g.best||{host:0,guest:0})};
+    if(g.cards[i]===shown.length+1){
+      const nextShown=[...shown,i];
+      best[role]=Math.max(best[role]||0,nextShown.length);
+      if(nextShown.length===g.cards.length){
+        const scores={...old.scores,[role]:old.scores[role]+3};
+        return {...old,scores,feedback:addFeedback(old,'win'),phase:'finished',result:role,numseq:{...g,shown:nextShown,best}};
+      }
+      return {...old,feedback:addFeedback(old,'good'),numseq:{...g,shown:nextShown,best}};
+    }
+    best[role]=Math.max(best[role]||0,shown.length);
+    const attempts={...(g.attempts||{host:0,guest:0}),[role]:((g.attempts||{})[role]||0)+1};
+    return {...old,feedback:addFeedback(old,'bad'),numseq:{...g,wrong:i,locked:true,attempts,best}};
+  });
+}
+let numseqResetKey='';
+function scheduleNumseqReset(g){
+  const attempt=(g.attempts?.host||0)+(g.attempts?.guest||0);
+  const round=state.round;
+  const key=`${roomCode}:${round}:${attempt}`;
+  if(numseqResetKey===key)return;
+  numseqResetKey=key;
+  // the player who just tapped resets the board; the other device is only a fallback if that device left
+  setTimeout(()=>mutateState(old=>{
+    const n=old.numseq;
+    if(old.game!=='numseq'||old.round!==round||!n?.locked)return;
+    if((n.attempts?.host||0)+(n.attempts?.guest||0)!==attempt)return;
+    return {...old,numseq:{...n,shown:[],wrong:null,locked:false,turn:other(n.turn)}};
+  }),g.turn===role?1700:3300);
+}
+function renderNumseq(){
+  const g=state.numseq;
+  if(!g)return;
+  const shown=g.shown||[];
+  const finished=state.phase==='finished';
+  const host=role==='host';
+  const n=g.cards.length, cols=n===10||n===25?5:n<=6?3:n<=12?4:n<=20?5:6;
+  const cards=g.cards.map((num,i)=>{
+    const found=shown.includes(i), bad=g.wrong===i, open=found||bad;
+    const disabled=finished||g.locked||g.turn!==role||open;
+    return `<button class="numseq-card ${bad?'bad':found?'ok':''}" data-numseq="${i}" aria-label="كارت ${i+1}${open?' رقم '+num:''}" ${disabled?'disabled':''}>${open?arabicDigits(num):'؟'}</button>`;
+  }).join('');
+  let status;
+  if(finished) status=`${nameOf(state.result)} وصل لآخر رقم! 🎊`;
+  else if(g.locked) status=g.turn===role?'غلط ❌ الكروت هتتقلب تاني...':`${nameOf(g.turn)} غلط ❌ الكروت هتتقلب تاني...`;
+  else if(g.turn===role) status=shown.length?`برافو! دوّر على رقم ${arabicDigits(shown.length+1)} ✨`:'دورك! ابدأ بالكارت اللي عليه ١ ✨';
+  else status=`دور ${nameOf(g.turn)} ⏳${shown.length?` • وصل لـ${arabicDigits(shown.length)}`:''}`;
+  const pct=Math.round(shown.length/g.cards.length*100);
+  const best=g.best||{host:0,guest:0};
+  const age=normalizeAge(state.childAge), chosen=numseqMaxFor(age), limit=numseqLimit(age);
+  const settings=host?`<div class="in-game-settings numseq-settings">
+      <label>🔢 الأرقام من ١ إلى</label>
+      <div class="numseq-chips">${NUMSEQ_PRESETS.filter(n=>n<=limit).map(n=>`<button type="button" class="numseq-chip ${n===chosen?'on':''}" data-numseq-max="${n}" aria-pressed="${n===chosen}">${arabicDigits(n)}</button>`).join('')}</div>
+      <button class="btn soft settings-apply" data-action="apply-numseq">🔁 ابدأ بالنطاق ده</button>
+    </div>`:'';
+  screen.innerHTML=`<div class="panel numseq-panel">${gameHeading('🔢','اقلب بالترتيب')}
+    ${settings}
+    <h2 class="game-title center">اقلب الكروت بالترتيب من ١ إلى ${arabicDigits(g.max)}</h2>
+    <p class="status">${status}</p>
+    <div class="numseq-meter" role="img" aria-label="التقدم ${shown.length} من ${g.max}"><span style="width:${pct}%"></span></div>
+    <p class="numseq-best center">🏅 أحسن وصول: بابا ${arabicDigits(best.host||0)} • ${childName()} ${arabicDigits(best.guest||0)}</p>
+    <div class="numseq-grid cols-${cols}">${cards}</div>
+    ${finishBox()}
+    ${host&&finished?'<div class="btn-row"><button class="btn primary" data-action="restart">🔁 جولة جديدة</button></div>':''}
+    <p class="rule center">ابدأ دايمًا من ١ • لو غلطت الكروت بترجع ويجي دور التاني • افتكر أماكن الأرقام! 🧠 • الوصول لآخر رقم = ⭐⭐⭐</p>
+  </div>`;
+  if(g.locked&&state.phase==='playing')scheduleNumseqReset(g);
 }
 
 function gameHeading(icon, title) {
@@ -1816,6 +1908,7 @@ function render() {
   if (state.game === 'jigsaw') return renderJigsaw();
   if (state.game === 'sorting') return renderSorting();
   if (state.game === 'phonics') return renderPhonics();
+  if (state.game === 'numseq') return renderNumseq();
   screen.innerHTML = '<div class="panel"><p>اللعبة غير معروفة. اطلب من بابا يرجع للمدينة.</p></div>';
 }
 // Counts only game starts and completed rounds, not child names, answers, drawings or device IDs.
@@ -1878,6 +1971,7 @@ function newGame(which, old, previousDraw) {
     const picks=shuffle(MEMORY_EMOJI).slice(0,size/2);
     return { ...common,game:which,phase:'playing',scores,round,memory:{cards:shuffle([...picks,...picks]),matched:[],revealed:[],roundScores:{host:0,guest:0},waiting:false,turn:round%2===0?'guest':'host'} };
   }
+  if (which === 'numseq') return newNumseq(common,scores,round);
   if (which === 'snakes') return {...common,game:which,phase:'playing',scores,round,snakes:{positions:{host:1,guest:1},turn:round%2===0?'guest':'host',phase:'ready',dice:null,pendingDice:null,rollId:0,moveId:0,move:null,lastRoll:null}};
   if (which === 'coloring') {
     const previous=old?.game==='coloring'?old.coloring?.pageIndex:-1,pageIndex=(Number(previous)+1)%COLORING_PAGES.length;
@@ -2317,6 +2411,10 @@ screen.addEventListener('click',async e=>{
     const which=state.game;
     return mutateState(old=>old.game===which?newGame(which,old):undefined);
   }
+  if (action==='apply-numseq') {
+    if(role!=='host'||state?.game!=='numseq')return;
+    return mutateState(old=>old.game==='numseq'?newGame('numseq',old):undefined);
+  }
   if (action==='restart') return restart();
   if (action==='next-draw') return nextDraw();
   if (action==='clear-draw' && state?.game==='draw' && state.draw.drawer===role) {
@@ -2324,6 +2422,8 @@ screen.addEventListener('click',async e=>{
   }
   if (button.dataset.game) {rememberGame(button.dataset.game);return startGame(button.dataset.game);}
   if (button.dataset.memory!==undefined) return chooseCard(Number(button.dataset.memory));
+  if (button.dataset.numseq!==undefined) return chooseNumseq(Number(button.dataset.numseq));
+  if (button.dataset.numseqMax!==undefined) {if(role!=='host')return;numseqPreference=Number(button.dataset.numseqMax)||0;saveNumseq();return render();}
   if (button.dataset.cell!==undefined) return chooseCell(Number(button.dataset.cell));
   if (button.dataset.guess!==undefined) return chooseGuess(Number(button.dataset.guess));
   if (button.dataset.quiz!==undefined) return chooseQuiz(Number(button.dataset.quiz));

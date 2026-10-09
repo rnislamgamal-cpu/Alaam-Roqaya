@@ -251,3 +251,26 @@ body .header,body[class] .header{backdrop-filter:none!important;-webkit-backdrop
   .v2-hero-img{max-height:42vh}
 }
 @media (prefers-reduced-motion:reduce){*{animation:none!important;transition:none!important}}
+
+/* ---------- Game: اقلب بالترتيب ---------- */
+.numseq-panel .numseq-settings{margin:6px 0 10px}
+.numseq-chips{display:flex;flex-wrap:wrap;gap:8px;margin:8px 0}
+.numseq-chip{min-width:46px;min-height:44px;padding:0 12px;border:2px solid var(--line);border-radius:14px;background:#fff;color:var(--ink);font-size:1rem;font-weight:900;box-shadow:0 3px 0 #ece2f8;cursor:pointer}
+.numseq-chip.on{background:var(--purple);border-color:var(--purple-d);color:#fff;box-shadow:0 3px 0 var(--purple-d)}
+.numseq-meter{height:12px;margin:8px 0 4px;border-radius:999px;background:#ece6fb;overflow:hidden}
+.numseq-meter span{display:block;height:100%;border-radius:999px;background:linear-gradient(90deg,#2fb67c,#8bd96b);transition:width .35s}
+.numseq-best{margin:2px 0 10px;font-size:.85rem;font-weight:800;color:var(--ink-2)}
+.numseq-grid{display:grid;gap:9px;margin:6px 0 12px;direction:rtl}
+.numseq-grid.cols-3{grid-template-columns:repeat(3,1fr)}
+.numseq-grid.cols-4{grid-template-columns:repeat(4,1fr)}
+.numseq-grid.cols-5{grid-template-columns:repeat(5,1fr)}
+.numseq-grid.cols-6{grid-template-columns:repeat(6,1fr)}
+.numseq-card{aspect-ratio:1/1;display:grid;place-items:center;min-width:0;padding:0;border:0;border-radius:18px;font-weight:900;font-size:clamp(1.3rem,7.5vw,2.2rem);color:#fff;cursor:pointer;
+  background:linear-gradient(180deg,#7d62f0,#5a3fd2);box-shadow:0 5px 0 var(--purple-d);transition:transform .12s,box-shadow .12s}
+.cols-5.numseq-grid .numseq-card,.cols-6.numseq-grid .numseq-card{border-radius:14px;font-size:clamp(1.05rem,5.6vw,1.7rem)}
+.numseq-card:active:not(:disabled){transform:translateY(4px);box-shadow:0 1px 0 var(--purple-d)}
+.numseq-card:disabled{cursor:default}
+.numseq-card:disabled:not(.ok):not(.bad){opacity:.82}
+.numseq-card.ok{background:linear-gradient(180deg,#46cf93,#2fb67c);box-shadow:0 5px 0 var(--green-d);opacity:1}
+.numseq-card.bad{background:linear-gradient(180deg,#ff7b7b,#e9494f);box-shadow:0 5px 0 #b3282e;opacity:1;animation:numseqShake .45s}
+@keyframes numseqShake{0%,100%{transform:translateX(0)}20%{transform:translateX(-7px)}40%{transform:translateX(7px)}60%{transform:translateX(-5px)}80%{transform:translateX(5px)}}
