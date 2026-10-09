@@ -9,7 +9,8 @@
     'memory-v2-active',
     'snakes-v2-active',
     'jigsaw-sync-active',
-    'draw-v2-active'
+    'draw-v2-active',
+    'connect4-v1-active'
   ];
 
   let pending = '';
