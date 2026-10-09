@@ -1,0 +1,196 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>خبّي ودوّر</title>
+<style>
+:root{--bg:#eef1f6;--ink:#101828;--blue:#2f6fed;--orange:#f08c00;--ok:#2b9348;--bad:#d62828;--card:#fff;--line:#d5dbe6}
+*{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+html,body{margin:0;min-height:100%}
+body{min-height:100vh;background:var(--bg);color:var(--ink);font-family:"Segoe UI",Tahoma,"Noto Sans Arabic",sans-serif;user-select:none}
+main{max-width:560px;margin:auto;padding:10px 8px 24px}
+h1{margin:0 0 6px;text-align:center;font-size:1.4rem}
+.score{display:grid;grid-template-columns:1fr 1fr;gap:7px;margin-bottom:8px}
+.pl{display:flex;align-items:center;gap:6px;padding:7px 9px;border:2px solid transparent;border-radius:13px;background:#fff;font-weight:850}
+.pl.on{border-color:var(--ink)}.pl b{min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;font-size:.74rem}.pl span{margin-inline-start:auto;font-weight:900}
+.host{color:var(--blue)}.guest{color:var(--orange)}
+.status{min-height:1.5em;margin:0 0 8px;text-align:center;font-weight:850;font-size:.82rem}
+.target{display:flex;align-items:center;gap:9px;background:#fff;border-radius:14px;padding:9px 11px;margin-bottom:9px;font-weight:800}
+.target img{width:38px;height:38px}.target span{margin-inline-start:auto;font-size:.72rem}
+.row{display:flex;gap:6px;flex-wrap:wrap;margin-bottom:8px}
+.chip{border:2px solid var(--line);background:#fff;border-radius:999px;padding:6px 10px;font:inherit;font-size:.72rem;cursor:pointer;display:flex;align-items:center;gap:5px}
+.chip img{width:23px;height:23px}.chip.on{border-color:var(--ink);background:var(--ink);color:#fff}
+.scene{display:grid;gap:7px;padding:10px;border-radius:16px;margin-bottom:9px}
+.spot{background:rgba(255,255,255,.90);border:2px solid transparent;border-radius:11px;padding:7px 3px;font:inherit;font-size:.7rem;display:flex;flex-direction:column;align-items:center;gap:3px;cursor:pointer;position:relative;min-height:74px}
+.spot img{width:min(10vw,44px);height:min(10vw,44px)}
+.spot.sel{border-color:#101828}.spot.miss{opacity:.48;pointer-events:none}.spot.hit{border-color:var(--ok);background:#d3f9d8}.spot.ans{border-color:var(--bad);background:#ffe3e3}
+.spot .tag{position:absolute;top:-7px;font-size:.58rem;color:#fff;border-radius:8px;padding:1px 6px;z-index:2}
+.spot .it{position:absolute;bottom:-8px;width:27px;height:27px;background:#fff;border-radius:50%;padding:3px;border:1px solid #ddd}
+.hint{text-align:center;font-weight:900;min-height:1.6em;margin:0 0 7px}
+.card{background:#fff;border-radius:14px;padding:12px;margin-bottom:9px;text-align:center}
+.card h2{margin:0 0 5px;font-size:1.12rem}.card p{margin:0;opacity:.72;font-size:.77rem;line-height:1.55}
+.btnrow{display:flex;gap:7px;justify-content:center;flex-wrap:wrap;margin-top:7px}
+.btn{font:inherit;font-weight:850;border:0;border-radius:11px;padding:9px 13px;background:#101828;color:#fff;cursor:pointer}
+.btn.alt{background:#fff;color:#101828;border:2px solid #101828}.btn:disabled{opacity:.4;cursor:default}
+.secret-note{margin:5px 0 0;text-align:center;font-size:.64rem;opacity:.55}
+@media(max-width:420px){
+ main{padding:7px 5px 18px}h1{font-size:1.2rem}.pl{padding:5px 6px}.pl b{font-size:.64rem}.pl span{font-size:.8rem}
+ .chip{font-size:.64rem;padding:5px 8px}.chip img{width:20px;height:20px}.scene{gap:5px;padding:7px}.spot{font-size:.61rem;min-height:65px;padding:5px 2px}.spot img{width:min(11vw,39px);height:min(11vw,39px)}.btn{font-size:.7rem;padding:8px 10px}
+}
+</style>
+</head>
+<body>
+<main>
+  <h1>🕵️ خبّي ودوّر</h1>
+  <div class="score">
+    <div id="hostBox" class="pl host"><b>بابا</b><span>⭐ ٠</span></div>
+    <div id="guestBox" class="pl guest"><b>رقية</b><span>⭐ ٠</span></div>
+  </div>
+  <p id="status" class="status">جاري تجهيز الجولة…</p>
+  <div id="game"></div>
+  <div class="btnrow"><button id="city" class="btn alt">🎡 المدينة</button></div>
+  <p class="secret-note">مكان الإخفاء السري يفضل على جهاز اللاعب اللي خبّى، ومش بيتبعت للطرف التاني.</p>
+</main>
+
+<script>
+const $=s=>document.querySelector(s);
+const IMG=c=>`https://cdn.jsdelivr.net/gh/twitter/twemoji@14.0.2/assets/svg/${c}.svg`;
+const E='٠١٢٣٤٥٦٧٨٩',ar=v=>String(v).replace(/[0-9]/g,d=>E[d.charCodeAt(0)-48]);
+
+const ITEMS=[
+ {c:"1f511",n:"مفتاح"},{c:"1f48e",n:"جوهرة"},{c:"1f381",n:"هدية"},{c:"1f451",n:"تاج"},
+ {c:"1f48d",n:"خاتم"},{c:"1f3c6",n:"كأس"},{c:"1f9f8",n:"دبدوب"},{c:"1fa99",n:"عملة"}
+];
+const SCENES={
+ house:{name:"البيت",cols:4,bg:"linear-gradient(#e8dcc8 0 62%,#c9a87c 62%)",spots:[
+  {id:"door",c:"1f6aa",n:"الباب"},{id:"tv",c:"1f4fa",n:"التلفزيون"},{id:"books",c:"1f4da",n:"الكتب"},{id:"plant",c:"1fab4",n:"الزرعة"},
+  {id:"vase",c:"1f3fa",n:"الفازة"},{id:"box",c:"1f4e6",n:"الكرتونة"},{id:"bag",c:"1f392",n:"الشنطة"},{id:"basket",c:"1f9fa",n:"السلة"},
+  {id:"bath",c:"1f6c1",n:"البانيو"},{id:"tools",c:"1f9f0",n:"الصندوق"},{id:"luggage",c:"1f9f3",n:"الحقيبة"},{id:"cart",c:"1f6d2",n:"العربية"}]},
+ garden:{name:"الحديقة",cols:4,bg:"linear-gradient(#cfe8f7 0 45%,#8fcf7a 45%)",spots:[
+  {id:"tree",c:"1f333",n:"الشجرة"},{id:"pine",c:"1f332",n:"الصنوبر"},{id:"sun",c:"1f33b",n:"عباد الشمس"},{id:"mush",c:"1f344",n:"الفطر"},
+  {id:"rock",c:"1faa8",n:"الصخرة"},{id:"bucket",c:"1faa3",n:"الجردل"},{id:"home",c:"1f3e0",n:"البيت"},{id:"fount",c:"26f2",n:"النافورة"},
+  {id:"mail",c:"1f4ee",n:"صندوق البريد"},{id:"flower",c:"1f33a",n:"الورد"},{id:"herb",c:"1f33f",n:"الأعشاب"},{id:"hut",c:"1f6d6",n:"الكوخ"}]}
+};
+const HINTS={hot:["قريب جدًا","#d62828"],warm:["قريب","#f08c00"],cold:["بعيد","#2f6fed"]};
+
+let cfg={role:'guest',childName:'رقية',roundId:0,roundNo:1,hider:'host',phase:'hiding',scene:null,item:null,guesses:[],result:null,reveal:null,tries:4,scores:{host:0,guest:0},secretMissing:false};
+let draft={scene:"house",item:ITEMS[0].c,spot:null},lastRoundId=null;
+const nameOf=r=>r==='host'?'بابا':(cfg.childName||'رقية');
+const seeker=()=>cfg.hider==='host'?'guest':'host';
+const iHide=()=>cfg.role===cfg.hider;
+const iSeek=()=>cfg.role===seeker();
+const itemObj=()=>ITEMS.find(i=>i.c===cfg.item)||ITEMS[0];
+const secretKey=()=>`roqaya-hs-secret:${cfg.roundId}:${cfg.hider}`;
+
+function secret(){
+ try{return sessionStorage.getItem(secretKey())||''}catch{return ''}
+}
+function setSecret(v){
+ try{if(v)sessionStorage.setItem(secretKey(),v);else sessionStorage.removeItem(secretKey())}catch{}
+}
+function spotBtn(S,s,cls="",extra=""){
+ return `<button class="spot ${cls}" data-id="${s.id}"><img src="${IMG(s.c)}" alt="">${s.n}${extra}</button>`;
+}
+function guesses(){return Array.isArray(cfg.guesses)?cfg.guesses:[]}
+
+function score(){
+ $('#hostBox').classList.toggle('on',cfg.hider==='host'&&cfg.phase!=='done');
+ $('#guestBox').classList.toggle('on',cfg.hider==='guest'&&cfg.phase!=='done');
+ $('#hostBox b').textContent='بابا';
+ $('#guestBox b').textContent=cfg.childName||'رقية';
+ $('#hostBox span').textContent=`⭐ ${ar(cfg.scores?.host||0)}`;
+ $('#guestBox span').textContent=`⭐ ${ar(cfg.scores?.guest||0)}`;
+ $('#city').disabled=cfg.role!=='host';
+}
+function render(){
+ score();
+ if(lastRoundId!==cfg.roundId){
+  lastRoundId=cfg.roundId;
+  draft={scene:"house",item:ITEMS[0].c,spot:null};
+ }
+
+ const g=$('#game'),phase=cfg.phase||'hiding';
+ if(phase==='hiding'){
+  $('#status').textContent=iHide()?`دورك تخبّي يا ${nameOf(cfg.role)} 👀`:`${nameOf(cfg.hider)} بيخبّي الحاجة…`;
+  if(!iHide()){
+   g.innerHTML=`<div class="card"><h2>🙈 بص بعيد شوية</h2><p>${nameOf(cfg.hider)} بيختار الحاجة ومكانها. أول ما يخلص هتبدأ تدوّر.</p></div>`;
+   return;
+  }
+  const S=SCENES[draft.scene];
+  g.innerHTML=`
+    <div class="card"><h2>اختار الحاجة وخبّيها</h2><p>اختار شكل، وبعدها المكان اللي هتخبّيه فيه.</p></div>
+    <div class="row">${ITEMS.map(i=>`<button class="chip ${i.c===draft.item?'on':''}" data-item="${i.c}"><img src="${IMG(i.c)}" alt="">${i.n}</button>`).join('')}</div>
+    <div class="row">${Object.entries(SCENES).map(([k,v])=>`<button class="chip ${k===draft.scene?'on':''}" data-scene="${k}">${v.name}</button>`).join('')}</div>
+    <div class="scene" style="background:${S.bg};grid-template-columns:repeat(${S.cols},1fr)">${S.spots.map(s=>spotBtn(S,s,s.id===draft.spot?'sel':'')).join('')}</div>
+    <button class="btn" data-act="hide" ${draft.spot?'':'disabled'}>🙈 خبّي هنا</button>`;
+  bind();
+  return;
+ }
+
+ if(phase==='seeking'){
+  const S=SCENES[cfg.scene],item=itemObj(),gs=guesses(),last=[...gs].reverse().find(x=>x.hint),pending=gs.some(x=>!x.hint),byId=Object.fromEntries(gs.map(x=>[x.spot,x]));
+  const ownSecret=iHide()?secret():'';
+  $('#status').textContent=iSeek()?`دورك تدوّر يا ${nameOf(cfg.role)} 🔎`:`${nameOf(seeker())} بيدوّر…`;
+  const grid=S.spots.map(s=>{
+    const q=byId[s.id],tag=q?.hint?`<span class="tag" style="background:${HINTS[q.hint]?.[1]||'#555'}">${HINTS[q.hint]?.[0]||''}</span>`:'';
+    return spotBtn(S,s,(q?'miss ':'')+(ownSecret===s.id?'sel':''),tag);
+  }).join('');
+  const hint=pending?'...':last?HINTS[last.hint]?.[0]:(iHide()?'استنى المحاولة':'اختار مكان تفتكر الحاجة فيه');
+  const color=last?HINTS[last.hint]?.[1]:'inherit';
+  g.innerHTML=`
+    <div class="target"><img src="${IMG(cfg.item)}" alt=""><strong>${iHide()?'اللاعب بيدوّر على':'دوّر على'}: ${item.n}</strong><span>${ar(gs.length)}/${ar(cfg.tries||4)}</span></div>
+    <div class="hint" style="color:${color}">${cfg.secretMissing&&iHide()?'مكان الإخفاء ضاع من الجهاز. أعد الجولة.':hint}</div>
+    <div class="scene" style="background:${S.bg};grid-template-columns:repeat(${S.cols},1fr);${iHide()||pending||cfg.secretMissing?'pointer-events:none':''}">${grid}</div>
+    ${cfg.secretMissing&&iHide()?'<button class="btn" data-act="retry-hide">↩️ إعادة اختيار مكان الإخفاء</button>':''}`;
+  bind();
+  return;
+ }
+
+ const S=SCENES[cfg.scene],item=itemObj(),won=cfg.result==='found',n=guesses().length;
+ $('#status').textContent=won?(iSeek()?'🎉 لقيتها!':`${nameOf(seeker())} لقاها!`):(iHide()?'😎 ما لقاش الحاجة!':'خلصت المحاولات 😅');
+ const grid=S.spots.map(s=>spotBtn(S,s,s.id===cfg.reveal?(won?'hit':'ans'):'miss',s.id===cfg.reveal?`<img class="it" src="${IMG(cfg.item)}" alt="">`:'')).join('');
+ g.innerHTML=`
+   <div class="card"><h2>${won?(iSeek()?`لقيت الـ${item.n}!`:`اتلقط الـ${item.n}!`):(iHide()?`خبّيت الـ${item.n} صح!`:`ما لقيتش الـ${item.n}`)}</h2>
+   <p>${won?`اتوجدت في ${ar(n)} محاولة`:`خلصت المحاولات (${ar(cfg.tries||4)})`}. كانت مخبّية في ${S.spots.find(s=>s.id===cfg.reveal)?.n||'المكان'}.</p></div>
+   <div class="scene" style="background:${S.bg};grid-template-columns:repeat(${S.cols},1fr)">${grid}</div>
+   ${cfg.role==='host'?'<button class="btn" data-act="next">🔄 الجولة اللي بعدها</button>':''}`;
+ bind();
+}
+function bind(){
+ document.querySelectorAll('[data-item]').forEach(b=>b.onclick=()=>{draft.item=b.dataset.item;render()});
+ document.querySelectorAll('[data-scene]').forEach(b=>b.onclick=()=>{draft.scene=b.dataset.scene;draft.spot=null;render()});
+ document.querySelectorAll('.spot').forEach(b=>b.onclick=()=>{
+   if(cfg.phase==='hiding'&&iHide()){draft.spot=b.dataset.id;render();return}
+   if(cfg.phase==='seeking'&&iSeek()){
+     const gs=guesses();
+     if(gs.length>=(cfg.tries||4)||gs.some(x=>!x.hint)||gs.some(x=>x.spot===b.dataset.id))return;
+     parent.postMessage({type:'roqaya-hide-guess',spot:b.dataset.id,roundId:cfg.roundId},location.origin);
+   }
+ });
+ const hideBtn=document.querySelector('[data-act="hide"]');
+ if(hideBtn)hideBtn.onclick=()=>{
+   if(!draft.spot)return;
+   setSecret(draft.spot);
+   parent.postMessage({type:'roqaya-hide-place',scene:draft.scene,item:draft.item,roundId:cfg.roundId},location.origin);
+ };
+ const retry=document.querySelector('[data-act="retry-hide"]');
+ if(retry)retry.onclick=()=>parent.postMessage({type:'roqaya-hide-retry',roundId:cfg.roundId},location.origin);
+ const next=document.querySelector('[data-act="next"]');
+ if(next)next.onclick=()=>parent.postMessage({type:'roqaya-hide-next',roundId:cfg.roundId},location.origin);
+}
+$('#city').onclick=()=>{if(cfg.role==='host')parent.postMessage({type:'roqaya-hide-city'},location.origin)};
+addEventListener('message',e=>{
+ if(e.origin!==location.origin||e.data?.type!=='roqaya-hide-config')return;
+ cfg={...cfg,...e.data.config};
+ render();
+ if(cfg.phase==='seeking'&&iHide()){
+   const s=secret();
+   parent.postMessage({type:s?'roqaya-hide-answer':'roqaya-hide-secret-missing',secret:s,roundId:cfg.roundId},location.origin);
+ }
+});
+render();
+parent.postMessage({type:'roqaya-hide-ready'},location.origin);
+</script>
+</body>
+</html>

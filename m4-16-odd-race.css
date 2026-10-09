@@ -1,0 +1,18 @@
+/* M4.16 — replace legacy Odd One Out with synchronized race */
+.odd-v2-overlay[hidden]{display:none!important}
+body.odd-v2-active #screen{display:none!important}
+body.odd-v2-active #game-switch-cover{display:none!important}
+body.odd-v2-active .shell{max-width:900px!important;padding:3px 5px 10px!important}
+body.odd-v2-active .header{
+  position:sticky!important;top:max(4px,env(safe-area-inset-top))!important;z-index:190!important;
+  margin:0 0 5px!important;padding:4px 6px!important;min-height:42px!important;border-radius:14px!important;
+  background:rgba(255,255,255,.94)!important;backdrop-filter:blur(14px)!important;-webkit-backdrop-filter:blur(14px)!important;
+  box-shadow:0 7px 22px rgba(59,48,102,.14)!important
+}
+body.odd-v2-active .brand{display:none!important}
+body.odd-v2-active .connection{font-size:.61rem!important;padding:4px 6px!important}
+body.odd-v2-active .sound-toggle{font-size:.6rem!important;min-height:34px!important;padding:4px 7px!important}
+body.odd-v2-active .call-controls{margin-top:0!important}
+.odd-v2-overlay{width:100%;margin:0 auto;padding:0 2px 12px}
+.odd-v2-frame{display:block;width:100%;height:calc(100svh - 64px);min-height:650px;border:0;border-radius:14px;background:#eef1f6;box-shadow:0 8px 24px rgba(73,64,130,.12)}
+@media(max-width:520px){body.odd-v2-active .header{padding:4px!important}.odd-v2-frame{height:calc(100svh - 60px);min-height:620px;border-radius:10px}}

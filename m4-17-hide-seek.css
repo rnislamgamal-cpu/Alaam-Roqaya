@@ -1,0 +1,18 @@
+/* M4.17 — Hide & Seek */
+.hide-seek-v1-overlay[hidden]{display:none!important}
+body.hide-seek-v1-active #screen{display:none!important}
+body.hide-seek-v1-active #game-switch-cover{display:none!important}
+body.hide-seek-v1-active .shell{max-width:900px!important;padding:3px 5px 10px!important}
+body.hide-seek-v1-active .header{
+  position:sticky!important;top:max(4px,env(safe-area-inset-top))!important;z-index:190!important;
+  margin:0 0 5px!important;padding:4px 6px!important;min-height:42px!important;border-radius:14px!important;
+  background:rgba(255,255,255,.94)!important;backdrop-filter:blur(14px)!important;-webkit-backdrop-filter:blur(14px)!important;
+  box-shadow:0 7px 22px rgba(59,48,102,.14)!important
+}
+body.hide-seek-v1-active .brand{display:none!important}
+body.hide-seek-v1-active .connection{font-size:.61rem!important;padding:4px 6px!important}
+body.hide-seek-v1-active .sound-toggle{font-size:.6rem!important;min-height:34px!important;padding:4px 7px!important}
+body.hide-seek-v1-active .call-controls{margin-top:0!important}
+.hide-seek-v1-overlay{width:100%;margin:0 auto;padding:0 2px 12px}
+.hide-seek-v1-frame{display:block;width:100%;height:calc(100svh - 64px);min-height:720px;border:0;border-radius:14px;background:#eef1f6;box-shadow:0 8px 24px rgba(73,64,130,.12)}
+@media(max-width:520px){body.hide-seek-v1-active .header{padding:4px!important}.hide-seek-v1-frame{height:calc(100svh - 60px);min-height:690px;border-radius:10px}}
