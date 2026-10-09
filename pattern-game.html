@@ -1,0 +1,209 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>أكمل النمط</title>
+<style>
+:root{--bg:#f4f5f7;--ink:#12151c;--line:#dde1e8;--good:#1b8a5a;--bad:#c62f2f;--blue:#2f6fed;--orange:#f08c00}
+*{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+html,body{margin:0;min-height:100%}
+body{min-height:100vh;background:var(--bg);color:var(--ink);font-family:"Segoe UI",Tahoma,"Noto Sans Arabic",sans-serif;user-select:none}
+main{max-width:600px;margin:auto;padding:9px 8px 22px}
+h1{margin:0 0 6px;text-align:center;font-size:1.35rem}
+.duo{display:grid;grid-template-columns:1fr 1fr;gap:7px;margin-bottom:7px}
+.player{display:flex;align-items:center;gap:5px;min-width:0;padding:6px 8px;border:2px solid transparent;border-radius:12px;background:#fff;font-weight:850}
+.player.me{border-color:#111}.player b{overflow:hidden;text-overflow:ellipsis;white-space:nowrap;font-size:.68rem}.player span{margin-inline-start:auto;font-size:.72rem}
+.host{color:var(--blue)}.guest{color:var(--orange)}
+.top{display:flex;justify-content:space-between;align-items:center;font-weight:800;margin-bottom:7px;font-size:.78rem}
+.top small{display:block;font-weight:600;opacity:.62;font-size:.62rem}
+.lives{display:flex;gap:4px}.lives i{width:10px;height:10px;border-radius:50%;background:var(--ink)}.lives i.off{background:var(--line)}
+.bar{height:6px;border-radius:4px;background:var(--line);overflow:hidden;margin-bottom:10px}.bar b{display:block;height:100%;background:var(--ink);width:100%}.bar.low b{background:var(--bad)}
+.q{font-weight:800;margin:0 0 8px;text-align:center;font-size:.84rem}
+.seq{display:grid;gap:6px;margin-bottom:12px}
+.mx{grid-template-columns:repeat(3,1fr);max-width:290px;margin:0 auto 12px}
+.card{background:#fff;border:2px solid var(--line);border-radius:12px;aspect-ratio:1;padding:7%;display:flex;align-items:center;justify-content:center}
+.card svg{width:100%;height:100%}.card.qmark{border-style:dashed;font-size:1.7rem;font-weight:900;color:#8a93a3}
+.opts{display:grid;gap:7px}.opt{font:inherit;cursor:pointer;position:relative}.opt kbd{position:absolute;top:4px;inset-inline-start:6px;font:600 .62rem inherit;opacity:.42}
+.opt.good{border-color:var(--good);background:#e6f6ee}.opt.bad{border-color:var(--bad);background:#fdeaea}.opt:disabled{cursor:default}
+.fb{margin-top:9px;padding:9px 11px;border-radius:11px;background:#fff;border:1px solid var(--line);font-weight:700;font-size:.72rem;line-height:1.55}
+.fb ul{margin:5px 0 0;padding-inline-start:17px;font-weight:600;opacity:.86}
+.btn{font:inherit;font-weight:800;border:0;border-radius:11px;padding:10px 12px;background:var(--ink);color:#fff;width:100%;cursor:pointer;margin-top:8px}
+.btn.alt{width:auto;background:#fff;color:var(--ink);border:2px solid var(--ink);margin-top:0}.btn:disabled{opacity:.42}
+.end{text-align:center;padding-top:18px}.end h2{font-size:1.35rem;margin:0 0 4px}.big{font-size:2.5rem;font-weight:900;margin:6px 0}.stats{display:flex;justify-content:center;gap:18px;margin:10px 0;opacity:.8;font-size:.75rem}.opp{font-size:.75rem;opacity:.78}
+.result{margin:8px 0;padding:9px;border-radius:12px;background:#fff8cf;font-weight:850;font-size:.78rem}
+.actions{display:flex;gap:7px;justify-content:center;margin-top:8px}
+@media(max-width:420px){
+ main{padding:6px 5px 16px}h1{font-size:1.15rem}.player{padding:4px 5px}.player b{font-size:.59rem}.player span,.top{font-size:.64rem}.top small{font-size:.55rem}
+ .q{font-size:.74rem}.seq{gap:4px;margin-bottom:9px}.card{border-radius:10px;padding:6%}.opts{gap:5px}.fb{font-size:.64rem}.btn{font-size:.7rem;padding:8px 10px}.big{font-size:2rem}
+}
+@media(prefers-reduced-motion:no-preference){.card{transition:border-color .15s,background .15s}}
+</style>
+</head>
+<body>
+<main>
+  <h1>🧩 أكمل النمط</h1>
+  <div class="duo">
+    <div id="hostBox" class="player host"><b>بابا</b><span>٠</span></div>
+    <div id="guestBox" class="player guest"><b>رقية</b><span>٠</span></div>
+  </div>
+  <div id="game"></div>
+  <div class="actions"><button id="city" class="btn alt">🎡 المدينة</button></div>
+</main>
+
+<script>
+const $=s=>document.querySelector(s);
+const EASTERN='٠١٢٣٤٥٦٧٨٩',ar=v=>String(v).replace(/[0-9]/g,d=>EASTERN[d.charCodeAt(0)-48]);
+const DEFAULTS={rounds:10,lives:3};
+const COLORS=["#0072B2","#E69F00","#009E73","#CC79A7","#D55E00"];
+const SHAPES=["circle","square","triangle","diamond","hexagon","star","pentagon"];
+const SIZES=[.6,.85,1.1];
+const timeFor=n=>Math.max(14,32-n*1.5);
+const mulberry=a=>()=>{a|=0;a=a+0x6D2B79F5|0;let t=Math.imul(a^a>>>15,1|a);t=t+Math.imul(t^t>>>7,61|t)^t;return((t^t>>>14)>>>0)/4294967296};
+const hash=(s,n)=>{let h=Math.imul(2166136261^s,16777619);h=Math.imul(h^n,16777619);h^=h>>>13;h=Math.imul(h,0x5bd1e995);return(h^(h>>>15))>>>0};
+const LAYOUT={1:[[50,50]],2:[[28,50],[72,50]],3:[[50,28],[28,70],[72,70]],4:[[30,30],[70,30],[30,70],[70,70]],5:[[30,30],[70,30],[30,70],[70,70],[50,50]]};
+const RAD={1:32,2:19,3:16,4:13,5:12};
+function shapeEl(k,cx,cy,r,rot,fill,col){
+ const st=fill?`fill="${col}"`:`fill="none" stroke="${col}" stroke-width="5" stroke-linejoin="round"`;
+ if(k==="circle")return`<circle cx="${cx}" cy="${cy}" r="${r}" ${st}/>`;
+ const pts=[];
+ if(k==="star"){for(let j=0;j<10;j++){const a=(rot-90+j*36)*Math.PI/180,q=j%2?r*.45:r;pts.push((cx+q*Math.cos(a)).toFixed(1)+","+(cy+q*Math.sin(a)).toFixed(1))}}
+ else{const n={square:4,diamond:4,triangle:3,hexagon:6,pentagon:5}[k],off=k==="square"?45:0;for(let j=0;j<n;j++){const a=(rot+off-90+j*360/n)*Math.PI/180;pts.push((cx+r*Math.cos(a)).toFixed(1)+","+(cy+r*Math.sin(a)).toFixed(1))}}
+ return`<polygon points="${pts.join(" ")}" ${st}/>`;
+}
+const itemSVG=it=>`<svg viewBox="0 0 100 100" aria-hidden="true">${LAYOUT[it.count].map(([x,y])=>shapeEl(it.shape,x,y,RAD[it.count]*it.size,it.rot,it.fill,it.color)).join("")}</svg>`;
+const keyOf=it=>[it.shape,it.color,it.rot,it.size,it.fill,it.count].join("|");
+const ANAME={shape:"الشكل",color:"اللون",size:"الحجم",count:"العدد"};
+function makePuzzle(seed,n){
+ const R=mulberry(hash(seed,n)),pick=a=>a[Math.floor(R()*a.length)];
+ const sample=(a,k)=>{const b=[...a],o=[];while(o.length<k)o.push(b.splice(Math.floor(R()*b.length),1)[0]);return o};
+ const nOpt=n<=2?4:6;let cells=[],vary=[],rules=[],matrix=false,answer;
+ if(n>=4&&R()<.45){
+  matrix=true;vary=sample(["shape","color","size","count"],n>=8?3:2);
+  const vals={shape:sample(SHAPES,3),color:sample(COLORS,3),size:sample(SIZES,3),count:sample([1,2,3],3)},idx=[(r,c)=>(r+c)%3,(r,c)=>r,(r,c)=>c];
+  const base={shape:"square",color:COLORS[0],rot:0,size:1,fill:true,count:1};base.shape=pick(SHAPES.filter(s=>s!=="circle"));base.color=pick(COLORS);
+  for(let i=0;i<9;i++){const r=Math.floor(i/3),c=i%3,it={...base};vary.forEach((a,j)=>it[a]=vals[a][idx[j](r,c)]);cells.push(it)}
+  rules=[`${ANAME[vary[0]]} مش بيتكرر في نفس الصف ولا العمود`,`${ANAME[vary[1]]} ثابت في الصف الواحد`];if(vary[2])rules.push(`${ANAME[vary[2]]} ثابت في العمود الواحد`);answer=cells.pop();
+ }else{
+  const names=["shape","color","rot","size","count","fill"];vary=sample(names,n<=2?1:n<=6?2:3);
+  const shapes=vary.includes("rot")?SHAPES.filter(s=>s!=="circle"):SHAPES;
+  const base={shape:pick(shapes),color:pick(COLORS),rot:0,size:1,fill:vary.includes("fill")||R()<.8,count:1};
+  const per=()=>n>=7?pick([2,3,4]):pick([2,3]);
+  const T={
+   shape:()=>{const p=per(),v=sample(shapes,p);return[i=>v[i%p],`الشكل بيتكرر كل ${p} خطوات`]},
+   color:()=>{const p=per(),v=sample(COLORS,p);return[i=>v[i%p],`اللون بيتكرر كل ${p} خطوات`]},
+   rot:()=>{const s=pick([45,90,-45,-90]);return[i=>((i*s)%360+360)%360,`الشكل بيلف ${Math.abs(s)}° كل خطوة`]},
+   size:()=>{const v=R()<.5?[...SIZES]:[...SIZES].reverse();return[i=>v[i%3],"الحجم بيتغيّر كل خطوة وبيتكرر كل 3"]},
+   count:()=>{const m=pick([3,4]);return[i=>1+i%m,`العدد بيزيد واحد وبيرجع لواحد بعد ${m}`]},
+   fill:()=>{const f=R()<.5;return[i=>i%2===0?f:!f,"الشكل بيتبدّل بين المليان والمفرّغ"]}
+  };
+  const tr=vary.map(a=>{const[f,d]=T[a]();rules.push(d);return[a,f]});
+  const vis=n>=5?6:5;for(let i=0;i<=vis;i++){const it={...base};tr.forEach(([a,f])=>it[a]=f(i));cells.push(it)}answer=cells.pop();
+ }
+ const generic={shape:SHAPES,color:COLORS,size:SIZES,count:[1,2,3,4],fill:[true,false],rot:[0,45,90,135,180,225,270,315]};
+ const seen=a=>[...new Set([...cells,answer].map(c=>c[a]))],opts=new Map([[keyOf(answer),answer]]);
+ for(let g=0;g<300&&opts.size<nOpt;g++){const it={...answer},k=(n>=5&&R()<.4)?2:1;for(let j=0;j<k;j++){const a=R()<.9?pick(vary):pick(Object.keys(generic)),pool=(seen(a).length>1&&R()<.7?seen(a):generic[a]).filter(v=>v!==it[a]);if(pool.length)it[a]=pick(pool)}opts.set(keyOf(it),it)}
+ const list=[...opts.values()].sort(()=>R()-.5);
+ return{cells,matrix,opts:list,ans:list.findIndex(o=>keyOf(o)===keyOf(answer)),answer,rules};
+}
+
+let cfg={role:'guest',childName:'رقية',seed:1,roundId:0,rounds:10,maxLives:3,players:{host:null,guest:null},winner:null,awarded:false};
+let S=null,P=null,timer=null,currentMatch=-1,locked=false,feedback=false;
+
+const mine=()=>cfg.players?.[cfg.role]||null;
+const otherRole=()=>cfg.role==='host'?'guest':'host';
+const nameOf=r=>r==='host'?'بابا':(cfg.childName||'رقية');
+
+function paintPlayers(){
+ const h=cfg.players?.host||{score:0,round:1,lives:3,done:false},g=cfg.players?.guest||{score:0,round:1,lives:3,done:false};
+ $('#hostBox').classList.toggle('me',cfg.role==='host');$('#guestBox').classList.toggle('me',cfg.role==='guest');
+ $('#hostBox b').textContent=`بابا${h.done?' ✅':''}`;$('#guestBox b').textContent=`${cfg.childName||'رقية'}${g.done?' ✅':''}`;
+ $('#hostBox span').textContent=ar(h.score||0);$('#guestBox span').textContent=ar(g.score||0);
+ $('#city').disabled=cfg.role!=='host';
+}
+function sendProgress(){
+ if(!S)return;
+ parent.postMessage({type:'roqaya-pattern-progress',roundId:cfg.roundId,progress:{
+  score:S.score,round:Math.min(S.n,cfg.rounds),lives:S.lives,streak:S.streak,correct:S.correct,done:Boolean(S.over)
+ }},location.origin);
+}
+function restore(){
+ const p=mine()||{score:0,round:1,lives:cfg.maxLives,streak:0,correct:0,done:false};
+ S={n:Math.max(1,Number(p.round)||1),score:Number(p.score)||0,lives:Number.isFinite(Number(p.lives))?Number(p.lives):cfg.maxLives,streak:Number(p.streak)||0,correct:Number(p.correct)||0,over:Boolean(p.done),locked:false,t0:0,limit:0};
+ if(S.over){end();return}
+ nextPuzzle();
+}
+function nextPuzzle(){
+ if(S.n>cfg.rounds||S.lives<=0)return finish();
+ P=makePuzzle(cfg.seed,S.n);S.locked=false;feedback=false;S.t0=performance.now();S.limit=timeFor(S.n)*1000;
+ draw();clearInterval(timer);timer=setInterval(tick,100);sendProgress();
+}
+function tick(){
+ const left=S.limit-(performance.now()-S.t0),b=$('.bar');
+ if(!b)return;b.firstElementChild.style.width=Math.max(0,left/S.limit*100)+'%';b.classList.toggle('low',left<5000);
+ if(left<=0)choose(-1);
+}
+function paintTop(){
+ const t=$('.top');if(!t)return;
+ const o=cfg.players?.[otherRole()];
+ t.innerHTML=`<div>جولة ${ar(S.n)}/${ar(cfg.rounds)}<small>${o?`${nameOf(otherRole())}: ${ar(o.score||0)} · جولة ${ar(o.round||1)}`:'&nbsp;'}</small></div>
+ <div>${ar(S.score)}<small>${S.streak>1?`سلسلة ×${ar(S.streak)}`:'&nbsp;'}</small></div>
+ <div class="lives">${Array.from({length:cfg.maxLives},(_,i)=>`<i class="${i<S.lives?'':'off'}"></i>`).join('')}</div>`;
+}
+function draw(){
+ const cols=P.opts.length===4?2:3;
+ $('#game').innerHTML=`<div class="top"></div><div class="bar"><b></b></div>
+ <p class="q">${P.matrix?'إيه الشكل الناقص في المصفوفة؟':'إيه الشكل اللي بيكمّل النمط؟'}</p>
+ <div class="seq ${P.matrix?'mx':''}" style="${P.matrix?'':`grid-template-columns:repeat(${P.cells.length+1},1fr)`}">
+ ${P.cells.map(c=>`<div class="card">${itemSVG(c)}</div>`).join('')}<div class="card qmark">؟</div></div>
+ <div class="opts" style="grid-template-columns:repeat(${cols},1fr)">${P.opts.map((o,i)=>`<button class="card opt" data-i="${i}"><kbd>${i+1}</kbd>${itemSVG(o)}</button>`).join('')}</div>
+ <div id="fb"></div>`;
+ paintTop();
+}
+function choose(i){
+ if(S.locked)return;S.locked=true;clearInterval(timer);
+ const ok=i===P.ans,secs=Math.max(0,(S.limit-(performance.now()-S.t0))/1000);
+ document.querySelectorAll('.opt').forEach((b,j)=>{b.disabled=true;if(j===P.ans)b.classList.add('good');else if(j===i)b.classList.add('bad')});
+ const q=$('.seq .card.qmark');if(q){q.innerHTML=itemSVG(P.answer);q.classList.remove('qmark')}
+ if(ok){S.streak++;S.correct++;S.score+=100+Math.round(secs*8)+25*(S.streak-1)}
+ else{S.streak=0;S.lives--}
+ paintTop();sendProgress();
+ const last=S.n>=cfg.rounds||S.lives<=0;
+ if(ok){setTimeout(()=>{S.n++;nextPuzzle()},750);return}
+ $('#fb').innerHTML=`<div class="fb">${i<0?'الوقت خلص':'إجابة غلط'} — القاعدة:<ul>${P.rules.map(r=>`<li>${r}</li>`).join('')}</ul></div>
+ <button class="btn" data-act="next">${last?'النتيجة':'اللغز اللي بعده'}</button>`;
+}
+function finish(){
+ clearInterval(timer);S.over=true;sendProgress();end();
+}
+function end(){
+ clearInterval(timer);
+ const o=cfg.players?.[otherRole()],mineP=cfg.players?.[cfg.role]||S;
+ let line='مستني الطرف التاني يخلّص…';
+ if(o?.done){
+  const a=Number(mineP?.score??S?.score??0),b=Number(o.score)||0;
+  line=a>b?'كسبت السباق! 🏆':a<b?`${nameOf(otherRole())} كسب السباق`:'تعادل 🤝';
+ }
+ $('#game').innerHTML=`<div class="end"><h2>${S?.lives>0&&S?.n>cfg.rounds?'خلّصت كل الألغاز':'خلصت المحاولات'}</h2>
+ <div class="big">${ar(S?.score||0)}</div><div class="stats"><span>صح: ${ar(S?.correct||0)}/${ar(Math.min(S?.n||1,cfg.rounds))}</span><span>الحياة: ${ar(S?.lives||0)}</span></div>
+ <div class="result">${line}</div>${cfg.role==='host'&&cfg.players?.host?.done&&cfg.players?.guest?.done?'<button class="btn" data-act="again">🔄 سباق جديد</button>':''}</div>`;
+}
+$('#game').onclick=e=>{
+ const o=e.target.closest('.opt');if(o)return choose(Number(o.dataset.i));
+ const a=e.target.closest('[data-act]')?.dataset.act;
+ if(a==='next'){S.n++;nextPuzzle()}
+ if(a==='again'&&cfg.role==='host')parent.postMessage({type:'roqaya-pattern-new',roundId:cfg.roundId},location.origin);
+};
+document.addEventListener('keydown',e=>{if(S&&!S.over&&!S.locked&&P&&/^[1-6]$/.test(e.key)&&Number(e.key)<=P.opts.length)choose(Number(e.key)-1)});
+$('#city').onclick=()=>{if(cfg.role==='host')parent.postMessage({type:'roqaya-pattern-city'},location.origin)};
+addEventListener('message',e=>{
+ if(e.origin!==location.origin||e.data?.type!=='roqaya-pattern-config')return;
+ const next=e.data.config,matchChanged=currentMatch!==Number(next.roundId);
+ cfg={...cfg,...next};paintPlayers();
+ if(matchChanged){currentMatch=Number(cfg.roundId);restore();return}
+ if(S?.over)end();else paintTop();
+});
+paintPlayers();parent.postMessage({type:'roqaya-pattern-ready'},location.origin);
+</script>
+</body>
+</html>

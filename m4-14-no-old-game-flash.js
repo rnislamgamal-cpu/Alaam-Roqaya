@@ -12,7 +12,10 @@
     'draw-v2-active',
     'connect4-v1-active',
     'odd-v2-active',
-    'hide-seek-v1-active'
+    'hide-seek-v1-active',
+    'pattern-v2-active',
+    'reading-v1-active',
+    'math-kids-v1-active'
   ];
 
   let pending = '';

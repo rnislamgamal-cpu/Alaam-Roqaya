@@ -1,0 +1,204 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>اقرأ</title>
+<style>
+:root{--bg:#eaf4ff;--ink:#1b2a49;--blue:#2f6bff;--ok:#22a06b;--bad:#e5484d;--line:#d6e2f3;--orange:#f59e0b}
+*{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+html,body{margin:0;min-height:100%}
+body{min-height:100vh;background:var(--bg);color:var(--ink);font-family:"Segoe UI",Tahoma,"Noto Sans Arabic",sans-serif;user-select:none}
+main{max-width:640px;margin:auto;padding:9px 8px 24px}
+h1{font-size:1.35rem;margin:0 0 6px;text-align:center}
+.duo{display:grid;grid-template-columns:1fr 1fr;gap:7px;margin-bottom:7px}
+.player{display:flex;align-items:center;gap:5px;min-width:0;padding:6px 8px;border:2px solid transparent;border-radius:12px;background:#fff;font-weight:850}
+.player.me{border-color:#111}.player b{overflow:hidden;text-overflow:ellipsis;white-space:nowrap;font-size:.68rem}.player span{margin-inline-start:auto;font-size:.72rem}
+.host{color:#2f6fed}.guest{color:#f08c00}
+.home{padding:8px 0}.sub{text-align:center;opacity:.7;margin:0 0 13px;font-size:.78rem;line-height:1.55}
+.lv{display:flex;width:100%;justify-content:space-between;align-items:center;font:inherit;font-weight:850;font-size:.92rem;border:0;border-radius:16px;padding:13px 14px;margin-bottom:8px;color:#fff;cursor:pointer}
+.lv small{font-weight:650;opacity:.9}.wait{background:#fff;border-radius:16px;padding:18px;text-align:center;font-weight:800;line-height:1.7}
+.top{display:flex;align-items:center;gap:7px;margin-bottom:8px}
+.dots{flex:1;display:flex;gap:3px}.dots i{flex:1;height:7px;border-radius:4px;background:var(--line)}.dots i.done{background:var(--blue)}.dots i.cur{background:#ffb703}
+.stars{display:flex;align-items:center;gap:3px;font-weight:900;font-size:.78rem}.stars img{width:18px;height:18px}
+.ibtn{border:0;background:#fff;border-radius:50%;width:36px;height:36px;display:flex;align-items:center;justify-content:center;cursor:pointer;box-shadow:0 1px 0 var(--line)}.ibtn img{width:20px;height:20px}
+.sent{background:#fff;border-radius:21px;padding:16px 12px 12px;text-align:center;margin-bottom:11px;box-shadow:0 2px 0 var(--line)}
+.sent p{margin:0 0 9px;font-family:"Noto Naskh Arabic","Amiri",serif;font-weight:800;font-size:clamp(1.55rem,6.7vw,2.35rem);line-height:1.85}
+.say{font:inherit;font-weight:800;border:2px solid var(--line);background:#fff;border-radius:999px;padding:6px 13px;cursor:pointer;color:var(--blue);display:inline-flex;align-items:center;gap:6px;font-size:.72rem}.say img{width:18px;height:18px}
+.opts{display:grid;grid-template-columns:repeat(auto-fit,minmax(115px,1fr));gap:8px}
+.opt{background:#fff;border:3px solid var(--line);border-radius:17px;padding:9px 5px 7px;cursor:pointer;display:flex;flex-direction:column;align-items:center;font:inherit;color:inherit;min-height:126px}
+.opt img{width:min(23vw,86px);height:min(23vw,86px)}.opt .cap{min-height:1.5em;font-family:"Noto Naskh Arabic",serif;font-weight:800;font-size:1rem;margin-top:3px}
+.opt:active:not(:disabled){transform:scale(.97)}.opt.ok{border-color:var(--ok);background:#e5f7ee}.opt.bad{border-color:var(--bad);background:#fdeaea;opacity:.5}.opt:disabled{cursor:default}
+.msg{text-align:center;font-weight:900;font-size:.92rem;min-height:1.8em;margin-top:10px}.msg.ok{color:var(--ok)}.msg.bad{color:var(--bad)}
+.end{text-align:center;padding-top:16px}.end img.big{width:90px;height:90px}.end h2{font-size:1.35rem;margin:8px 0 3px}.bigscore{font-size:2rem;font-weight:900;margin:4px 0}
+.result{margin:8px 0;padding:9px;border-radius:12px;background:#fff8cf;font-weight:850;font-size:.76rem}
+.btn{font:inherit;font-weight:800;font-size:.8rem;border:0;border-radius:13px;padding:10px;background:var(--blue);color:#fff;width:100%;margin-top:8px;cursor:pointer}.btn.alt{width:auto;background:#fff;color:var(--ink);border:2px solid var(--line);margin-top:0}.btn:disabled{opacity:.42}
+.actions{display:flex;gap:7px;justify-content:center;margin-top:9px}.credit{font-size:.56rem;opacity:.42;text-align:center;margin-top:7px}
+@media(prefers-reduced-motion:no-preference){
+ .opt.ok img{animation:pop .6s}.opt.bad{animation:shake .4s}
+ @keyframes pop{40%{transform:scale(1.22) rotate(-6deg)}70%{transform:scale(.96) rotate(3deg)}}
+ @keyframes shake{25%{transform:translateX(-7px)}50%{transform:translateX(7px)}75%{transform:translateX(-4px)}}
+}
+@media(max-width:420px){main{padding:6px 5px 17px}h1{font-size:1.15rem}.player{padding:4px 5px}.player b{font-size:.58rem}.player span{font-size:.64rem}.sent{padding:12px 9px 9px}.sent p{font-size:clamp(1.35rem,7vw,1.9rem)}.opts{gap:6px;grid-template-columns:repeat(2,1fr)}.opt{min-height:108px;padding:7px 4px}.opt img{width:min(25vw,72px);height:min(25vw,72px)}.msg{font-size:.78rem}.lv{font-size:.78rem;padding:10px 11px}}
+</style>
+</head>
+<body>
+<main>
+  <h1>📖 اقرأ</h1>
+  <div class="duo">
+    <div id="hostBox" class="player host"><b>بابا</b><span>⭐ ٠</span></div>
+    <div id="guestBox" class="player guest"><b>رقية</b><span>⭐ ٠</span></div>
+  </div>
+  <div id="game"></div>
+  <div class="actions"><button id="city" class="btn alt">🎡 المدينة</button></div>
+  <div class="credit">Graphics: Twemoji © Twitter, CC-BY 4.0</div>
+</main>
+
+<script>
+const $=s=>document.querySelector(s);
+const IMG=c=>`https://cdn.jsdelivr.net/gh/twitter/twemoji@14.0.2/assets/svg/${c}.svg`;
+const E='٠١٢٣٤٥٦٧٨٩',ar=v=>String(v).replace(/[0-9]/g,d=>E[d.charCodeAt(0)-48]);
+const IM={
+ cat:["1f431","قِطَّة","a"],dog:["1f436","كَلْب","a"],lion:["1f981","أَسَد","a"],elephant:["1f418","فِيل","a"],horse:["1f434","حِصَان","a"],
+ cow:["1f42e","بَقَرَة","a"],chicken:["1f414","دَجَاجَة","a"],duck:["1f986","بَطَّة","a"],rabbit:["1f430","أَرْنَب","a"],monkey:["1f435","قِرْد","a"],fish:["1f41f","سَمَكَة","a"],bird:["1f426","عُصْفُور","a"],
+ apple:["1f34e","تُفَّاحَة","f"],banana:["1f34c","مَوْزَة","f"],grapes:["1f347","عِنَب","f"],orange:["1f34a","بُرْتُقَالَة","f"],carrot:["1f955","جَزَرَة","f"],bread:["1f35e","خُبْز","f"],milk:["1f95b","لَبَن","f"],egg:["1f95a","بَيْضَة","f"],
+ car:["1f697","سَيَّارَة","t"],bus:["1f68c","حَافِلَة","t"],plane:["2708","طَائِرَة","t"],house:["1f3e0","بَيْت","t"],book:["1f4d5","كِتَاب","t"],ball:["26bd","كُرَة","t"],clock:["23f0","سَاعَة","t"],phone:["1f4f1","هَاتِف","t"],key:["1f511","مِفْتَاح","t"],bag:["1f392","حَقِيبَة","t"],
+ sun:["2600","شَمْس","n"],moon:["1f319","قَمَر","n"],star:["2b50","نَجْمَة","n"],tree:["1f333","شَجَرَة","n"],rose:["1f339","وَرْدَة","n"],cloud:["2601","سَحَابَة","n"]
+};
+const L2=[
+ ["lion","الْأَسَدُ مَلِكُ الْغَابَةِ"],["elephant","الْفِيلُ حَيَوَانٌ كَبِيرٌ"],["fish","تَسْبَحُ السَّمَكَةُ فِي الْمَاءِ"],
+ ["cow","الْبَقَرَةُ تَأْكُلُ الْعُشْبَ",["milk"]],["chicken","تَصِيحُ الدَّجَاجَةُ فِي الصَّبَاحِ",["egg"]],["horse","الْحِصَانُ يَجْرِي بِسُرْعَةٍ"],
+ ["duck","تَسْبَحُ الْبَطَّةُ فِي الْبُحَيْرَةِ",["fish"]],["rabbit","الْأَرْنَبُ يَقْفِزُ فِي الْحَدِيقَةِ"],["cat","تَنَامُ الْقِطَّةُ بِهُدُوءٍ"],
+ ["dog","يَنْبَحُ الْكَلْبُ بِصَوْتٍ عَالٍ"],["apple","أَكَلَ سَامِي تُفَّاحَةً حَمْرَاءَ"],["banana","الْمَوْزَةُ فَاكِهَةٌ صَفْرَاءُ"],
+ ["grapes","أُحِبُّ الْعِنَبَ الْحُلْوَ"],["car","رَكِبَ أَبِي السَّيَّارَةَ",["bus"]],["plane","تَطِيرُ الطَّائِرَةُ فِي السَّمَاءِ",["bird","cloud"]],
+ ["house","نَسْكُنُ فِي بَيْتٍ جَمِيلٍ"],["book","قَرَأَتْ لَيْلَى الْكِتَابَ"],["ball","يَلْعَبُ أَحْمَدُ بِالْكُرَةِ"],
+ ["sun","تُشْرِقُ الشَّمْسُ فِي الصَّبَاحِ",["moon","star"]],["moon","يَظْهَرُ الْقَمَرُ فِي اللَّيْلِ",["star"]],["tree","الشَّجَرَةُ طَوِيلَةٌ وَخَضْرَاءُ"],
+ ["rose","رَسَمَتْ سَلْمَى وَرْدَةً جَمِيلَةً"],["clock","السَّاعَةُ تُشِيرُ إِلَى الْوَاحِدَةِ"]
+];
+const L3=[
+ ["elephant","حَيَوَانٌ ضَخْمٌ لَهُ خُرْطُومٌ طَوِيلٌ وَأُذُنَانِ كَبِيرَتَانِ"],
+ ["banana","فَاكِهَةٌ صَفْرَاءُ طَوِيلَةٌ نُقَشِّرُهَا قَبْلَ أَكْلِهَا",["orange"]],
+ ["fish","يَعِيشُ فِي الْمَاءِ وَلَهُ زَعَانِفُ",["duck"]],["clock","نَنْظُرُ إِلَيْهَا لِنَعْرِفَ الْوَقْتَ",["phone"]],
+ ["bus","نَرْكَبُهَا مَعَ أَصْدِقَائِنَا لِنَذْهَبَ إِلَى الْمَدْرَسَةِ",["car","plane"]],
+ ["moon","يُضِيءُ السَّمَاءَ فِي اللَّيْلِ وَيَتَغَيَّرُ شَكْلُهُ",["star"]],["star","تَلْمَعُ فِي السَّمَاءِ لَيْلًا وَهِيَ صَغِيرَةٌ جِدًّا",["moon"]],
+ ["cow","حَيَوَانٌ فِي الْمَزْرَعَةِ نَشْرَبُ لَبَنَهُ",["milk","chicken"]],["chicken","تَعِيشُ فِي الْمَزْرَعَةِ وَتَضَعُ الْبَيْضَ",["egg","duck","cow"]],
+ ["sun","تُعْطِينَا الضَّوْءَ وَالدِّفْءَ فِي النَّهَارِ",["moon","star"]],["book","نَقْرَؤُهُ لِنَتَعَلَّمَ وَنَسْتَمْتِعَ بِالْقِصَصِ",["phone"]],
+ ["key","نَفْتَحُ بِهِ بَابَ الْبَيْتِ",["house"]],["bag","يَحْمِلُهَا التِّلْمِيذُ عَلَى ظَهْرِهِ وَفِيهَا كُتُبُهُ",["book"]],
+ ["rose","زَهْرَةٌ جَمِيلَةٌ رَائِحَتُهَا طَيِّبَةٌ وَلَهَا أَشْوَاكٌ",["tree"]],["lion","حَيَوَانٌ قَوِيٌّ لَهُ شَعْرٌ كَثِيفٌ حَوْلَ رَأْسِهِ"],
+ ["carrot","خُضْرَةٌ بُرْتُقَالِيَّةٌ تُحِبُّهَا الْأَرَانِبُ",["rabbit","orange"]],["bird","يُغَرِّدُ عَلَى الْأَغْصَانِ وَيَطِيرُ",["plane","duck","chicken"]],
+ ["egg","نَأْكُلُهَا فِي الْفُطُورِ وَتَخْرُجُ مِنْهَا الْكَتَاكِيتُ",["chicken"]]
+];
+const L1=Object.keys(IM).map(k=>[k,IM[k][1]]);
+const BANK={1:L1,2:L2,3:L3};
+
+function rng(a){return()=>{a|=0;a=a+0x6D2B79F5|0;let t=Math.imul(a^a>>>15,1|a);t=t+Math.imul(t^t>>>7,61|t)^t;return((t^t>>>14)>>>0)/4294967296}}
+function hash(s,n){let h=Math.imul(2166136261^s,16777619);h=Math.imul(h^n,16777619);h^=h>>>13;h=Math.imul(h,0x5bd1e995);return(h^(h>>>15))>>>0}
+function shuffle(a,R){const x=[...a];for(let i=x.length-1;i>0;i--){const j=Math.floor(R()*(i+1));[x[i],x[j]]=[x[j],x[i]]}return x}
+function buildQuestions(seed,level,rounds){
+ const R=rng(hash(seed,911));
+ const take=(L,n,lvl)=>shuffle(L,R).slice(0,n).map(q=>({lvl,key:q[0],text:q[1],bad:q[2]||[]}));
+ if(level==="mix"){const a=Math.round(rounds*.3),b=Math.round(rounds*.4);return[...take(L1,a,1),...take(L2,b,2),...take(L3,rounds-a-b,3)]}
+ return take(BANK[level],rounds,Number(level));
+}
+function options(q,seed,index){
+ const R=rng(hash(seed,index+1203)),n=q.lvl===1?3:4,ans=IM[q.key],pool=Object.keys(IM).filter(k=>k!==q.key&&!q.bad.includes(k));
+ const same=shuffle(pool.filter(k=>IM[k][2]===ans[2]),R),other=shuffle(pool.filter(k=>IM[k][2]!==ans[2]),R);
+ const ds=(q.lvl===1?[...other,...same]:q.lvl===2?[...same.slice(0,1),...other,...same.slice(1)]:[...same,...other]).slice(0,n-1);
+ return shuffle([q.key,...ds],R);
+}
+let ac=null,muted=false;
+function audio(){try{ac=ac||new(window.AudioContext||window.webkitAudioContext)();if(ac.state==='suspended')ac.resume();return ac}catch{return null}}
+function tone(f,t0,d,type='sine',gain=.18,f2){if(muted)return;const a=audio();if(!a)return;const o=a.createOscillator(),v=a.createGain(),t=a.currentTime+t0;o.type=type;o.frequency.setValueAtTime(f,t);if(f2)o.frequency.exponentialRampToValueAtTime(f2,t+d);v.gain.setValueAtTime(.001,t);v.gain.linearRampToValueAtTime(gain,t+.02);v.gain.exponentialRampToValueAtTime(.001,t+d);o.connect(v).connect(a.destination);o.start(t);o.stop(t+d+.05)}
+const SFX={ok:()=>[523,659,784,1047].forEach((f,i)=>tone(f,i*.09,.3,'triangle',.18)),no:()=>{tone(220,0,.25,'sawtooth',.13,110);tone(160,.2,.3,'square',.08,90)},win:()=>[523,523,659,784,1047].forEach((f,i)=>tone(f,i*.14,.28,'triangle',.16))};
+function speak(t){if(muted||!("speechSynthesis" in window))return;const u=new SpeechSynthesisUtterance(t);u.lang='ar-SA';u.rate=.8;speechSynthesis.cancel();speechSynthesis.speak(u)}
+function confetti(){
+ const cv=document.createElement('canvas');Object.assign(cv.style,{position:'fixed',inset:0,width:'100%',height:'100%',pointerEvents:'none',zIndex:50});cv.width=innerWidth;cv.height=innerHeight;document.body.appendChild(cv);
+ const g=cv.getContext('2d'),cols=['#2f6bff','#ffb703','#22a06b','#e5484d','#9b5de5','#00b4d8'],n=matchMedia('(prefers-reduced-motion:reduce)').matches?24:90;
+ const ps=Array.from({length:n},()=>({x:cv.width/2,y:cv.height*.42,vx:(Math.random()-.5)*14,vy:-Math.random()*13-4,w:5+Math.random()*6,h:4+Math.random()*5,r:Math.random()*6,vr:(Math.random()-.5)*.4,c:cols[Math.random()*cols.length|0]}));
+ let f=0;(function step(){g.clearRect(0,0,cv.width,cv.height);ps.forEach(p=>{p.vy+=.42;p.x+=p.vx;p.y+=p.vy;p.vx*=.99;p.r+=p.vr;g.save();g.translate(p.x,p.y);g.rotate(p.r);g.fillStyle=p.c;g.fillRect(-p.w/2,-p.h/2,p.w,p.h);g.restore()});if(++f<95)requestAnimationFrame(step);else cv.remove()})();
+}
+
+let cfg={role:'guest',childName:'رقية',roundId:0,seed:1,level:null,rounds:10,phase:'choose',players:{host:null,guest:null},winner:null};
+let Q=[],currentMatch=-1,deferAdvance=false,pendingCfg=null;
+
+const mine=()=>cfg.players?.[cfg.role]||{index:0,stars:0,firstTry:0,tries:0,wrongs:[],done:false};
+const otherRole=()=>cfg.role==='host'?'guest':'host';
+const nameOf=r=>r==='host'?'بابا':(cfg.childName||'رقية');
+const STAR=()=>`<img src="${IMG('2b50')}" alt="">`;
+function paintPlayers(){
+ const h=cfg.players?.host||{stars:0,done:false},g=cfg.players?.guest||{stars:0,done:false};
+ $('#hostBox').classList.toggle('me',cfg.role==='host');$('#guestBox').classList.toggle('me',cfg.role==='guest');
+ $('#hostBox b').textContent=`بابا${h.done?' ✅':''}`;$('#guestBox b').textContent=`${cfg.childName||'رقية'}${g.done?' ✅':''}`;
+ $('#hostBox span').textContent=`⭐ ${ar(h.stars||0)}`;$('#guestBox span').textContent=`⭐ ${ar(g.stars||0)}`;$('#city').disabled=cfg.role!=='host';
+}
+function home(){
+ if(cfg.role!=='host'){
+  $('#game').innerHTML=`<div class="wait">📚 بابا بيختار مستوى لعبة «اقرأ»…<br><small>أول ما يختار، نفس الأسئلة هتبدأ عندكم.</small></div>`;return;
+ }
+ $('#game').innerHTML=`<div class="home"><p class="sub">اختار المستوى. بابا و${cfg.childName||'رقية'} هيلعبوا نفس الأسئلة وكل واحد يجمع نجومه.</p>
+ <button class="lv" data-l="1" style="background:#22a06b">سَهْل <small>كَلِمَات</small></button>
+ <button class="lv" data-l="2" style="background:#2f6bff">مُتَوَسِّط <small>جُمَل</small></button>
+ <button class="lv" data-l="3" style="background:#9b5de5">صَعْب <small>أَوْصَاف</small></button>
+ <button class="lv" data-l="mix" style="background:#ffb703;color:#1b2a49">تَدَرُّج <small>مِنَ السَّهْلِ لِلصَّعْبِ</small></button></div>`;
+}
+function show(){
+ const p=mine(),i=Number(p.index)||0;
+ if(p.done||i>=Q.length){end();return}
+ const q=Q[i],opts=options(q,cfg.seed,i),wrongs=Array.isArray(p.wrongs)?p.wrongs:[];
+ $('#game').innerHTML=`<div class="top"><div class="dots">${Q.map((_,j)=>`<i class="${j<i?'done':j===i?'cur':''}"></i>`).join('')}</div>
+ <span class="stars">${STAR()}${ar(p.stars||0)}</span>
+ <button class="ibtn" data-act="mute"><img src="${IMG(muted?'1f507':'1f50a')}" alt=""></button></div>
+ <div class="sent"><p>${q.text}</p>${"speechSynthesis" in window?`<button class="say" data-act="say"><img src="${IMG('1f50a')}" alt="">اِسْتَمِعْ</button>`:''}</div>
+ <div class="opts">${opts.map(k=>`<button class="opt ${wrongs.includes(k)?'bad':''}" data-k="${k}" ${wrongs.includes(k)?'disabled':''}><img src="${IMG(IM[k][0])}" alt=""><span class="cap"></span></button>`).join('')}</div>
+ <div class="msg" id="msg">${wrongs.length?'حَاوِلْ مَرَّةً أُخْرَى':''}</div>`;
+}
+function end(){
+ const p=mine(),o=cfg.players?.[otherRole()],max=Q.length*3,ratio=(Number(p.stars)||0)/Math.max(1,max);
+ let line=o?.done?(p.stars>o.stars?'كسبت تحدّي القراءة! 🏆':p.stars<o.stars?`${nameOf(otherRole())} كسب تحدّي القراءة`:'تعادل 🤝'):'مستني الطرف التاني يخلّص…';
+ $('#game').innerHTML=`<div class="end"><img class="big" src="${IMG('1f3c6')}" alt=""><h2>${ratio>.8?'بَطَل الْقِرَاءَة!':ratio>.5?'أَحْسَنْتَ!':'مُحَاوَلَة جَمِيلَة!'}</h2>
+ <div class="bigscore">⭐ ${ar(p.stars||0)} / ${ar(max)}</div><p class="sub">${ar(p.firstTry||0)} إجابة من أول مرة</p><div class="result">${line}</div>
+ ${cfg.role==='host'&&cfg.players?.host?.done&&cfg.players?.guest?.done?'<button class="btn" data-act="again">🔄 تحدّي جديد</button>':''}</div>`;
+}
+function render(){
+ paintPlayers();
+ if(!cfg.level||cfg.phase==='choose'){home();return}
+ Q=buildQuestions(cfg.seed,cfg.level,cfg.rounds||10);show();
+}
+function choose(b){
+ const p=mine(),i=Number(p.index)||0,q=Q[i];if(!q||b.disabled||deferAdvance)return;
+ const k=b.dataset.k,tries=(Number(p.tries)||0)+1;
+ if(k===q.key){
+  deferAdvance=true;b.classList.add('ok');b.querySelector('.cap').textContent=IM[k][1];document.querySelectorAll('.opt').forEach(o=>o.disabled=true);
+  $('#msg').className='msg ok';$('#msg').textContent=['أَحْسَنْتَ!','رَائِع!','مُمْتَاز!'][Math.random()*3|0];SFX.ok();confetti();setTimeout(()=>speak(q.text),500);
+  parent.postMessage({type:'roqaya-reading-answer',key:k,question:i,roundId:cfg.roundId},location.origin);
+  setTimeout(()=>{deferAdvance=false;if(pendingCfg){const n=pendingCfg;pendingCfg=null;applyConfig(n)}},1600);
+ }else{
+  b.classList.add('bad');b.disabled=true;$('#msg').className='msg bad';$('#msg').textContent='حَاوِلْ مَرَّةً أُخْرَى';SFX.no();
+  parent.postMessage({type:'roqaya-reading-answer',key:k,question:i,roundId:cfg.roundId},location.origin);
+ }
+}
+$('#game').onclick=e=>{
+ const lv=e.target.closest('.lv');if(lv&&cfg.role==='host')return parent.postMessage({type:'roqaya-reading-level',level:lv.dataset.l,roundId:cfg.roundId},location.origin);
+ const o=e.target.closest('.opt');if(o)return choose(o);
+ const act=e.target.closest('[data-act]')?.dataset.act;
+ if(act==='say'){const p=mine(),q=Q[Number(p.index)||0];if(q)speak(q.text)}
+ if(act==='mute'){muted=!muted;if(muted&&"speechSynthesis" in window)speechSynthesis.cancel();show()}
+ if(act==='again'&&cfg.role==='host')parent.postMessage({type:'roqaya-reading-new',roundId:cfg.roundId},location.origin);
+};
+$('#city').onclick=()=>{if(cfg.role==='host')parent.postMessage({type:'roqaya-reading-city'},location.origin)};
+function applyConfig(next){
+ const changed=currentMatch!==Number(next.roundId);
+ cfg={...cfg,...next};paintPlayers();
+ if(changed){currentMatch=Number(cfg.roundId);deferAdvance=false;pendingCfg=null}
+ if(cfg.level)Q=buildQuestions(cfg.seed,cfg.level,cfg.rounds||10);
+ render();
+}
+addEventListener('message',e=>{
+ if(e.origin!==location.origin||e.data?.type!=='roqaya-reading-config')return;
+ if(deferAdvance){pendingCfg=e.data.config;return}
+ applyConfig(e.data.config);
+});
+render();parent.postMessage({type:'roqaya-reading-ready'},location.origin);
+</script>
+</body>
+</html>
