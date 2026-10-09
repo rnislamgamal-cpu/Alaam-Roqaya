@@ -150,26 +150,19 @@ body .header,body[class] .header{backdrop-filter:none!important;-webkit-backdrop
 .v2-room .room-code,.v2-roombar .room-code{display:block;margin:0;padding:0;background:none;border:0;font-size:1.65rem;font-weight:900;letter-spacing:.14em;color:var(--ink);line-height:1.15}
 .v2-room-actions{display:flex;gap:8px}
 
-/* ---------- Corridor ---------- */
-.v2-topbar{display:flex;align-items:center;gap:12px}
-.v2-doors{display:grid;grid-template-columns:1fr 1fr;gap:12px}
-.v2-door{position:relative;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:6px;min-height:138px;padding:14px 8px 12px;border:0;border-radius:var(--r-lg);color:var(--ink);cursor:pointer;
-  background:var(--bg);box-shadow:0 6px 0 var(--sh);transition:transform .12s,box-shadow .12s}
-.v2-door:active:not(:disabled){transform:translateY(4px);box-shadow:0 2px 0 var(--sh)}
-.v2-door:disabled{cursor:default;opacity:.92;filter:saturate(.75)}
-.v2-door strong{font-size:1.1rem;font-weight:900}
-.v2-door em{position:absolute;top:10px;inset-inline-start:10px;padding:2px 9px;border-radius:999px;background:#fff;color:#7a5a1a;font-style:normal;font-size:.7rem;font-weight:900;box-shadow:0 2px 0 #0000001a}
-.d-arabic{--bg:#ffe0b8;--sh:#f0b978}.d-math{--bg:#d3e6ff;--sh:#9fc2f0}.d-english{--bg:#ffd3e6;--sh:#efa1c6}.d-quran{--bg:#c9f0d6;--sh:#8fd3a8}
-.v2-door-ico{display:grid;place-items:center;width:76px;height:76px}
-.v2-world{display:flex;align-items:center;gap:12px;width:100%;min-height:96px;padding:10px 16px;border:0;border-radius:var(--r-lg);color:#fff;cursor:pointer;text-align:start;
-  background:linear-gradient(135deg,#7d62f0,#ec5b9a);box-shadow:0 6px 0 #4a35b3}
-.v2-world:active:not(:disabled){transform:translateY(4px);box-shadow:0 2px 0 #4a35b3}
-.v2-world:disabled{cursor:default;filter:saturate(.75)}
-.v2-world .v2-door-ico{background:#fff;border-radius:50%;width:72px;height:72px}
-.v2-world-text{flex:1;display:flex;flex-direction:column}
-.v2-world-text small{font-size:.82rem;font-weight:800;opacity:.9}
-.v2-world-text strong{font-size:1.45rem;font-weight:900;line-height:1.2}
-.v2-world-go{font-size:2.2rem;font-weight:900;line-height:1}
+/* ---------- Corridor: the artwork is the interface (original design) ---------- */
+.v2-corridor-art{position:relative;width:100%;aspect-ratio:1536/1404;border-radius:var(--r-lg);overflow:hidden;border:4px solid #fff;background:#f7dfe9;box-shadow:0 8px 22px rgba(80,50,130,.18),0 0 0 2px var(--line)}
+.v2-corridor-img{display:block;width:100%;height:100%;object-fit:fill}
+.v2-spot{position:absolute;z-index:2;padding:0;border:0;border-radius:14px;background:transparent;cursor:pointer}
+.v2-spot:not(:disabled):active{background:rgba(255,255,255,.3)}
+.v2-spot:disabled{cursor:default}
+.s-english{left:1.5%;top:5%;width:25%;height:28%}
+.s-math{left:1.5%;top:34%;width:25%;height:28%}
+.s-arabic{right:1.5%;top:5%;width:25%;height:28%}
+.s-quran{right:1.5%;top:34%;width:25%;height:28%}
+.s-world{left:31%;top:27%;width:38%;height:44%;border-radius:24px}
+.v2-corridor-bar{display:flex;align-items:center;gap:12px}
+.v2-corridor-bar p{margin:0;color:var(--ink-2);font-weight:800;font-size:.95rem;line-height:1.5}
 
 /* ---------- Lobby ---------- */
 .v2-lobby{gap:12px;padding-bottom:6px}
