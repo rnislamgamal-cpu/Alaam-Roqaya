@@ -8,78 +8,67 @@
 :root{--bg:#e6f0ff;--ink:#1e1b4b;--acc:#6d4ce0;--gold:#f0b429}
 *{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
 html,body{margin:0;min-height:100%}
-body{
-  display:flex;flex-direction:column;min-height:100svh;
-  background:var(--bg);color:var(--ink);
-  font-family:"Segoe UI",Tahoma,"Noto Sans Arabic",sans-serif;
-  user-select:none;overflow-x:hidden;
-}
+body{display:flex;flex-direction:column;min-height:100svh;background:var(--bg);color:var(--ink);font-family:"Segoe UI",Tahoma,"Noto Sans Arabic",sans-serif;user-select:none;overflow-x:hidden}
 main{flex:1 1 auto;display:flex;flex-direction:column;min-height:0;width:100%;align-items:center;gap:6px;padding:6px 8px 2px}
 h1{margin:0;font-size:1.15rem;text-align:center}
 .hide{display:none!important}
 
-/* ===== شرائط اللاعبين ===== */
-#hud{width:min(100%,640px);display:grid;grid-template-columns:1fr 1fr;gap:6px}
-.pl{display:flex;align-items:center;gap:6px;min-width:0;padding:3px 8px;border:3px solid var(--c);border-radius:12px;background:#fff;font-weight:800;font-size:.8rem}
+/* شريط اللاعبين */
+#hud{width:min(100%,660px);display:grid;grid-template-columns:1fr 1fr;gap:6px}
+.pl{display:flex;align-items:center;gap:6px;min-width:0;padding:3px 8px;border:3px solid var(--c);border-radius:12px;background:#fff;font-weight:800;font-size:.8rem;transition:box-shadow .2s}
 .pl b{overflow:hidden;text-overflow:ellipsis;white-space:nowrap;font-size:.68rem}
 .pl span{margin-inline-start:auto;white-space:nowrap;font-size:.9rem}
-.pl.turn{box-shadow:0 0 0 3px #ffd76a inset}
+.pl.lead{box-shadow:0 0 0 3px #ffd76a inset}
 .info{display:flex;gap:10px;flex-wrap:wrap;justify-content:center;font-weight:800;font-size:.76rem;min-height:1.2em}
+.you{color:var(--acc)}
 
-/* ===== الصور ===== */
-#pics{--w:300px;display:flex;direction:ltr;gap:8px;align-items:center;justify-content:center;flex:1 1 auto;min-height:0}
+/* الصور */
+#pics{--w:320px;display:flex;direction:ltr;gap:8px;align-items:center;justify-content:center;flex:1 1 auto;min-height:0}
 #pics.stack{flex-direction:column}
 #pics.side{flex-direction:row}
-.pic{position:relative;width:var(--w);height:calc(var(--w)*.75);border-radius:14px;overflow:hidden;background:#fff;box-shadow:0 0 0 3px #fff,0 4px 0 3px #c9d6ef;touch-action:manipulation;cursor:crosshair;-webkit-user-select:none;user-select:none}
-.pic canvas{display:block;width:100%;height:100%}
-.pic.locked{cursor:default;filter:saturate(.85)}
+.pic{position:relative;width:var(--w);height:calc(var(--w)*.7467);border-radius:14px;overflow:hidden;background:#fff;box-shadow:0 0 0 3px #fff,0 4px 0 3px #c9d6ef;touch-action:manipulation;cursor:crosshair}
+.pic img{display:block;width:100%;height:100%;object-fit:cover;pointer-events:none}
+.pic.locked{cursor:default}
 .ov{position:absolute;inset:0;pointer-events:none}
-.ring{position:absolute;width:calc(var(--w)*var(--k));height:calc(var(--w)*var(--k));transform:translate(-50%,-50%);border:4px solid var(--c);border-radius:50%;box-shadow:0 0 0 2px #fff,inset 0 0 0 2px #fff;animation:pop .35s ease-out}
-.ring.hint{border-style:dashed;animation:pulse .6s ease-in-out infinite alternate}
+.ring{position:absolute;width:calc(var(--w)*var(--k));height:calc(var(--w)*var(--k)*.7467);transform:translate(-50%,-50%);border:4px solid var(--c);border-radius:50%;box-shadow:0 0 0 2px #fff,inset 0 0 0 2px #fff;animation:pop .35s ease-out;display:flex;align-items:center;justify-content:center}
+.ring::after{content:attr(data-n);font-weight:900;font-size:.6rem;color:#fff;background:var(--c);width:1.05rem;height:1.05rem;border-radius:50%;display:flex;align-items:center;justify-content:center;box-shadow:0 1px 3px rgba(0,0,0,.3)}
 @keyframes pop{from{transform:translate(-50%,-50%) scale(2);opacity:0}to{transform:translate(-50%,-50%) scale(1);opacity:1}}
-@keyframes pulse{from{transform:translate(-50%,-50%) scale(1)}to{transform:translate(-50%,-50%) scale(1.3)}}
-.miss{position:absolute;transform:translate(-50%,-50%);font-size:28px;font-weight:800;line-height:1;color:#ef4444;text-shadow:0 0 3px #fff,0 0 3px #fff,0 0 6px #fff;animation:fade .7s forwards}
+.miss{position:absolute;transform:translate(-50%,-50%);font-size:28px;font-weight:800;line-height:1;color:#ef4444;text-shadow:0 0 3px #fff,0 0 3px #fff,0 0 6px #fff;animation:fade .7s forwards;pointer-events:none}
 @keyframes fade{to{opacity:0;transform:translate(-50%,-90%)}}
-#won{position:absolute;inset:0;z-index:5;display:none;flex-direction:column;align-items:center;justify-content:center;gap:8px;padding:10px;direction:rtl;text-align:center;background:rgba(255,255,255,.92);color:#17332a}
-#won.show{display:flex}
-#msg{margin:0;font-weight:800;line-height:1.6;font-size:.92rem}
+/* «إنت كسبت النقطة» */
+.pop{position:absolute;transform:translate(-50%,-50%);font-weight:900;font-size:.72rem;color:#fff;background:var(--c);padding:2px 8px;border-radius:99px;box-shadow:0 2px 6px rgba(0,0,0,.3);animation:up .9s forwards;pointer-events:none;white-space:nowrap}
+@keyframes up{0%{opacity:0;transform:translate(-50%,-30%) scale(.7)}25%{opacity:1;transform:translate(-50%,-60%) scale(1)}100%{opacity:0;transform:translate(-50%,-140%) scale(1)}}
 
-/* ===== الأزرار ===== */
+#won{position:absolute;inset:0;z-index:5;display:none;flex-direction:column;align-items:center;justify-content:center;gap:8px;padding:10px;direction:rtl;text-align:center;background:rgba(255,255,255,.94)}
+#won.show{display:flex}
+#msg{margin:0;font-weight:800;line-height:1.6;font-size:.9rem}
+
+/* أزرار */
 .row{display:flex;gap:6px;flex-wrap:wrap;justify-content:center;align-items:center}
 .btn{padding:8px 14px;border:0;border-radius:12px;background:var(--acc);color:#fff;font:inherit;font-size:.78rem;font-weight:800;cursor:pointer;box-shadow:0 3px 0 #4a30b0}
 .btn.alt{background:#fff;color:var(--ink);border:2px solid #c7d2fe;box-shadow:0 3px 0 #c9d6ef}
 .btn:disabled{opacity:.45;cursor:default}
-.sel{display:flex;align-items:center;gap:5px;font-weight:800;font-size:.74rem}
-select{padding:6px 9px;border:2px solid #c7d2fe;border-radius:12px;background:#fff;color:var(--ink);font:inherit;font-weight:700;font-size:.74rem}
-.tip{margin:0;max-width:520px;color:#4c4a7a;font-size:.6rem;text-align:center;line-height:1.45}
-#toast{position:fixed;left:50%;bottom:70px;z-index:99;max-width:90%;padding:8px 14px;border-radius:99px;background:var(--ink);color:#fff;font-weight:800;font-size:.78rem;opacity:0;transform:translate(-50%,10px);transition:opacity .25s,transform .25s;pointer-events:none}
+#toast{position:fixed;left:50%;bottom:80px;z-index:99;max-width:90%;padding:8px 14px;border-radius:99px;background:var(--ink);color:#fff;font-weight:800;font-size:.76rem;opacity:0;transform:translate(-50%,10px);transition:opacity .25s,transform .25s;pointer-events:none}
 #toast.show{opacity:1;transform:translate(-50%,0)}
-@media (prefers-reduced-motion:reduce){.ring,.ring.hint,.miss{animation:none}}
+@media (prefers-reduced-motion:reduce){.ring,.miss,.pop{animation:none}}
 </style>
-<link rel="stylesheet" href="game-shell.css?v=1">
+<link rel="stylesheet" href="game-shell.css?v=2">
 </head>
 <body>
 <main>
   <h1>🔍 لاقوا الاختلافات سوا</h1>
 
   <div id="hud"></div>
-  <div class="info"><span id="inf"></span><span>⏱ <b id="tm">0:00</b></span></div>
+  <div class="info"><span id="inf"></span><span id="who"></span></div>
 
   <div id="pics" class="stack">
-    <div class="pic" id="pa"></div>
-    <div class="pic" id="pb">
+    <div class="pic" id="pa"><div class="ov" id="ova"></div></div>
+    <div class="pic" id="pb"><div class="ov" id="ovb"></div>
       <div id="won" aria-live="polite"><p id="msg"></p></div>
     </div>
   </div>
 
-  <div class="row">
-    <label class="sel"><span>المستوى</span><select id="lv" aria-label="المستوى"></select></label>
-    <label class="sel"><span>الاختلافات</span><select id="cnt" aria-label="عدد الاختلافات"></select></label>
-  </div>
-  <p class="tip">دوّروا على الاختلافات بين الصورتين واضغطوا عليها. أي اختلاف حد يلاقيه بيظهر عند الاتنين فوراً ✨</p>
-
   <div class="row footer-bar">
-    <button id="hint" class="btn alt" type="button">💡 ٣</button>
     <button id="next" class="btn alt" type="button">الصورة اللي بعدها ◀</button>
     <button id="mute" class="btn alt" type="button" aria-label="الصوت">🔊</button>
     <button id="city" class="btn alt" type="button">🎡 المدينة</button>
@@ -88,477 +77,273 @@ select{padding:6px 9px;border:2px solid #c7d2fe;border-radius:12px;background:#f
 <div id="toast" role="status"></div>
 
 <script>
-/* ===== M12 «لاقوا الاختلافات سوا» — لعبة جديدة داخل عالم رقية
- * المنطق مأخوذ من النسخة التي أرسلها المستخدم، وأُعيد وصله بنظام الغرف/Firebase.
- * - لا PeerJS / لا غرف جديدة: المزامنة كلها عبر postMessage مع m4-26-spot-sync.js
- * - الاختلافات تُولَّد على جهاز المضيف فقط وتُرسل جاهزة → نفس التوزيع بالظبط (Seed مشترك §2)
- * - الصور محلية: assets/spot/spot-01..10.jpg
- * - «اقرأ» TTS ممنوع — هنا المسموح Web Audio فقط (تنبيهات)، والمشكلة لا تُخيف (§6)
+/* ===== M12 «لاقوا الاختلافات سوا» — نسخة مبسّطة ومضمونة
+ * - الصور جاهزة (أصلية + معدّلة) → مفيش توليد، مفيش صفحة بيضاء.
+ * - الأزواج 10، وكل زوج له إحداثيات اختلافاته من _spots.json مدمجة هنا.
+ * - الاتنان يشوفوا نفس الصورتين، ويدوّروا في نفس الوقت، واللي يلاقي ياخد نقطة.
+ * - المزامنة عبر m4-26-spot-sync.js (نفس غرفة Firebase). لا PeerJS.
+ * - «بابا بس» هو اللي يغيّر الصورة/المستوى (§4).
  */
 const $ = s => document.querySelector(s);
-const pics = $('#pics'), pa = $('#pa'), pb = $('#pb'), won = $('#won');
-const AR = .75, BW = 960, BH = 720;                 // الصورة بنسبة 4:3
-const COL = ['#2563eb', '#db2777'];                 // المضيف أزرق، الضيف وردي
+const pa = $('#pa'), pb = $('#pb'), ova = $('#ova'), ovb = $('#ovb'), won = $('#won'), pics = $('#pics');
+const COL = ['#2563eb', '#db2777'];
 const E = '٠١٢٣٤٥٦٧٨٩', D = n => String(n).replace(/\d/g, d => E[d]);
+const AR = 0.7467;
 
-/* المستويات: r = حجم الاختلاف (نسبة من عرض الصورة) | vis = أقل نسبة تغيير واضح | types = احتمالات الأنواع
- * أنواع الاختلاف: a ملصق جديد | h لون اتغيّر | r حاجة اتشالت | f حاجة اتقلبت | t إضاءة | g لون باهت */
-const LV = [
-  { name: 'سهل 🟢',   r: [.075, .10],  vis: .30, tol: 40, hue: [110, 180], tone: [.45, .60], types: { a: 4, h: 3, r: 2, t: 1 } },
-  { name: 'متوسط 🟡', r: [.055, .075], vis: .22, tol: 38, hue: [80, 140],  tone: [.35, .50], types: { a: 3, h: 3, r: 2, f: 1, t: 1, g: 1 } },
-  { name: 'صعب 🟠',   r: [.04, .055],  vis: .16, tol: 36, hue: [50, 100],  tone: [.25, .40], types: { a: 2, h: 3, r: 2, f: 2, t: 2, g: 2 } },
-  { name: 'خبير 🔴',  r: [.03, .042],  vis: .12, tol: 34, hue: [35, 70],   tone: [.18, .30], types: { a: 1, h: 3, r: 2, f: 3, t: 2, g: 2 } },
-];
-const PAL = ['#ef4444', '#f97316', '#facc15', '#22c55e', '#06b6d4', '#3b82f6', '#a855f7', '#ec4899', '#ffffff', '#111827'];
-const LEVELS = Array.from({ length: 10 }, (_, i) => `assets/spot/spot-${String(i + 1).padStart(2, '0')}.jpg`);
-
-/* cfg = ما يرسله المضيف عبر postMessage */
-let cfg = { role: '', childName: 'رقية', roundId: 0, round: null, scores: { host: 0, guest: 0 }, champion: null, winScore: 10 };
-let S = null, ready = false, readySent = false, playing = false, over = false, locked = false;
-let found = [], scores = [0, 0], hints = 3, secs = 0, timer = 0, armed = 0, hintT = 0, toastT = 0;
-let ovs = [null, null], soundOn = true, ac = null;
-let imgs = [], bases = [];
+/* إحداثيات الاختلافات تأتي من spots-data.js */
+</script>
+<script src="spots-data.js?v=2"></script>
+<script>
+/* ==== حالة اللعبة ==== */
+let cfg = { role:'', childName:'رقية', otherName:'', roundId:0, round:null, scores:{host:0,guest:0}, champion:null, winScore:5 };
+let S = null, ready = false, readySent = false, over = false;
+let found = [], scores = [0,0], secs = 0, timer = 0, soundOn = true, ac = null, toastT = 0;
+let armed = 0, winKey = '', lastTurn = '';
 
 const isHost = () => cfg.role === 'host';
 const me = () => (cfg.role === 'host' ? 1 : 2);
-const names = () => cfg.role === 'host' ? [cfg.childName, otherName] : [otherName, cfg.childName];
-let otherName = 'اللاعب التاني';
+const otherName = () => cfg.otherName || 'اللاعب التاني';
+const myName = () => cfg.childName || 'رقية';
+function nameOf(p){ return p===1 ? (isHost()? myName() : otherName()) : (isHost()? otherName() : myName()); }
 const foundCount = () => found.filter(Boolean).length;
-const fmt = s => Math.floor(s / 60) + ':' + String(s % 60).padStart(2, '0');
-const num = (v, a, b) => typeof v === 'number' && v >= a && v <= b;
-const post = (type, extra) => { try { parent.postMessage({ type, roundId: cfg.roundId, ...extra }, location.origin); } catch { } };
-function toast(m) { const t = $('#toast'); t.textContent = m; t.classList.add('show'); clearTimeout(toastT); toastT = setTimeout(() => t.classList.remove('show'), 2400); }
+const fmt = s => Math.floor(s/60) + ':' + String(s%60).padStart(2,'0');
+const post = (type, extra) => { try { parent.postMessage({ type, roundId: cfg.roundId, ...extra }, location.origin); } catch {} };
+function toast(m){ const t=$('#toast'); t.textContent=m; t.classList.add('show'); clearTimeout(toastT); toastT=setTimeout(()=>t.classList.remove('show'),2200); }
+function esc(s){ return String(s).replace(/[&<>"']/g, ch => '&#'+ch.charCodeAt(0)+';'); }
 
-/* ===== الصوت: Web Audio مولّد بالكود، بدون ملفات (§7) ===== */
+/* ==== الصوت: Web Audio فقط (ممنوع speechSynthesis في اللعبة دي) ==== */
 function acOn(){ try{ ac = ac || new (window.AudioContext||window.webkitAudioContext)(); if(ac.state==='suspended') ac.resume(); }catch{} }
 document.addEventListener('pointerdown', acOn);
-function tone(f, at, d, type, v, f2) {
-  if (!soundOn || !ac) return;
-  try {
-    const o = ac.createOscillator(), g = ac.createGain(), t = ac.currentTime + at;
-    o.type = type; o.frequency.setValueAtTime(f, t);
-    if (f2) o.frequency.exponentialRampToValueAtTime(f2, t + d);
-    g.gain.setValueAtTime(v, t); g.gain.exponentialRampToValueAtTime(.001, t + d);
-    o.connect(g); g.connect(ac.destination); o.start(t); o.stop(t + d);
-  } catch { }
+function tone(f, at, d, type, v, f2){
+  if(!soundOn || !ac) return;
+  try{
+    const o=ac.createOscillator(), g=ac.createGain(), t=ac.currentTime+at;
+    o.type=type; o.frequency.setValueAtTime(f,t);
+    if(f2) o.frequency.exponentialRampToValueAtTime(f2, t+d);
+    g.gain.setValueAtTime(v,t); g.gain.exponentialRampToValueAtTime(.001, t+d);
+    o.connect(g); g.connect(ac.destination); o.start(t); o.stop(t+d);
+  }catch{}
 }
 const sfx = {
-  ok:   () => { tone(660, 0, .1, 'triangle', .22); tone(990, .09, .16, 'triangle', .22); },
-  bad:  () => tone(200, 0, .18, 'sine', .10, 130),          /* غلط: نغمة لطيفة غير مخيفة (§6) */
-  hint: () => { tone(880, 0, .1, 'sine', .15); tone(1175, .1, .14, 'sine', .15); },
-  win:  () => [523, 659, 784, 1047, 784, 1047, 1319].forEach((f, k) => tone(f, k * .13, .24, 'triangle', .1)),
-  turn: () => { tone(520, 0, .09, 'sine', .12); tone(700, .09, .12, 'sine', .12); }
+  mine:  () => { tone(784,0,.09,'triangle',.20); tone(1047,.08,.14,'triangle',.20); },
+  other: () => { tone(587,0,.08,'sine',.13); tone(494,.08,.12,'sine',.13); },   // الخصم لقى — نغمة هادية مش محبطة
+  bad:   () => tone(220,0,.16,'sine',.09,150),                                   // غلط: لطيفة غير مخيفة (§6)
+  win:   () => [523,659,784,1047,784,1047,1319].forEach((f,k)=>tone(f,k*.12,.22,'triangle',.11))
 };
-$('#mute').onclick = () => { soundOn = !soundOn; $('#mute').textContent = soundOn ? '🔊' : '🔇'; };
+$('#mute').onclick = () => { soundOn=!soundOn; $('#mute').textContent = soundOn?'🔊':'🔇'; };
 
-/* ===== PRNG مثبَّت (نفس أسلوب باقي الوحدات) ===== */
-function rng(a) {
-  return () => {
-    let t = a += 0x6D2B79F5;
-    t = Math.imul(t ^ t >>> 15, t | 1);
-    t ^= t + Math.imul(t ^ t >>> 7, t | 61);
-    return ((t ^ t >>> 14) >>> 0) / 4294967296;
-  };
-}
-
-/* ===== معالجة البكسلات (تعمل على {data,width,height} بدون لمس الشاشة) ===== */
-const HSV = [0, 0, 0], RGB = [0, 0, 0];
-function hsv(r, g, b) {
-  r /= 255; g /= 255; b /= 255;
-  const mx = Math.max(r, g, b), mn = Math.min(r, g, b), d = mx - mn;
-  let h = 0;
-  if (d) h = (mx === r ? ((g - b) / d) % 6 : mx === g ? (b - r) / d + 2 : (r - g) / d + 4) * 60;
-  HSV[0] = h < 0 ? h + 360 : h; HSV[1] = mx ? d / mx : 0; HSV[2] = mx;
-  return HSV;
-}
-function rgbOf(h, s, v) {
-  const c = v * s, x = c * (1 - Math.abs((h / 60) % 2 - 1)), m = v - c;
-  let r, g, b;
-  if (h < 60) { r = c; g = x; b = 0; } else if (h < 120) { r = x; g = c; b = 0; } else if (h < 180) { r = 0; g = c; b = x; }
-  else if (h < 240) { r = 0; g = x; b = c; } else if (h < 300) { r = x; g = 0; b = c; } else { r = c; g = 0; b = x; }
-  RGB[0] = (r + m) * 255; RGB[1] = (g + m) * 255; RGB[2] = (b + m) * 255;
-  return RGB;
-}
-const hueDist = (a, b) => { const d = Math.abs(a - b) % 360; return d > 180 ? 360 - d : d; };
-const smooth = t => t <= 0 ? 0 : t >= 1 ? 1 : t * t * (3 - 2 * t);
-const cl = (v, a, b) => Math.max(a, Math.min(b, v));
-
-/* يطبّق اختلافاً واحداً (دائرة) على البكسلات. out=null يعني قياس فقط.
- * يرجع نسبة البكسلات المتغيّرة بوضوح داخل الدائرة. */
-function edit(src, out, d) {
-  const W = src.width, H = src.height, s = src.data, o = out && out.data, k = d.k;
-  const cx = d.x * W, cy = d.y * W, R = d.r * W;
-  const x0 = Math.max(0, Math.floor(cx - R)), x1 = Math.min(W - 1, Math.ceil(cx + R));
-  const y0 = Math.max(0, Math.floor(cy - R)), y1 = Math.min(H - 1, Math.ceil(cy + R));
-  const ox = k === 'r' ? Math.round(d.ox * W) : 0, oy = k === 'r' ? Math.round(d.oy * W) : 0;
-  let inner = 0, changed = 0;
-  for (let y = y0; y <= y1; y++) for (let x = x0; x <= x1; x++) {
-    const dx = x - cx, dy = y - cy, dist = Math.sqrt(dx * dx + dy * dy) / R;
-    if (dist >= 1) continue;
-    const w = smooth((1 - dist) / .2), i = (y * W + x) * 4, r = s[i], g = s[i + 1], b = s[i + 2];
-    let nr = r, ng = g, nb = b, j = -1;
-    if (k === 'h') {
-      const c = hsv(r, g, b);
-      if (c[1] > .18 && c[2] > .15 && hueDist(c[0], d.h0) < d.tol) {
-        const q = rgbOf((c[0] + d.a * w + 720) % 360, c[1], c[2]); nr = q[0]; ng = q[1]; nb = q[2];
-      }
-    } else if (k === 'r') j = (cl(y + oy, 0, H - 1) * W + cl(x + ox, 0, W - 1)) * 4;
-    else if (k === 'f') j = (y * W + cl(Math.round(2 * cx - x), 0, W - 1)) * 4;
-    else if (k === 't') {
-      const m = d.m * w;
-      if (m < 0) { nr = r * (1 + m); ng = g * (1 + m); nb = b * (1 + m); }
-      else { nr = r + (255 - r) * m; ng = g + (255 - g) * m; nb = b + (255 - b) * m; }
-    } else if (k === 'g') {
-      const l = .3 * r + .59 * g + .11 * b; nr = r + (l - r) * w; ng = g + (l - g) * w; nb = b + (l - b) * w;
-    }
-    if (j >= 0) { nr = r + (s[j] - r) * w; ng = g + (s[j + 1] - g) * w; nb = b + (s[j + 2] - b) * w; }
-    if (o) { o[i] = nr; o[i + 1] = ng; o[i + 2] = nb; }
-    if (dist < .8) { inner++; if (Math.max(Math.abs(nr - r), Math.abs(ng - g), Math.abs(nb - b)) > 28) changed++; }
-  }
-  return inner ? changed / inner : 0;
-}
-
-function meanRgb(src, x, y, r) {
-  const W = src.width, s = src.data, cx = x * W, cy = y * W, R = r * W;
-  let sr = 0, sg = 0, sb = 0, n = 0;
-  for (let yy = Math.floor(cy - R); yy <= cy + R; yy += 3) for (let xx = Math.floor(cx - R); xx <= cx + R; xx += 3) {
-    if (xx < 0 || yy < 0 || xx >= W || yy >= src.height || (xx - cx) ** 2 + (yy - cy) ** 2 > R * R) continue;
-    const i = (yy * W + xx) * 4; sr += s[i]; sg += s[i + 1]; sb += s[i + 2]; n++;
-  }
-  return n ? [sr / n, sg / n, sb / n] : [128, 128, 128];
-}
-function stickerColor(src, x, y, r, R) {
-  const m = meanRgb(src, x, y, r);
-  const dist = c => { const v = parseInt(c.slice(1), 16); return Math.hypot((v >> 16) - m[0], ((v >> 8) & 255) - m[1], (v & 255) - m[2]); };
-  const top = PAL.slice().sort((p, q) => dist(q) - dist(p)).slice(0, 3);
-  return top[R() * top.length | 0];
-}
-function tryKind(k, src, x, y, r, R, L, rel) {
-  const d = { k, x: +x.toFixed(4), y: +y.toFixed(4), r: +r.toFixed(4) };
-  const sign = () => R() < .5 ? -1 : 1;
-  if (k === 'a') { d.s = R() * 4 | 0; d.rot = +(R() * .8 - .4).toFixed(2); d.c = stickerColor(src, x, y, r, R); return d; }
-  if (k === 'h') {
-    const cx = Math.round(x * src.width), cy = Math.round(y * src.width), s = src.data;
-    let sr = 0, sg = 0, sb = 0;
-    for (let yy = cy - 3; yy <= cy + 3; yy++) for (let xx = cx - 3; xx <= cx + 3; xx++) { const i = (yy * src.width + xx) * 4; sr += s[i]; sg += s[i + 1]; sb += s[i + 2]; }
-    const c = hsv(sr / 49, sg / 49, sb / 49);
-    if (c[1] < .3 || c[2] < .25) return null;
-    d.h0 = Math.round(c[0]); d.tol = L.tol; d.a = sign() * Math.round(L.hue[0] + R() * (L.hue[1] - L.hue[0]));
-  } else if (k === 'r') {
-    const th = R() * 6.283, m = r * (2.3 + R() * .9);
-    d.ox = +(Math.cos(th) * m).toFixed(4); d.oy = +(Math.sin(th) * m).toFixed(4);
-    if (x + d.ox - r < 0 || x + d.ox + r > 1 || y + d.oy - r < 0 || y + d.oy + r > AR) return null;
-  } else if (k === 't') d.m = +(sign() * (L.tone[0] + R() * (L.tone[1] - L.tone[0]))).toFixed(2);
-  return edit(src, null, d) >= L.vis * rel ? d : null;
-}
-
-/* المضيف فقط يبني الاختلافات من Seed، ثم تُرسل جاهزة → الطرفان يريان نفس الشيء بالظبط (§2) */
-function makeDiffs(src, seed, level, count) {
-  const R = rng(seed), L = LV[level], out = [];
-  const cap = Math.sqrt(.0364 / count);
-  const r0 = Math.min(L.r[0], cap * .85), r1 = Math.min(L.r[1], cap);
-  const kinds = Object.keys(L.types), tot = kinds.reduce((a, k) => a + L.types[k], 0);
-  const pickKind = () => { let t = R() * tot; for (const k of kinds) { t -= L.types[k]; if (t <= 0) return k; } return kinds[0]; };
-  const free = (x, y, r, rel) => out.every(q => !q || Math.hypot(q.x - x, q.y - y) >= (q.r + r) * 1.9 * rel);
-  const spot = r => [r * 1.25 + R() * (1 - r * 2.5), r * 1.25 + R() * (AR - r * 2.5)];
-  for (let n = 0; n < count; n++) {
-    let d = null, rel = 1;
-    for (let at = 0; at < 400 && !d; at++) {
-      if (at && at % 100 === 0) rel *= .85;
-      const r = r0 + R() * (r1 - r0), [x, y] = spot(r);
-      if (free(x, y, r, rel)) d = tryKind(pickKind(), src, x, y, r, R, L, rel);
-    }
-    for (let at = 0; at < 300 && !d; at++) {
-      const r = r0, [x, y] = spot(r);
-      if (free(x, y, r, at < 200 ? .6 : 0)) d = tryKind('a', src, x, y, r, R, L, 1);
-    }
-    if (!d) d = { k: 'a', x: +(.5).toFixed(4), y: +(AR / 2).toFixed(4), r: +r0.toFixed(4), s: 0, rot: 0, c: '#ef4444' };
-    out.push(d);
-  }
-  return out;
-}
-
-/* الملصقات (نجمة، قلب، كورة، وردة) تُرسم فوق الصورة الثانية */
-function sticker(ctx, d, W) {
-  const R = d.r * W * .85;
-  ctx.save(); ctx.translate(d.x * W, d.y * W); ctx.rotate(d.rot || 0);
-  ctx.fillStyle = d.c; ctx.strokeStyle = '#1e1b4b'; ctx.lineWidth = Math.max(2, R * .13); ctx.lineJoin = 'round';
-  ctx.beginPath();
-  if (d.s === 0) {
-    for (let i = 0; i < 10; i++) { const a = i * Math.PI / 5 - Math.PI / 2, q = i % 2 ? R * .46 : R; ctx[i ? 'lineTo' : 'moveTo'](Math.cos(a) * q, Math.sin(a) * q); }
-    ctx.closePath();
-  } else if (d.s === 1) {
-    ctx.moveTo(0, R * .85); ctx.bezierCurveTo(-R * 1.3, R * .1, -R * .75, -R * .9, 0, -R * .3);
-    ctx.bezierCurveTo(R * .75, -R * .9, R * 1.3, R * .1, 0, R * .85); ctx.closePath();
-  } else if (d.s === 2) ctx.arc(0, 0, R * .85, 0, 7);
-  else for (let i = 0; i < 5; i++) { const a = i * 2 * Math.PI / 5, px = Math.cos(a) * R * .5, py = Math.sin(a) * R * .5; ctx.moveTo(px + R * .42, py); ctx.arc(px, py, R * .42, 0, 7); }
-  ctx.fill(); ctx.stroke();
-  if (d.s === 2) { ctx.fillStyle = 'rgba(255,255,255,.75)'; ctx.beginPath(); ctx.arc(-R * .3, -R * .3, R * .2, 0, 7); ctx.fill(); }
-  if (d.s === 3) { ctx.fillStyle = d.c === '#facc15' ? '#f97316' : '#facc15'; ctx.beginPath(); ctx.arc(0, 0, R * .3, 0, 7); ctx.fill(); ctx.stroke(); }
-  ctx.restore();
-}
-
-/* الصورة الثانية = الأصلية + كل الاختلافات غير الملصقات، ثم الملصقات فوقها */
-function renderB(cv, base, diffs) {
-  const ctx = cv.getContext('2d');
-  ctx.drawImage(base, 0, 0);
-  const src = base.getContext('2d').getImageData(0, 0, BW, BH), out = ctx.createImageData(BW, BH);
-  out.data.set(src.data);
-  diffs.forEach(d => d.k !== 'a' && edit(src, out, d));
-  ctx.putImageData(out, 0, 0);
-  diffs.forEach(d => d.k === 'a' && sticker(ctx, d, BW));
-}
-
-/* ===== تحميل الصور (محلية، خفيفة §7) ===== */
-function loadImg(l, cb) {
-  if (imgs[l]) return cb(imgs[l]);
-  const im = new Image();
-  im.onload = () => { imgs[l] = im; cb(im); };
-  im.onerror = () => cb(null);
-  im.src = LEVELS[l];
-}
-function baseOf(l, im) {
-  if (bases[l]) return bases[l];
-  const c = document.createElement('canvas'); c.width = BW; c.height = BH;
-  const iw = im.naturalWidth || im.width, ih = im.naturalHeight || im.height;
-  let sw = iw, sh = iw * AR; if (sh > ih) { sh = ih; sw = ih / AR; }
-  c.getContext('2d', { willReadFrequently: true }).drawImage(im, (iw - sw) / 2, (ih - sh) / 2, sw, sh, 0, 0, BW, BH);
-  return bases[l] = c;
-}
-
-/* ===== التخطيط ===== */
-function layout() {
-  if (!pics.offsetHeight || !pics.offsetWidth) return;
-  const land = innerWidth > innerHeight * 1.2;
+/* ==== التخطيط ==== */
+function layout(){
+  if(!pics.offsetHeight) return;
+  const land = innerWidth > innerHeight * 1.15;
   pics.className = land ? 'side' : 'stack';
-  pics.style.setProperty('--w', '240px');
-  const chrome = document.querySelector('.row').offsetHeight + (document.querySelector('.info').offsetHeight || 0) + document.querySelector('#hud').offsetHeight + 90;
-  const avail = innerHeight - chrome - 10;
-  const maxW = land ? Math.min((innerWidth - 40) / 2, 620) : Math.min(innerWidth - 26, 560);
-  const w = Math.floor(Math.max(land ? 180 : 220, Math.min(maxW, avail / (land ? AR : 2 * AR + .04))));
-  pics.style.setProperty('--w', w + 'px');
+  const chrome = 150;
+  const avail = innerHeight - chrome;
+  const maxW = land ? Math.min((innerWidth-40)/2, 640) : Math.min(innerWidth-26, 560);
+  const w = Math.floor(Math.max(land?200:230, Math.min(maxW, avail/(land?AR:2*AR+.04))));
+  pics.style.setProperty('--w', w+'px');
 }
 addEventListener('resize', layout);
 
-/* ===== الشاشة ===== */
-let otherName_ = '';
-function hud() {
-  const n = names();
-  $('#hud').innerHTML = [1, 2].map(p =>
-    `<div class="pl${turnRole() === (p === 1 ? 'host' : 'guest') ? ' turn' : ''}" style="--c:${COL[p - 1]}"><b>${esc(n[p - 1] || '...')}${p === me() ? ' (إنت)' : ''}</b><span>⭐ ${D(scores[p - 1])}</span></div>`).join('');
-  $('#inf').textContent = S ? `الصورة ${D(S.lvl + 1)}/${D(LEVELS.length)} • ${LV[S.level].name} • الاختلافات ${D(foundCount())}/${D(S.d.length)}` : '';
+/* ==== الشاشة ==== */
+function hud(){
+  $('#hud').innerHTML = [1,2].map(p => {
+    const lead = scores[p-1] > scores[2-p] ? ' lead' : '';
+    const tag = p===me() ? ' <span class="you">(إنت)</span>' : '';
+    return `<div class="pl${lead}" style="--c:${COL[p-1]}"><b>${esc(nameOf(p))}${tag}</b><span>⭐ ${D(scores[p-1])}</span></div>`;
+  }).join('');
+  const sp = S ? S.spots : [];
+  $('#inf').textContent = S ? `الصورة ${D(S.lvl+1)}/${D(10)} • الاختلافات ${D(foundCount())}/${D(sp.length)}` : '';
+  $('#who').textContent = S ? `اللي يلاقي ياخد نقطة • أول ${D(cfg.winScore||5)} نقط يكسب` : '';
 }
-function turnRole() { return S ? (foundCount() % 2 === 0 ? 'host' : 'guest') : ''; }
-function esc(s) { return String(s).replace(/[&<>"']/g, ch => '&#' + ch.charCodeAt(0) + ';'); }
-function updHint() { $('#hint').textContent = '💡 ' + D(hints); $('#hint').disabled = hints <= 0 || over || !S || !isHost(); }
-
-function ring(i, p, cls) {
-  const d = S.d[i];
-  ovs.forEach(ov => {
-    if (!ov) return;
+function ring(i, p, who){
+  const s = S.spots[i];
+  [ova, ovb].forEach(ov => {
     const e = document.createElement('div');
-    e.className = 'ring' + (cls ? ' ' + cls : ''); e.dataset.i = i; e.dataset.p = p;
-    e.style.cssText = `left:${d.x * 100}%;top:${d.y / AR * 100}%;--k:${(d.r * 2.5).toFixed(3)};--c:${cls === 'hint' ? '#f0b429' : COL[p - 1] || COL[0]}`;
+    e.className = 'ring'; e.dataset.i = i;
+    e.style.cssText = `left:${s[0]*100}%;top:${s[1]*100}%;--k:${Math.max(s[2],.055)*1.5};--c:${COL[p-1]}`;
+    e.dataset.n = D(i+1);
     ov.append(e);
   });
 }
-function ringsOf(sel) { return ovs.flatMap(ov => ov ? Array.from(ov.children).filter(sel) : []); }
-
-function build() {
-  const base = bases[S.lvl];
-  if (!base) return;
-  const a = document.createElement('canvas'), b = document.createElement('canvas');
-  a.width = b.width = BW; a.height = b.height = BH;
-  a.getContext('2d').drawImage(base, 0, 0);
-  renderB(b, base, S.d);
-  ovs = [document.createElement('div'), document.createElement('div')];
-  ovs.forEach(ov => ov.className = 'ov');
-  pa.replaceChildren(a, ovs[0]); pb.replaceChildren(b, ovs[1], won);
-  found.forEach((p, i) => p && ring(i, p));
-  layout();
-}
-
-/* ===== اللعب ===== */
-const hitR = d => Math.max(d.r * 1.35, .045);
-
-function mark(i, p) {
-  if (found[i]) return;
-  found[i] = p; scores[p - 1]++;
-  ring(i, p); sfx.ok(); hud();
-  if (found.every(Boolean)) win();
-}
-
-function tap(e, pic, k) {
-  if (!S || !ready || over || locked) return;
-  const r = pic.getBoundingClientRect(), px = e.clientX - r.left, py = e.clientY - r.top, x = px / r.width, y = py / r.width;
-  let best = -1, bd = 9, old = false;
-  S.d.forEach((d, i) => {
-    const dist = Math.hypot(d.x - x, d.y - y);
-    if (dist > hitR(d)) return;
-    if (found[i]) old = true; else if (dist < bd) { bd = dist; best = i; }
+function popText(i, p, txt){
+  const s = S.spots[i];
+  [ova, ovb].forEach(ov => {
+    const e = document.createElement('div');
+    e.className = 'pop'; e.textContent = txt;
+    e.style.cssText = `left:${s[0]*100}%;top:${s[1]*100}%;--c:${COL[p-1]}`;
+    ov.append(e);
+    setTimeout(()=>e.remove(), 950);
   });
-  if (best >= 0) {
-    /* رد فعل فوري على الجهاز (الشبكة الضعيفة ما تأخّرش الاستجابة) ثم تُصحَّح الحالة من Firebase */
-    if (!found[best]) { found[best] = me(); scores[me() - 1]++; ring(best, me()); sfx.ok(); hud(); if (found.every(Boolean)) win(); }
+}
+function resetOverlays(){ ova.replaceChildren(); ovb.replaceChildren(); }
+
+/* ==== النقر ==== */
+const hitR = s => Math.max(s[2]*1.1, .05);
+function tap(e, pic){
+  if(!S || !ready || over) return;
+  const r = pic.getBoundingClientRect();
+  const x = (e.clientX - r.left)/r.width;
+  const y = (e.clientY - r.top)/r.height;
+  let best=-1, bd=9, already=false;
+  S.spots.forEach((s,i) => {
+    const dist = Math.hypot(s[0]-x, s[1]-y);
+    if(dist > hitR(s)) return;
+    if(found[i]) already = true;
+    else if(dist < bd){ bd = dist; best = i; }
+  });
+  if(best >= 0){
+    // رد فعل فوري محلي (نت ضعيف) + إرسال لـFirebase
+    const p = me();
+    found[best] = p; scores[p-1]++;
+    ring(best, p); popText(best, p, 'نقطة لك! 🎉');
+    sfx.mine(); hud();
     post('roqaya-spot-find', { index: best });
-  }
-  else if (!old) miss(k, px, py);
-}
-pa.onclick = e => tap(e, pa, 0);
-pb.onclick = e => tap(e, pb, 1);
-
-function miss(k, x, y) {
-  sfx.bad();
-  const ov = ovs[k]; if (!ov) return;
-  const e = document.createElement('div'); e.className = 'miss'; e.textContent = '✖'; e.style.left = x + 'px'; e.style.top = y + 'px';
-  ov.append(e); setTimeout(() => e.remove(), 700);
-}
-
-/* الخصم لقى اختلافاً → يظهر عندنا فوراً (نفس اللحظة) */
-function onFound(i, p) {
-  if (i < 0 || i >= found.length) return;
-  if (!found[i]) { found[i] = p; scores[p - 1]++; ring(i, p); hud(); sfx.turn(); if (found.every(Boolean)) win(); return; }
-  if (found[i] !== p && p === 1 && me() === 2) {   /* الاتنان ضغطا في نفس اللحظة → النقطة للمضيف (ثابت على الجهازين) */
-    scores[found[i] - 1]--; scores[0]++; found[i] = 1;
-    ringsOf(e => e.dataset.i == i).forEach(e => { e.dataset.p = 1; e.style.setProperty('--c', COL[0]); });
-    hud();
+    checkDone();
+  } else if(!already){
+    sfx.bad();
+    const ov = pic === pa ? ova : ovb;
+    const m = document.createElement('div');
+    m.className='miss'; m.textContent='✖';
+    m.style.cssText = `left:${e.clientX-r.left}px;top:${e.clientY-r.top}px`;
+    ov.append(m); setTimeout(()=>m.remove(), 720);
   }
 }
+pa.addEventListener('click', e => tap(e, pa));
+pb.addEventListener('click', e => tap(e, pb));
 
-function clearHint() { clearTimeout(hintT); ringsOf(e => e.classList.contains('hint')).forEach(e => e.remove()); }
-function hintShow(i) {
-  clearHint(); ring(i, 1, 'hint'); sfx.hint();
-  hintT = setTimeout(clearHint, 3500);
-}
-$('#hint').onclick = () => {
-  if (!S || !ready || over || hints <= 0 || !isHost()) return;
-  const i = found.findIndex(f => !f);
-  if (i < 0) return;
-  hints--; updHint(); hintShow(i); post('roqaya-spot-hint', { index: i });
-};
-
-/* آخر جولة اكتملت محلياً: نمنع تشغيل الاحتفال مرتين */
-let winKey = '';
-function win() {
-  if (over) return;
-  over = true; playing = false; locked = true; clearInterval(timer); timer = 0; clearHint();
-  const last = S.lvl === LEVELS.length - 1;
-  $('#msg').innerHTML = `🎉 برافو يا فريق!<br>لقيتوا كل الاختلافات في ${D(fmt(secs))}${last ? '<br>🌟 خلّصتوا كل الصور!' : ''}`;
-  won.classList.add('show'); sfx.win(); hud(); updHint();
+function checkDone(){
+  if(!S || over) return;
+  // الفوز بالنقاط (أول من يوصل للهدف) أو بخلاص كل الاختلافات
+  const target = Number(cfg.winScore) || 5;
+  const leader = scores[0] >= target ? 1 : scores[1] >= target ? 2 : 0;
+  const allDone = found.every(Boolean);
+  if(!leader && !allDone) return;
+  over = true; clearInterval(timer);
+  const winner = leader || (scores[0]>scores[1] ? 1 : scores[1]>scores[0] ? 2 : 0);
+  $('#msg').innerHTML = winner
+    ? `🎉 ${esc(nameOf(winner))} كسب!<br>النتيجة ${D(scores[0])} - ${D(scores[1])}`
+    : `🤝 تعادل! ${D(scores[0])} - ${D(scores[1])}`;
+  won.classList.add('show');
+  if(winner === me()) sfx.win();
+  hud();
 }
 
-/* ===== الجولات: المضيف يجهّز ويرسل الاختلافات جاهزة ===== */
-function validDiff(d) {
-  if (!d || typeof d.k !== 'string' || d.k.length !== 1 || !'hrfatg'.includes(d.k)) return false;
-  if (!num(d.x, 0, 1) || !num(d.y, 0, AR) || !num(d.r, .02, .12)) return false;
-  if (d.k === 'h') return num(d.h0, 0, 360) && num(d.tol, 5, 90) && num(d.a, -360, 360);
-  if (d.k === 'r') return num(d.ox, -1, 1) && num(d.oy, -1, 1);
-  if (d.k === 't') return num(d.m, -1, 1);
-  if (d.k === 'a') return Number.isInteger(d.s) && d.s >= 0 && d.s < 4 && num(d.rot, -3.2, 3.2) && typeof d.c === 'string' && /^#[0-9a-f]{6}$/i.test(d.c);
-  return true;
-}
-const validNew = o => Number.isInteger(o.n) && o.n > 0 && Number.isInteger(o.lvl) && o.lvl >= 0 && o.lvl < LEVELS.length
-  && Number.isInteger(o.level) && o.level >= 0 && o.level < LV.length
-  && Array.isArray(o.d) && o.d.length >= 1 && o.d.length <= 12 && o.d.every(validDiff);
-
-let gno = 0, reqId = 0;
-
-function syncSel() { if ($('#lv').value !== '' && cfg.round) { $('#lv').value = cfg.round.level; $('#cnt').value = cfg.round.d.length; } }
-
-function startRound(o) {
-  gno = o.n;
-  S = { n: o.n, lvl: o.lvl, level: o.level, d: o.d };
-  found = Array(o.d.length).fill(0); scores = [0, 0]; hints = 3; secs = 0; over = false; playing = true; ready = false;
-  locked = false; readySent = false;
-  clearInterval(timer); clearTimeout(armed); armed = 0; clearHint();
-  $('#tm').textContent = '0:00'; won.classList.remove('show');
-  $('#lv').value = o.level; $('#cnt').value = o.d.length;
-  hud(); updHint();
-  timer = setInterval(() => { secs++; $('#tm').textContent = D(fmt(secs)); }, 1000);
-  const n = o.n;
-  loadImg(o.lvl, im => {
-    if (!im || !S || S.n !== n) return;
-    baseOf(o.lvl, im); build(); ready = true;
-    if (!readySent) { readySent = true; post('roqaya-spot-ready'); }
-  });
+/* ==== مزامنة اختلاف الخصم ==== */
+function onFound(i, p){
+  if(!S || i<0 || i>=S.spots.length) return;
+  if(found[i] === p) return;
+  if(found[i]){
+    // الاتنين ضغطوا في نفس اللحظة → النقطة للمضيف (ثابت على الجهازين)
+    if(p===1 && me()===2){
+      scores[found[i]-1]--; scores[0]++; found[i]=1;
+      [ova,ovb].forEach(ov => Array.from(ov.querySelectorAll('.ring')).filter(e=>e.dataset.i==i).forEach(e=>e.style.setProperty('--c', COL[0])));
+    }
+  } else {
+    found[i] = p; scores[p-1]++;
+    ring(i, p);
+    if(p === me()){ popText(i,p,'نقطة لك! 🎉'); sfx.mine(); }
+    else { popText(i,p, nameOf(p)+' لقى!'); sfx.other(); }
+  }
+  hud(); checkDone();
 }
 
-/* (المضيف فقط) يجهّز جولة جديدة — الاختلافات تُبنى هنا وتُرسل جاهزة */
-function newRound(lvl, level, count) {
-  if (!isHost()) return;
-  const id = ++reqId;
-  loadImg(lvl, im => {
-    if (id !== reqId) return;
-    if (!im) return;
-    const src = baseOf(lvl, im).getContext('2d').getImageData(0, 0, BW, BH);
-    let s; try { const a = new Uint32Array(1); crypto.getRandomValues(a); s = a[0] & 0x7fffffff; } catch { s = Math.floor(Math.random() * 0x7fffffff) }
-    const o = { n: gno + 1, lvl, level, d: makeDiffs(src, s, level, count) };
-    post('roqaya-spot-new', o);
-  });
-}
-function requestRound(lvl) {
-  if (isHost()) newRound(lvl, +$('#lv').value, +$('#cnt').value);
-  else post('roqaya-spot-request', { lvl });
+/* ==== الجولة ==== */
+function startRound(rd){
+  const spots = (typeof SPOTS !== 'undefined' && SPOTS[rd.lvl+1]) || [];
+  S = { n: rd.n, lvl: rd.lvl, spots };
+  found = Array(spots.length).fill(0);
+  scores = [0,0]; over = false; ready = false; readySent = false;
+  winKey = ''; clearInterval(timer); clearTimeout(armed); armed = 0;
+  resetOverlays(); won.classList.remove('show');
+  $('#next').textContent = 'الصورة اللي بعدها ◀';
+  secs = 0; $('#inf').textContent = '';
+  if(!spots.length){ toast('مش لاقيين بيانات الصورة 😕'); return; }
+  timer = setInterval(()=>{ secs++; }, 1000);
+  const loadOk = () => {
+    if(!S || S.n !== rd.n) return;
+    ready = true; hud(); layout();
+    if(!readySent){ readySent = true; post('roqaya-spot-ready'); }
+  };
+  // تحميل الصورتين (محلية، سريعة)
+  const urlA = `assets/spot2/p${String(rd.lvl+1).padStart(2,'0')}_a.jpg`;
+  const urlB = `assets/spot2/p${String(rd.lvl+1).padStart(2,'0')}_b.jpg`;
+  pa.querySelector('img')?.remove();
+  pb.querySelector('img')?.remove();
+  const ia = new Image(), ib = new Image();
+  let loaded = 0;
+  const done = () => { if(++loaded === 2) loadOk(); };
+  ia.onload = () => { pa.insertAdjacentElement('afterbegin', ia); done(); };
+  ib.onload = () => { pb.insertAdjacentElement('afterbegin', ib); done(); };
+  ia.onerror = ib.onerror = () => { toast('مش عارفين نحمّل الصورة 😕'); done(); };
+  ia.src = urlA; ib.src = urlB;
 }
 
+/* ==== بابا فقط: الصورة اللي بعدها ==== */
 $('#next').onclick = () => {
-  if (!S || !ready || over || !isHost()) return;
-  if (foundCount() > 0 && !armed) {
+  if(!isHost()){ toast('بابا هو اللي يجيب الصورة الجديدة 🙂'); return; }
+  if(!S || over) return;
+  if(foundCount() > 0 && !armed && foundCount() < S.spots.length){
     $('#next').textContent = 'متأكد؟ اضغط تاني';
-    armed = setTimeout(() => { armed = 0; $('#next').textContent = 'الصورة اللي بعدها ◀'; }, 3000);
+    armed = setTimeout(()=>{ armed=0; $('#next').textContent='الصورة اللي بعدها ◀'; }, 3000);
     return;
   }
   clearTimeout(armed); armed = 0; $('#next').textContent = 'الصورة اللي بعدها ◀';
-  requestRound((S.lvl + 1) % LEVELS.length);
+  const nextLvl = (S.lvl + 1) % 10;
+  post('roqaya-spot-request', { lvl: nextLvl });
+};
+$('#city').onclick = () => {
+  if(!isHost()){ toast('بابا بس اللي يرجع للمدينة 🙂'); return; }
+  post('roqaya-spot-city');
 };
 
-/* المستوى/العدد: الاتنان يريان نفس الاختيار؛ لو لسه مفيش تقدّم يتطبق فوراً */
-function cfgChanged() {
-  if (!isHost()) { toast('بابا هو اللي يختار المستوى 🙂'); return; }
-  if (S) { toast('هيتطبّق في الصورة اللي بعدها 👍'); }
-  post('roqaya-spot-config', { level: +$('#lv').value, count: +$('#cnt').value });
-}
-$('#lv').onchange = $('#cnt').onchange = cfgChanged;
-$('#city').onclick = () => { if (!isHost()) return; post('roqaya-spot-city'); };
-
-/* ===== الرسائل من الوحدة الأم ===== */
+/* ==== رسائل الوحدة الأم ==== */
 addEventListener('message', e => {
-  if (e.origin !== location.origin) return;
+  if(e.origin !== location.origin) return;
   const d = e.data || {};
-  if (d.type === 'roqaya-spot-config') {
+  if(d.type === 'roqaya-spot-config'){
     const c = d.config || {};
     cfg = { ...cfg, ...c };
-    if (cfg.otherName) otherName = cfg.otherName;
-    if (cfg.round && (!S || cfg.round.n !== gno)) startRound(cfg.round);
-    else { hud(); updHint(); }
-    if (cfg.champion) { locked = true; document.querySelectorAll('.pic').forEach(p => p.classList.add('locked')); }
-    else document.querySelectorAll('.pic').forEach(p => p.classList.remove('locked'));
-    layout();
+    if(cfg.round && (!S || cfg.round.n !== S.n)) startRound(cfg.round);
+    else {
+      // نفس الجولة: اعتبر حالة Firebase هي المرجع (النقاط + اللي اتلقى)
+      if(cfg.round){
+        const n = S.spots.length;
+        const f = Array.isArray(cfg.round.found) ? cfg.round.found : [];
+        found = Array.from({length:n}, (_,i) => Number(f[i]) || 0);
+        ova.replaceChildren(); ovb.replaceChildren();
+        found.forEach((p,i) => { if(p) ring(i,p); });
+      }
+      if(cfg.scores) scores = [Number(cfg.scores.host)||0, Number(cfg.scores.guest)||0];
+      hud(); layout();
+    }
+    if(cfg.champion){
+      over = true;
+      document.querySelectorAll('.pic').forEach(p=>p.classList.add('locked'));
+      // أظهر النتيجة الرسمية لو لسه ما ظهرتش عندي
+      if(!won.classList.contains('show')){
+        const w = cfg.champion === 'host' ? 1 : 2;
+        $('#msg').innerHTML = `🎉 ${esc(nameOf(w))} كسب!<br>النتيجة ${D(scores[0])} - ${D(scores[1])}`;
+        won.classList.add('show'); hud();
+      }
+    }
+    else document.querySelectorAll('.pic').forEach(p=>p.classList.remove('locked'));
     return;
   }
-  if (d.type === 'roqaya-spot-new' && validNew(d)) { startRound(d); return; }
-  if (d.type === 'roqaya-spot-found') { onFound(Number(d.index), Number(d.player)); return; }
-  if (d.type === 'roqaya-spot-hint') {
-    // المضيف نفسه يعرض التلميح؛ الضيف يعرض التلميح القادم من أي طرف
-    if (Number.isInteger(d.index) && S && !found[d.index]) { if (!isHost()) hints = Math.max(0, hints - 1); updHint(); hintShow(d.index); }
-    return;
-  }
-  if (d.type === 'roqaya-spot-reset') { S = null; ready = false; locked = true; clearInterval(timer); pa.replaceChildren(); pb.replaceChildren(won); return; }
+  if(d.type === 'roqaya-spot-new' && d.round){ startRound(d.round); return; }
+  if(d.type === 'roqaya-spot-found'){ onFound(Number(d.index), Number(d.player)); return; }
+  if(d.type === 'roqaya-spot-reset'){ S=null; ready=false; clearInterval(timer); resetOverlays(); pa.querySelector('img')?.remove(); pb.querySelector('img')?.remove(); return; }
 });
-addEventListener('pointerdown', () => acOn(), { once: true });
+addEventListener('pointerdown', acOn, { once:true });
 
-/* ===== الإقلاع ===== */
-function init() {
-  $('#lv').innerHTML = LV.map((l, i) => `<option value="${i}">${l.name}</option>`).join('');
-  $('#cnt').innerHTML = Array.from({ length: 10 }, (_, i) => `<option value="${i + 3}">${D(i + 3)}</option>`).join('');
-  $('#lv').value = 1; $('#cnt').value = 5;
-  hud();
-  layout();
-  post('roqaya-spot-ready');           // اطلب الإعدادات من الوحدة الأم
-  setTimeout(() => post('roqaya-spot-ready'), 800);   // إعادة المحاولة لو الـiframe اتأخر
+/* ==== الإقلاع ==== */
+function init(){
+  hud(); layout();
+  post('roqaya-spot-ready');
+  setTimeout(()=>post('roqaya-spot-ready'), 700);
 }
-addEventListener('DOMContentLoaded', init);
-if (document.readyState !== 'loading') init();
+if(document.readyState === 'loading') document.addEventListener('DOMContentLoaded', init);
+else init();
 </script>
 </body>
 </html>

@@ -1,6 +1,6 @@
 /* M4.26 — «لاقوا الاختلافات سوا» (overlay) — يُحمَّل داخل index.html
- * اللعبة تعمل كـoverlay فوق الشاشة مثل باقي الألعاب (§9: منع ظهور نسخة قديمة).
- * كل القواعد مربوطة بـbody.spot-v1-active حتى لا تؤثر على أي شاشة أخرى.
+ * اللعبة overlay فوق الشاشة مثل باقي الألعاب (§9: منع ظهور نسخة قديمة).
+ * كل القواعد مربوطة بـbody.spot-v1-active فقط.
  */
 .spot-v1-overlay{
   position:fixed;inset:0;z-index:200;
@@ -16,12 +16,10 @@
 }
 body.spot-v1-active{overflow:hidden!important}
 body.spot-v1-active #screen{display:none!important}
+/* الهيدر المصغّر (.m4-25) لازم يبقى فوق الأوفيرلاي بس مش يغطيه */
 body.spot-v1-active .header{z-index:210}
 
 @media(max-width:520px){
   .spot-v1-overlay{padding:max(1px,env(safe-area-inset-top)) 2px max(2px,env(safe-area-inset-bottom))}
   .spot-v1-frame{border-radius:10px}
-}
-@media(prefers-reduced-motion:reduce){
-  .spot-v1-overlay{scroll-behavior:auto}
 }
