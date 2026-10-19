@@ -1457,7 +1457,7 @@ function renderNumseq(){
   const cards=g.cards.map((num,i)=>{
     const found=shown.includes(i), bad=g.wrong===i, open=found||bad;
     const disabled=finished||g.locked||g.turn!==role||open;
-    return `<button class="numseq-card ${bad?'bad':found?'ok':''}" data-numseq="${i}" aria-label="كارت ${i+1}${open?' رقم '+num:''}" ${disabled?'disabled':''}>${open?arabicDigits(num):'؟'}</button>`;
+    return `<button class="numseq-card ${bad?'bad':found?'ok':''}" data-numseq="${i}" aria-label="كارت ${i+1}${open?' رقم '+num:''}" ${disabled?'disabled':''}><span class="nc-num">${open?arabicDigits(num):'؟'}</span></button>`;
   }).join('');
   let status;
   if(finished) status=`${nameOf(state.result)} وصل لآخر رقم! 🎊`;
