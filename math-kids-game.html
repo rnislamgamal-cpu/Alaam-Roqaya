@@ -9,7 +9,9 @@
 *{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
 html,body{margin:0;min-height:100%}
 body{min-height:100vh;background:var(--bg);color:var(--ink);font-family:"Segoe UI",Tahoma,"Noto Sans Arabic",sans-serif;user-select:none}
-main{max-width:660px;margin:auto;padding:8px 7px 22px;overflow-x:hidden}
+main{max-width:660px;margin:auto;padding:6px 7px 2px;overflow-x:hidden}
+.footer-bar{display:flex;justify-content:center;padding:4px 0 10px}
+.credit{margin:0;font-size:.55rem;opacity:.6;text-align:center;line-height:1.2}
 h1{font-size:1.35rem;margin:0 0 6px;text-align:center}
 .duo{display:grid;grid-template-columns:1fr 1fr;gap:7px;margin-bottom:7px}
 .player{display:flex;align-items:center;gap:5px;min-width:0;padding:6px 8px;border:2px solid transparent;border-radius:12px;background:#fff;font-weight:850}
@@ -51,6 +53,7 @@ h1{font-size:1.35rem;margin:0 0 6px;text-align:center}
 @media(prefers-reduced-motion:reduce){.rays,.trophy,.itw.fly img{animation:none}.itw.fly img{opacity:0}}
 @media(max-width:420px){main{padding:6px 5px 16px}h1{font-size:1.15rem}.player{padding:4px 5px}.player b{font-size:.58rem}.player span{font-size:.63rem}.controller{gap:4px}.ctrl{font-size:.54rem;padding:6px 2px}.map{gap:6px}.lvc{padding:9px 5px 8px}.lvc img.ic{width:44px;height:44px}.lvc b{font-size:.7rem}.card{padding:10px 6px}.prompt{font-size:.78rem}.eq .n{font-size:2rem}.eq .op{font-size:1.8rem}.itw{width:clamp(30px,10vw,42px)}.opt{font-size:2rem;border-radius:18px}.big{font-size:.7rem;padding:8px 12px}}
 </style>
+<link rel="stylesheet" href="game-shell.css?v=1">
 </head>
 <body>
 <main>
@@ -69,6 +72,9 @@ h1{font-size:1.35rem;margin:0 0 6px;text-align:center}
   </div>
 
   <div id="game"></div>
+  <div class="footer-bar">
+    <button id="city" class="btn alt">🎡 المدينة</button>
+  </div>
   <div class="credit">Graphics: Twemoji © Twitter, CC-BY 4.0</div>
 </main>
 
@@ -205,6 +211,9 @@ $('#controller').onclick=e=>{
  const b=e.target.closest('[data-ctrl]');if(!b||!isHost()||b.disabled)return;
  parent.postMessage({type:'roqaya-math-control',action:b.dataset.ctrl,roundId:cfg.roundId},location.origin);
 };
+/* [M11] زر المدينة الموحّد */
+const cityBtn=document.getElementById('city');
+if(cityBtn)cityBtn.onclick=()=>{if(isHost())parent.postMessage({type:'roqaya-math-city'},location.origin)};
 addEventListener('message',e=>{
  if(e.origin!==location.origin||e.data?.type!=='roqaya-math-config')return;
  cfg={...cfg,...e.data.config};render();

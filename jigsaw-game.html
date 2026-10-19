@@ -105,6 +105,7 @@ button:disabled,select:disabled{opacity:.48;cursor:not-allowed}
 }
 @media(prefers-reduced-motion:reduce){.ghost,.pc{transition:none}}
 </style>
+<link rel="stylesheet" href="game-shell.css?v=1">
 </head>
 <body>
 <h1>🧩 لعبة تكوين الصور</h1>
@@ -137,6 +138,10 @@ button:disabled,select:disabled{opacity:.48;cursor:not-allowed}
 </div></div>
 
 <p class="tip">كل مرة لاعب واحد يحرك القطعة. لما يركّب قطعة صح، الدور يروح للتاني تلقائيًا.</p>
+
+<div class="footer-bar">
+  <button id="city" class="btn alt">🎡 المدينة</button>
+</div>
 
 <script>
 const $=s=>document.querySelector(s),area=$('#area'),frame=$('#frame'),won=$('#won');
@@ -402,6 +407,9 @@ $('#new').onclick=()=>{
 $('#size').onchange=e=>{
   try{localStorage.setItem('roqaya-jigsaw-n',String(e.target.value))}catch{}
 };
+/* [M11] زر المدينة الموحّد أسفل اللعبة */
+const cityBtn=document.getElementById('city');
+if(cityBtn)cityBtn.onclick=()=>parent.postMessage({type:'roqaya-jigsaw-city'},location.origin);
 addEventListener('resize',()=>{if(src)build()});
 addEventListener('message',e=>{
   if(e.origin!==location.origin||e.data?.type!=='roqaya-jigsaw-config')return;

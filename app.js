@@ -66,9 +66,9 @@ const MEMORY_SIZES = [4,6,8,12,16,20,24,30];
 // The age is a gameplay setting chosen by the adult, not a date of birth.
 const AGE_GAME_LEVELS = [
   {max:3,games:['memory','count','colors','compare','coloring','sorting'],memory:[4,6]},
-  {max:5,games:['draw','memory','odd','count','pattern','animals','colors','compare','coloring','jigsaw','sorting','phonics'],memory:[6,8,12]},
-  {max:7,games:['draw','memory','ttt','odd','count','pattern','animals','colors','math','treasure','read','english','compare','numberline','snakes','coloring','jigsaw','sorting','phonics'],memory:[8,12,16,20]},
-  {max:10,games:['draw','memory','ttt','odd','count','pattern','animals','colors','math','treasure','read','english','compare','numberline','snakes','coloring','jigsaw','sorting','phonics'],memory:[12,16,20,24,30]}
+  {max:5,games:['draw','memory','odd','count','pattern','animals','colors','compare','spot','coloring','jigsaw','sorting','phonics'],memory:[6,8,12]},
+  {max:7,games:['draw','memory','ttt','odd','count','pattern','animals','colors','math','treasure','read','english','compare','numberline','snakes','spot','coloring','jigsaw','sorting','phonics'],memory:[8,12,16,20]},
+  {max:10,games:['draw','memory','ttt','odd','count','pattern','animals','colors','math','treasure','read','english','compare','numberline','snakes','spot','coloring','jigsaw','sorting','phonics'],memory:[12,16,20,24,30]}
 ];
 function normalizeAge(value) {
   const age=Number(value);
@@ -84,7 +84,7 @@ function effectiveMemoryPreference(age) {
   return memorySizesForAge(age).includes(Number(memoryPreference)) ? memoryPreference : 'random';
 }
 const QUIZ_GAMES = ['odd','count','pattern','animals','colors','math','read','english','compare','numberline'];
-const GAMES = ['draw','memory','ttt',...QUIZ_GAMES,'treasure','snakes','coloring','jigsaw','sorting','phonics'];
+const GAMES = ['draw','memory','ttt',...QUIZ_GAMES,'spot','treasure','snakes','coloring','jigsaw','sorting','phonics'];
 const GAME_LABELS = {
   draw:['🎨','ارسم وخمّن','واحد يرسم والتاني يخمّن'],
   memory:['🃏','كروت الذاكرة','8–30 كارت أو عدد متغيّر'],
@@ -100,6 +100,7 @@ const GAME_LABELS = {
   english:['🔤','عربي وإنجليزي','معاني كلمات بسيطة'],
   compare:['🔢','ترتيب ومقارنة الأرقام','تصاعدي • تنازلي • مين الأكبر؟'],
   numberline:['🔢','الرقم الناقص','كمّلي تسلسل الأرقام'],
+  spot:['🔍','لاقوا الاختلافات','دوّروا معاً • اللي يلاقي ياخد نقطة'],
   snakes:['🐍','السلم والثعبان','نرد متحرك • خطوات حقيقية • سلالم وثعابين'],
   coloring:['🎨','كتاب التلوين','اختاري لون واضغطي لتلوين الرسمة'],
   jigsaw:['🧩','البازل','٤ / ١٠ / ٢٠ / ٥٠ قطعة • لكل لاعب بازل مستقل'],
@@ -624,6 +625,61 @@ function sound(type='tap') {
 // Native Arabic speech runs on-device when supported; never sends a child name to analytics.
 const VOICE_GAME_NAMES={draw:'الرَّسْمَ وَالتَّخْمِينَ',memory:'كُرُوتَ الذَّاكِرَةِ',ttt:'إِكْس أَوْ',odd:'اخْتِيَارَ الصُّورَةِ الْمُخْتَلِفَةِ',count:'عَدَّ الصُّوَرِ',pattern:'إِكْمَالَ النَّمَطِ',animals:'بُيُوتَ الْحَيَوَانَاتِ',colors:'الأَلْوَانَ وَالأَشْكَالَ',math:'الْحِسَابَ',treasure:'رِحْلَةَ الْكَنْزِ',read:'الْقِرَاءَةَ',english:'الْعَرَبِيَّةَ وَالْإِنْجِلِيزِيَّةَ',compare:'تَرْتِيبَ وَمُقَارَنَةَ الأَرْقَامِ',numberline:'الرَّقْمَ النَّاقِصَ',snakes:'السُّلَّمَ وَالثُّعْبَانَ',coloring:'التَّلْوِينَ',jigsaw:'تَرْكِيبَ الصُّوَرِ',sorting:'فَرْزَ الأَلْوَانِ وَالأَشْكَالِ',phonics:'مُطَابَقَةَ الْحُرُوفِ وَالصُّوَرِ'};
 let lastWelcomeKey='';
+/* ===== [M11] نغمة مميزة لكل لعبة (بدل صوت الترحيب «مرحبا هذا عالم رقية») =====
+ * كل لعبة لها ميلودي مختلف (Web Audio، بدون ملفات) عشان البنت تعرف اللعبة من الصوت.
+ * صوت الترحيب القديم أُلغي نهائياً — لا نطق عند دخول اللعبة.
+ */
+const GAME_JINGLES={
+  draw:      [[523,0,.10],[659,.10,.10],[784,.20,.14]],                       /* تصاعدي مرِح */
+  memory:    [[440,0,.09],[554,.09,.09],[440,.18,.09],[554,.27,.12]],         /* تكرار (ذاكرة) */
+  ttt:       [[392,0,.10],[494,.10,.10],[587,.20,.14]],                       /* ثلاثي */
+  odd:       [[587,0,.10],[740,.10,.10],[880,.20,.14]],                       /* صاعد سريع */
+  count:     [[494,0,.08],[587,.08,.08],[698,.16,.08],[784,.24,.12]],         /* تعدّد تدريجي */
+  pattern:   [[440,0,.09],[523,.09,.09],[659,.18,.09],[784,.27,.14]],         /* نمط متكرر */
+  animals:   [[349,0,.10],[440,.11,.10],[523,.22,.14]],                       /* ودود دافئ */
+  colors:    [[659,0,.09],[784,.09,.09],[988,.18,.14]],                       /* لامع */
+  math:      [[523,0,.08],[523,.10,.08],[784,.20,.14]],                       /* جمع (نقرتان + نتيجة) */
+  treasure:  [[392,0,.09],[523,.10,.09],[659,.20,.09],[880,.30,.18]],         /* اكتشاف */
+  read:      [[440,0,.12],[440,.14,.12],[554,.28,.16]],                       /* هادئ تأملي */
+  english:   [[523,0,.09],[494,.09,.09],[440,.18,.14]],                       /* لغة (نزول) */
+  compare:   [[494,0,.08],[587,.08,.08],[494,.16,.14]],                       /* مقارنة */
+  numberline:[[440,0,.08],[494,.08,.08],[554,.16,.08],[587,.24,.14]],         /* تدرّج الرقم */
+  snakes:    [[587,0,.07],[523,.07,.07],[659,.14,.07],[784,.21,.16]],         /* لعبة مرِحة */
+  coloring:  [[698,0,.09],[880,.09,.09],[1047,.18,.16]],                      /* رسم ملوّن */
+  jigsaw:    [[494,0,.08],[659,.08,.08],[784,.16,.08],[988,.24,.16]],
+  spot:      [[659,0,.09],[784,.09,.09],[659,.18,.09],[880,.27,.18]],          /* بحث واكتشاف */         /* تركيب */
+  sorting:   [[523,0,.08],[659,.08,.08],[523,.16,.08],[659,.24,.14]],         /* فرز */
+  phonics:   [[440,0,.09],[554,.09,.09],[659,.18,.14]],                       /* حروف */
+  default:   [[523,0,.10],[659,.10,.10],[784,.20,.14]]
+};
+let lastJingleKey='';
+function playGameJingle(which,key=''){
+  if(!soundEnabled)return false;
+  if(key&&lastJingleKey===key)return false;
+  try{
+    const notes=GAME_JINGLES[which]||GAME_JINGLES.default;
+    const Audio=window.AudioContext||window.webkitAudioContext;
+    if(!Audio)return false;
+    audioContext||=new Audio();
+    if(audioContext.state==='suspended')audioContext.resume().catch(()=>{});
+    const start=audioContext.currentTime;
+    for(const [frequency,offset,duration] of notes){
+      const oscillator=audioContext.createOscillator();
+      const volume=audioContext.createGain();
+      oscillator.type='triangle';
+      oscillator.frequency.value=frequency;
+      volume.gain.setValueAtTime(.0001,start+offset);
+      volume.gain.exponentialRampToValueAtTime(.06,start+offset+.012);
+      volume.gain.exponentialRampToValueAtTime(.0001,start+offset+duration);
+      oscillator.connect(volume).connect(audioContext.destination);
+      oscillator.start(start+offset);oscillator.stop(start+offset+duration+.015);
+    }
+    lastJingleKey=key;
+    return true;
+  }catch(_){return false;}
+}
+/* صوت الترحيب أُلغي — نفس الاسم محفوظ كي لا تتعطّل أي إشارة قديمة */
+function welcomeToGame(which,name=childName(),key=''){ return playGameJingle(which,key); }
 function chooseArabicVoice(){
   const voices=window.speechSynthesis?.getVoices()||[];
   const ar=voices.filter(v=>/^ar(?:-|$)/i.test(v.lang));
@@ -632,24 +688,11 @@ function chooseArabicVoice(){
       ||ar.find(v=>/^ar-EG$/i.test(v.lang)&&v.localService)
       ||ar.find(v=>v.localService)||ar[0]||null;
 }
-function welcomeToGame(which,name=childName(),key=''){
-  if(!soundEnabled || !VOICE_GAME_NAMES[which] || !('speechSynthesis' in window) || !('SpeechSynthesisUtterance' in window))return false;
-  if(key && lastWelcomeKey===key)return false;
-  const voice=chooseArabicVoice();
-  const safeName=normalizeChildName(name)||'رقية';
-  const spokenName=safeName==='رقية'?'رُقَيَّة':safeName;
-  const say=new SpeechSynthesisUtterance(`مَرْحَبًا! هَذَا عَالَمُ ${spokenName}. هَيَّا نَلْعَبُ ${VOICE_GAME_NAMES[which]}.`);
-  // Android browsers can expose an empty voice list even when Arabic system TTS is installed.
-  // ar-SA lets the browser hand the utterance to the installed Arabic engine without forcing a listed voice.
-  say.lang=voice?.lang||'ar-SA';if(voice)say.voice=voice;say.rate=0.86;say.pitch=1;say.volume=1;
-  try{window.speechSynthesis.cancel();window.speechSynthesis.resume?.();window.speechSynthesis.speak(say);lastWelcomeKey=key;info('');return true;}
-  catch(_){return false;}
-}
 function maybeWelcomeOnSync(before,after){
   if(!before || !after || after.game==='lobby' || after.phase!=='playing')return;
   // A new question in the same game must not repeat the introduction.
   if(before.game!==after.game)
-    welcomeToGame(after.game,after.childName,`${roomCode}:${after.round}`);
+    playGameJingle(after.game,`${roomCode}:${after.round}`);
 }
 function soundControl() {
   let control=document.querySelector('#sound-toggle');
@@ -2204,7 +2247,7 @@ screen.addEventListener('click',async e=>{
   if(hubTarget)return navigateHub(hubTarget);
   const action=button.dataset.action;
   if (action==='welcome') {
-    if(!welcomeToGame(state?.game,state?.childName)) info(soundEnabled?'المتصفح الحالي لا يتيح النطق الصوتي. جرّب فتح اللعبة في Google Chrome.':'شغّل الصوت من الزر العلوي أولًا.');
+    if(!welcomeToGame(state?.game)) info(soundEnabled?'':'شغّل الصوت من الزر العلوي أولًا.');
     return;
   }
   if (action==='create') return createRoom();

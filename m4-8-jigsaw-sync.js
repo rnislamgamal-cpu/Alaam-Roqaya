@@ -231,6 +231,7 @@ addEventListener('message',e=>{
   if(e.data?.type==='roqaya-jigsaw-piece'){placePiece(Number(e.data.piece),Number(e.data.roundId));return}
   if(e.data?.type==='roqaya-jigsaw-cheer'){sendCheer(Number(e.data.roundId));return}
   if(e.data?.type==='roqaya-jigsaw-new'){newRound(Number(e.data.n));return}
+  if(e.data?.type==='roqaya-jigsaw-city'){goLobby();return}
 });
 const observer=new MutationObserver(()=>{
   if(observerBusy)return;
