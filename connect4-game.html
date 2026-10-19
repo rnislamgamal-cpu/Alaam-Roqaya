@@ -78,7 +78,16 @@ const mine=()=>!cfg.winner&&cfg.turn===cfg.role;
 const unlock=()=>{try{ac=ac||new(window.AudioContext||window.webkitAudioContext)();if(ac.state==='suspended')ac.resume()}catch{}};
 document.addEventListener('pointerdown',unlock,{passive:true});
 function tone(f,at,d,type,v,f2){if(!sound||!ac)return;try{const o=ac.createOscillator(),g=ac.createGain(),t=ac.currentTime+at;o.type=type;o.frequency.setValueAtTime(f,t);if(f2)o.frequency.exponentialRampToValueAtTime(f2,t+d);g.gain.setValueAtTime(v,t);g.gain.exponentialRampToValueAtTime(.001,t+d);o.connect(g);g.connect(ac.destination);o.start(t);o.stop(t+d)}catch{}}
-const sfx={drop:()=>tone(320,0,.12,'sine',.22,140),win:()=>[523,659,784,1047,784,1047].forEach((f,k)=>tone(f,k*.13,.24,'square',.085)),lose:()=>{tone(330,0,.25,'triangle',.16,260);tone(262,.25,.35,'triangle',.16,200)}};
+const sfx={
+  /* صوت الأحمر (لاعب ١ — بابا): نغمة منخفضة دافئة */
+  dropRed:()=>{tone(392,0,.14,'triangle',.22,262);tone(523,.07,.13,'sine',.10,349)},
+  /* صوت الأصفر (لاعب ٢ — رقية): نغمة مرتفعة مرحة */
+  dropYellow:()=>{tone(587,0,.14,'triangle',.22,784);tone(880,.07,.13,'sine',.10,1046)},
+  /* احتياطي لو اللاعب غير معروف */
+  drop:()=>tone(320,0,.12,'sine',.22,140),
+  win:()=>[523,659,784,1047,784,1047].forEach((f,k)=>tone(f,k*.13,.24,'square',.085)),
+  lose:()=>{tone(330,0,.25,'triangle',.16,260);tone(262,.25,.35,'triangle',.16,200)}
+};
 $('#snd').onclick=()=>{sound=!sound;$('#snd').textContent=sound?'🔊':'🔇'};
 function cell(r,c){return board.children[r*COLS+c]}
 function buildBoard(){
@@ -122,7 +131,12 @@ function apply(next){
   cfg={...cfg,...next};
   buildBoard();render();
   if(wasReady&&seq>lastSeq){
-    lastSeq=seq;unlock();sfx.drop();
+    lastSeq=seq;unlock();
+    /* صوت مختلف حسب صاحب القرص: بابا = أحمر ، رقية = أصفر */
+    const mover=cfg.lastMove?.player;
+    if(mover==='host')sfx.dropRed();
+    else if(mover==='guest')sfx.dropYellow();
+    else sfx.drop();
     if(cfg.winner&&cfg.winner!=='draw')setTimeout(()=>cfg.winner===cfg.role?sfx.win():sfx.lose(),430);
   }else lastSeq=Math.max(lastSeq,seq);
   ready=true;
