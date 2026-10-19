@@ -252,40 +252,25 @@ body .header,body[class] .header{backdrop-filter:none!important;-webkit-backdrop
 }
 @media (prefers-reduced-motion:reduce){*{animation:none!important;transition:none!important}}
 
-/* ---------- Game: اقلب بالترتيب (artwork cards on a night-sky board) ---------- */
-.numseq-panel{background:radial-gradient(120% 70% at 50% 0,#3a2d86 0,#1b1646 55%,#100d2e 100%)!important;border:2px solid #4b3c9a!important;box-shadow:0 6px 0 #0b0924!important;color:#f3eeff}
-.numseq-panel .game-title,.numseq-panel .status,.numseq-panel .rule,.numseq-panel .numseq-best,.numseq-panel .numseq-settings>label{color:#f3eeff!important}
-.numseq-panel .status{font-weight:900}
-.numseq-panel .rule{opacity:.8;font-size:.82rem}
-.numseq-panel .numseq-settings{background:rgba(255,255,255,.08)!important;border:1px solid rgba(255,255,255,.18)!important;border-radius:var(--r-md)}
+/* ---------- Game: اقلب بالترتيب ---------- */
+.numseq-panel .numseq-settings{margin:6px 0 10px}
 .numseq-chips{display:flex;flex-wrap:wrap;gap:8px;margin:8px 0}
-.numseq-chip{min-width:46px;min-height:44px;padding:0 12px;border:2px solid #d9b95a;border-radius:14px;background:rgba(255,255,255,.1);color:#ffe9a8;font-size:1rem;font-weight:900;cursor:pointer}
-.numseq-chip.on{background:linear-gradient(180deg,#ffd978,#e0a62e);border-color:#fff1bd;color:#3b2a00;box-shadow:0 0 14px #ffce5a88}
-.numseq-meter{height:12px;margin:8px 0 4px;border-radius:999px;background:rgba(255,255,255,.14);overflow:hidden}
-.numseq-meter span{display:block;height:100%;border-radius:999px;background:linear-gradient(90deg,#ffd978,#fff2bd);box-shadow:0 0 10px #ffd97899;transition:width .35s}
-.numseq-best{margin:2px 0 10px;font-size:.85rem;font-weight:800}
-.numseq-grid{display:grid;gap:10px;margin:8px 0 12px;direction:rtl;justify-items:center}
+.numseq-chip{min-width:46px;min-height:44px;padding:0 12px;border:2px solid var(--line);border-radius:14px;background:#fff;color:var(--ink);font-size:1rem;font-weight:900;box-shadow:0 3px 0 #ece2f8;cursor:pointer}
+.numseq-chip.on{background:var(--purple);border-color:var(--purple-d);color:#fff;box-shadow:0 3px 0 var(--purple-d)}
+.numseq-meter{height:12px;margin:8px 0 4px;border-radius:999px;background:#ece6fb;overflow:hidden}
+.numseq-meter span{display:block;height:100%;border-radius:999px;background:linear-gradient(90deg,#2fb67c,#8bd96b);transition:width .35s}
+.numseq-best{margin:2px 0 10px;font-size:.85rem;font-weight:800;color:var(--ink-2)}
+.numseq-grid{display:grid;gap:9px;margin:6px 0 12px;direction:rtl}
 .numseq-grid.cols-3{grid-template-columns:repeat(3,1fr)}
 .numseq-grid.cols-4{grid-template-columns:repeat(4,1fr)}
 .numseq-grid.cols-5{grid-template-columns:repeat(5,1fr)}
 .numseq-grid.cols-6{grid-template-columns:repeat(6,1fr)}
-.numseq-card{position:relative;width:100%;max-width:118px;aspect-ratio:1060/1484;display:grid;place-items:center;min-width:0;padding:0;overflow:hidden;
-  border:0;border-radius:10px;background:#120f33 url(numseq-card.webp) center/100% 100% no-repeat;cursor:pointer;
-  box-shadow:0 4px 10px rgba(0,0,0,.45);transition:transform .15s,box-shadow .2s}
-.numseq-card::before{content:"";position:absolute;inset:0;background:rgba(8,6,36,.22);transition:opacity .2s}
-.numseq-card .nc-num{position:relative;z-index:1;display:grid;place-items:center;min-width:1.9em;aspect-ratio:1;padding:0 .15em;border-radius:50%;font-weight:900;font-size:clamp(1.1rem,6.6vw,2.1rem);line-height:1;
-  color:#fff2bf;background:rgba(10,8,40,.72);border:2px solid #ffd978;text-shadow:0 0 8px #ffc83d,0 1px 0 #2a1d00}
-.cols-5.numseq-grid .nc-num,.cols-6.numseq-grid .nc-num{font-size:clamp(.9rem,5vw,1.5rem);border-width:1.5px}
-.numseq-card:not(.ok):not(.bad) .nc-num{background:rgba(10,8,40,.45);border-color:rgba(255,217,120,.55);color:#ffe9a8}
-.numseq-card.ok .nc-num{background:rgba(70,45,0,.78);box-shadow:0 0 10px #ffc83d99}
-.numseq-card.bad .nc-num{background:rgba(120,10,26,.85);border-color:#ffb3ba;color:#fff;text-shadow:0 0 8px #ff4d5e,0 1px 0 #4a0008}
-.numseq-card:active:not(:disabled){transform:translateY(3px) scale(.97)}
+.numseq-card{aspect-ratio:1/1;display:grid;place-items:center;min-width:0;padding:0;border:0;border-radius:18px;font-weight:900;font-size:clamp(1.3rem,7.5vw,2.2rem);color:#fff;cursor:pointer;
+  background:linear-gradient(180deg,#7d62f0,#5a3fd2);box-shadow:0 5px 0 var(--purple-d);transition:transform .12s,box-shadow .12s}
+.cols-5.numseq-grid .numseq-card,.cols-6.numseq-grid .numseq-card{border-radius:14px;font-size:clamp(1.05rem,5.6vw,1.7rem)}
+.numseq-card:active:not(:disabled){transform:translateY(4px);box-shadow:0 1px 0 var(--purple-d)}
 .numseq-card:disabled{cursor:default}
-.numseq-card.ok::before,.numseq-card.bad::before{opacity:0}
-.numseq-card.ok{box-shadow:0 0 0 3px #ffd978,0 0 20px #ffc83dcc}
-.numseq-card.bad{box-shadow:0 0 0 3px #ff6b78,0 0 20px #ff4d5ecc;animation:numseqShake .45s}
-.numseq-card.bad::before{opacity:1;background:rgba(226,48,66,.38)}
-@keyframes numseqShake{0%,100%{transform:translateX(0)}20%{transform:translateX(-6px)}40%{transform:translateX(6px)}60%{transform:translateX(-4px)}80%{transform:translateX(4px)}}
-
-.numseq-panel .finish{background:rgba(255,255,255,.1)!important;border:1px solid rgba(255,255,255,.22)!important}
-.numseq-panel .finish strong,.numseq-panel .finish p,.numseq-panel .finish .hint{color:#f3eeff!important}
+.numseq-card:disabled:not(.ok):not(.bad){opacity:.82}
+.numseq-card.ok{background:linear-gradient(180deg,#46cf93,#2fb67c);box-shadow:0 5px 0 var(--green-d);opacity:1}
+.numseq-card.bad{background:linear-gradient(180deg,#ff7b7b,#e9494f);box-shadow:0 5px 0 #b3282e;opacity:1;animation:numseqShake .45s}
+@keyframes numseqShake{0%,100%{transform:translateX(0)}20%{transform:translateX(-7px)}40%{transform:translateX(7px)}60%{transform:translateX(-5px)}80%{transform:translateX(5px)}}

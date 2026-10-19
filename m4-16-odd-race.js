@@ -21,31 +21,43 @@ const H={
   arctic:["2744","26c4","1f9ca","1f427","2603"],ocean:["1f41f","1f420","1f419","1f980","1f42c"],
   tropic:["1f334","1f965","1f99c","1f34d","1f412"]
 };
-const COLORFUL=[...G.fruits,...G.balls,...G.vehicles,"1f420","1f98b"];
-const ASYM=[...G.vehicles,...G.sea,"1f41f","1f986","1f426"];
-const MODES=["category","habitat","color","mirror"];
+const ASYM=["1f697","1f695","1f68c","1f693","1f691","1f692","1f69c","1f41f","1f420","1f421","1f42c","1f433","1f988","1f986","1f426","1f985"];
+const MODES=["category","habitat","shape"];
 
 const currentRoom=()=>location.hash.match(/^#room=([A-Z2-9]{8})$/)?.[1]||'';
 const childName=()=>String(shared?.childName||'رقية');
 const now=()=>Date.now()+(Number(serverOffset)||0);
 const timeFor=n=>Math.max(8000,16000-n*600);
 function rng(a){return()=>{a|=0;a=a+0x6D2B79F5|0;let t=Math.imul(a^a>>>15,1|a);t=t+Math.imul(t^t>>>7,61|t)^t;return((t^t>>>14)>>>0)/4294967296}}
+/* seeded shuffle — must consume the same R() stream so both devices build identical boards (§2 shared seed) */
+function shuf(R,a){const b=[...a];for(let i=b.length-1;i>0;i--){const j=Math.floor(R()*(i+1));[b[i],b[j]]=[b[j],b[i]]}return b}
 function build(seed,n){
   const R=rng(seed),pick=a=>a[Math.floor(R()*a.length)];
-  const size=Math.min(4+Math.floor((n-1)/2),6),total=size*size,mode=pick(MODES),delta=Math.max(14,70-n*6)*(R()<.5?-1:1);
+  const size=Math.min(4+Math.floor((n-1)/2),6),total=size*size;
+  const pool=n<3?["category","habitat"]:n<5?["category","habitat","habitat"]:["category","habitat","shape","shape"];
+  const mode=pick(pool);
   let main=()=>"",odd="",base=null;
-  if(mode==="category"){const l=pick(LINKS);main=()=>pick(G[l[0]]);odd=pick(G[l[1]])}
-  else if(mode==="habitat"){const k=Object.keys(H),a=pick(k),b=pick(k.filter(x=>x!==a));main=()=>pick(H[a]);odd=pick(H[b])}
-  else{base=pick(mode==="color"?COLORFUL:ASYM);main=()=>base;odd=base}
+  if(mode==="category"){
+    const l=pick(LINKS),from=G[l[0]],others=G[l[1]];
+    const kinds=shuf(R,from).slice(0,Math.min(3,from.length));
+    const oddImg=pick(others.filter(x=>!kinds.includes(x)));
+    main=()=>pick(kinds); odd=oddImg;
+  }else if(mode==="habitat"){
+    const k=Object.keys(H),a=pick(k),b=pick(k.filter(x=>x!==a));
+    const kinds=shuf(R,H[a]).slice(0,Math.min(3,H[a].length));
+    const oddImg=pick(H[b].filter(x=>!kinds.includes(x)));
+    main=()=>pick(kinds); odd=oddImg;
+  }else{
+    base=pick(ASYM);main=()=>base;odd=base;
+  }
   const cells=[];
   for(let i=0;i<total;i++){
-    const c={c:main(),rot:(R()-.5)*16,sc:.86+R()*.2,f:"",flip:false};
-    if(mode==="color")c.f=`hue-rotate(${((R()-.5)*Math.abs(delta)*.5).toFixed(1)}deg)`;
+    const c={c:main(),rot:(R()-.5)*10,sc:.9+R()*.12,flip:false};
     cells.push(c);
   }
   const o=Math.floor(R()*total);cells[o].c=odd;
-  if(mode==="color")cells[o].f=`hue-rotate(${delta}deg)`;
-  if(mode==="mirror")cells[o].flip=true;
+  if(mode==="shape")cells[o].flip=true;
+  cells[o].rot=(R()-.5)*6;cells[o].sc=.94+R()*.1;
   return{size,cells,odd:o,mode};
 }
 function seed(){
@@ -123,7 +135,7 @@ function upgradeCard(){
   card.setAttribute('data-odd-v2-start','');
   const title=card.querySelector('strong'),desc=card.querySelector('small');
   if(title&&title.textContent!=='مين المختلف؟')title.textContent='مين المختلف؟';
-  const wanted='سباق تركيز • أول واحد لـ ٧ نقاط';
+  const wanted='سباق تركيز • فرق واضح • أول واحد لـ ٧ نقاط';
   if(desc&&desc.textContent!==wanted)desc.textContent=wanted;
 }
 function ensureOverlay(){
@@ -137,7 +149,7 @@ function sendConfig(){
   const g=shared?.oddV2;
   if(!frame?.contentWindow||shared?.game!=='odd-v2'||!g||!role)return;
   frame.contentWindow.postMessage({type:'roqaya-odd-config',config:{
-    role,childName:childName(),roundId:Number(g.roundId)||Number(shared.round)||0,round:g.round||null,
+    role,childName:childName(),childAge:Number(shared?.childAge)||6,roundId:Number(g.roundId)||Number(shared.round)||0,round:g.round||null,
     scores:g.scores||{host:0,guest:0},champion:g.champion||null,winScore:Number(g.winScore)||WIN_SCORE,
     serverOffset:Number(serverOffset)||0
   }},location.origin);
