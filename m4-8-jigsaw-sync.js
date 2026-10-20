@@ -116,7 +116,7 @@ function ensureOverlay(){
   overlay.id='jigsaw-sync-overlay';
   overlay.className='jigsaw-sync-overlay';
   overlay.hidden=true;
-  overlay.innerHTML=`<iframe class="jigsaw-sync-frame" src="jigsaw-game.html?v=4" title="لعبة تكوين الصور" loading="eager"></iframe>`;
+  overlay.innerHTML=`<iframe class="jigsaw-sync-frame" src="jigsaw-game.html?v=5" title="لعبة تكوين الصور" loading="eager"></iframe>`;
   screen.insertAdjacentElement('afterend',overlay);
   frame=overlay.querySelector('iframe');
   frame.addEventListener('load',()=>sendConfig());
@@ -170,7 +170,7 @@ async function placePiece(piece,roundId){
     }};
   });
 }
-async function newRound(n){
+async function newRound(n,keepImage){
   if(role!=='host')return;
   n=VALID_N.has(Number(n))?Number(n):3;
   try{localStorage.setItem('roqaya-jigsaw-n',String(n))}catch{}
@@ -178,7 +178,12 @@ async function newRound(n){
     if(old.game!=='jigsaw')return;
     const nextRound=(Number(old.round)||0)+1;
     let imageIndex=secureInt(LEVELS);
-    if(old.jigsawSync&&LEVELS>1&&imageIndex===old.jigsawSync.imageIndex)imageIndex=(imageIndex+1)%LEVELS;
+    /* [M13] لو التغيير بسبب عدد القطع، نحافظ على نفس الصورة */
+    if(keepImage&&old.jigsawSync&&Number.isInteger(Number(old.jigsawSync.imageIndex))){
+      imageIndex=Number(old.jigsawSync.imageIndex);
+    }else if(old.jigsawSync&&LEVELS>1&&imageIndex===old.jigsawSync.imageIndex){
+      imageIndex=(imageIndex+1)%LEVELS;
+    }
     return {...old,round:nextRound,phase:'playing',jigsawSync:{
       v:3,roundId:nextRound,imageIndex,n,seed:secureInt(0x7fffffff)+1,placed:{},
       turn:nextRound%2===0?'guest':'host',
@@ -230,7 +235,7 @@ addEventListener('message',e=>{
   if(e.data?.type==='roqaya-jigsaw-ready'){sendConfig();return}
   if(e.data?.type==='roqaya-jigsaw-piece'){placePiece(Number(e.data.piece),Number(e.data.roundId));return}
   if(e.data?.type==='roqaya-jigsaw-cheer'){sendCheer(Number(e.data.roundId));return}
-  if(e.data?.type==='roqaya-jigsaw-new'){newRound(Number(e.data.n));return}
+  if(e.data?.type==='roqaya-jigsaw-new'){newRound(Number(e.data.n),Boolean(e.data.keepImage));return}
   if(e.data?.type==='roqaya-jigsaw-city'){goLobby();return}
 });
 const observer=new MutationObserver(()=>{
