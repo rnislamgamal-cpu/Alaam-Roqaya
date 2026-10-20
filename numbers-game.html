@@ -1,0 +1,745 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>افهم الأعداد</title>
+<style>
+:root{--bg:#e6f0ff;--ink:#1e1b4b;--acc:#6d4ce0;--gold:#f0b429;--green:#22c55e;--pink:#db2777;--blue:#2563eb;--line:#c7d2fe}
+*{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+html,body{margin:0;height:100%}
+body{display:flex;flex-direction:column;height:100svh;overflow:hidden;background:var(--bg);color:var(--ink);font-family:"Segoe UI",Tahoma,"Noto Sans Arabic",sans-serif;user-select:none}
+main{flex:1 1 auto;display:flex;flex-direction:column;min-height:0;width:100%;max-width:660px;margin:0 auto;align-items:center;gap:4px;padding:4px 8px 66px}
+h1{margin:0;font-size:1.15rem;font-weight:900;text-align:center}
+.hide{display:none!important}
+
+/* شريط اللاعبين */
+#hud{width:100%;display:grid;grid-template-columns:1fr 1fr;gap:6px}
+.pl{display:flex;align-items:center;gap:6px;min-width:0;padding:3px 8px;border:3px solid var(--c);border-radius:12px;background:#fff;font-weight:800;font-size:.8rem}
+.pl b{overflow:hidden;text-overflow:ellipsis;white-space:nowrap;font-size:.68rem}
+.pl span{margin-inline-start:auto;white-space:nowrap;font-size:.9rem}
+.pl.lead{box-shadow:0 0 0 3px #ffd76a inset}
+.you{color:var(--acc)}
+#info{width:100%;text-align:center;font-weight:800;font-size:.72rem;color:#4b4376;min-height:1.2em}
+#ladder{display:flex;gap:3px;justify-content:center;align-items:center}
+#ladder i{width:12px;height:12px;border-radius:50%;background:#d8d2f2;border:2px solid #fff}
+#ladder i.on{background:var(--gold)}
+#banner{width:100%;text-align:center;font-weight:900;font-size:.9rem;min-height:1.3em;color:var(--ink)}
+
+/* منطقة اللعب */
+#play{flex:1 1 auto;display:flex;flex-direction:column;align-items:center;justify-content:flex-start;gap:6px;width:100%;min-height:0}
+#play.watch .opt,#play.watch .cell,#play.watch .ocard,#play.watch .twrap,#play.watch .mcard{pointer-events:none;opacity:.75}
+.idle{margin-top:8vh;font-weight:900;font-size:1rem;color:#6b6398}
+.q-prompt{font-weight:900;font-size:1.05rem;text-align:center;line-height:1.5}
+.q-art{width:100%;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:6px}
+#note{font-weight:800;font-size:.8rem;color:#5b5390;text-align:center;min-height:1.2em;background:#fff;border-radius:10px;padding:3px 8px;max-width:100%}
+#hint{font-weight:800;font-size:.72rem;color:#6b6398;text-align:center;min-height:1.1em}
+.opts{display:grid;grid-template-columns:repeat(3,1fr);gap:7px;width:100%;max-width:560px}
+.opts.n2{grid-template-columns:repeat(2,1fr)}
+.opts.n4,.opts.n5{grid-template-columns:repeat(2,1fr)}
+.opts.n5{gap:6px}
+.opts.n5 .opt{min-height:64px;font-size:1.15rem}
+.opt{min-height:74px;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:4px;padding:8px;border:3px solid var(--line);border-radius:16px;background:#fff;color:var(--ink);font:inherit;font-weight:900;font-size:1.25rem;cursor:pointer;box-shadow:0 4px 0 #c9d6ef;transition:transform .12s}
+.opt:active{transform:translateY(2px)}
+.opt .oe{font-size:1.5rem}
+.opt.good{background:#dcfce7;border-color:var(--green);box-shadow:0 4px 0 #86efac}
+.opt.dim{opacity:.4}
+.shk{animation:shk .4s}
+@keyframes shk{0%,100%{transform:translateX(0)}25%{transform:translateX(-6px)}75%{transform:translateX(6px)}}
+
+/* ميزان */
+.balw{width:100%;max-width:420px;margin:2px auto}
+.beam{display:flex;align-items:center;justify-content:space-between;gap:4px;transform:rotate(var(--t,0deg));transition:transform .6s ease}
+.pan{flex:1 1 0;min-width:0;min-height:74px;display:flex;flex-direction:column;align-items:center;justify-content:flex-end;background:#fff;border:3px solid var(--line);border-radius:14px;padding:4px;font-size:1.05rem;word-break:break-all;line-height:1.15;transform:rotate(calc(-1*var(--t,0deg)));transition:transform .6s ease}
+.mid{font-size:1.5rem;flex:0 0 auto}
+
+/* مجموعتين */
+.sets{display:flex;flex-direction:column;gap:6px;width:100%;max-width:420px}
+.set{background:#fff;border:3px solid var(--line);border-radius:14px;padding:8px;font-size:1.5rem;letter-spacing:6px;text-align:center;word-break:break-all;line-height:1.3}
+.set.big{font-size:1.05rem;letter-spacing:3px;padding:6px}
+
+/* صفوف البسكويت */
+.rows{display:flex;flex-direction:column;gap:10px;width:100%;max-width:460px}
+.roww{background:#fff;border:3px solid var(--line);border-radius:14px;padding:10px 6px;font-size:1.35rem;text-align:center;direction:ltr}
+.roww.far{letter-spacing:16px}
+.roww.near{letter-spacing:2px}
+
+/* أباراج */
+.tows{display:flex;align-items:flex-end;justify-content:center;gap:18px;direction:ltr}
+.tow{display:flex;flex-direction:column-reverse;gap:2px;align-items:center}
+.blk{width:36px;height:13px;border-radius:4px;background:var(--gold);box-shadow:inset 0 -3px 0 rgba(0,0,0,.13)}
+.qm{font-size:1.6rem;font-weight:900}
+.tows2{display:flex;align-items:flex-end;justify-content:center;gap:26px;direction:ltr}
+.twrap{display:flex;flex-direction:column;align-items:center;gap:4px;padding:8px;border-radius:14px;border:3px solid transparent}
+.twrap.tappable{border-color:var(--green);background:#f0fdf4;cursor:pointer}
+.tn{font-weight:900;font-size:.95rem}
+
+/* فلوس */
+.coins{font-size:1.5rem;letter-spacing:4px;text-align:center;background:#fff;border:3px solid var(--line);border-radius:14px;padding:10px;max-width:420px;word-break:break-all;line-height:1.3}
+.prc{font-weight:900;font-size:1rem;background:#fff;border-radius:10px;padding:4px 10px;border:2px dashed var(--gold)}
+
+/* فقاعة الرقم */
+.bub{width:110px;height:110px;border-radius:50%;background:var(--acc);color:#fff;display:flex;align-items:center;justify-content:center;font-size:2.6rem;font-weight:900;box-shadow:0 6px 0 #4a30b0}
+
+/* هدية */
+.gift{font-size:3.4rem;position:relative;line-height:1}
+.gift .qm2{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;font-size:1.6rem;font-weight:900;color:var(--ink)}
+
+/* زحليقة */
+.slide{display:flex;flex-direction:column;align-items:center;gap:2px;font-weight:900}
+.slide .st{font-size:1.8rem;background:#fff;border:3px solid var(--line);border-radius:12px;padding:2px 14px}
+.slide .st.qm3{border-color:var(--gold);color:var(--gold)}
+.slide .ars{font-size:1.1rem;letter-spacing:6px}
+
+/* جسر */
+.bline{display:flex;flex-wrap:wrap;gap:4px;justify-content:center;max-width:460px}
+.bc{min-width:36px;height:36px;display:flex;align-items:center;justify-content:center;background:#fff;border:3px solid var(--line);border-radius:10px;font-weight:900}
+.bc.gap{border-color:var(--pink);color:var(--pink);background:#fdf2f8}
+
+/* خط الأعداد */
+.cells{display:flex;flex-wrap:wrap;gap:5px;justify-content:center;max-width:520px}
+.cell{min-width:42px;height:44px;border:3px solid var(--line);border-radius:10px;background:#fff;font:inherit;font-weight:900;font-size:1rem;cursor:pointer;color:var(--ink)}
+.cell.hit{border-color:var(--blue)}
+.cell.lit{background:#fef3c7;border-color:var(--gold)}
+
+/* أرانب */
+.lanes{display:flex;flex-direction:column;gap:8px;width:100%;max-width:460px}
+.lane{display:flex;align-items:center;gap:6px;background:#fff;border:3px solid var(--line);border-radius:14px;padding:6px 10px;direction:ltr}
+.lane .an{font-size:1.4rem}
+.lane .dots{flex:1 1 auto;font-size:1.1rem;letter-spacing:3px;color:var(--blue);overflow:hidden;white-space:nowrap}
+.lane .fin{font-weight:900;font-size:1.1rem}
+
+/* خط البيت البعيد */
+.fline{display:flex;flex-wrap:wrap;gap:4px;justify-content:center;max-width:520px}
+.fc{min-width:36px;height:36px;display:flex;align-items:center;justify-content:center;background:#fff;border:3px solid var(--line);border-radius:10px;font-weight:900}
+.fc.home{background:#fef3c7;border-color:var(--gold)}
+.fc.ax{background:#dbeafe;border-color:var(--blue)}
+.fc.ay{background:#fce7f3;border-color:var(--pink)}
+
+/* كروت الترتيب */
+.cards{display:flex;flex-wrap:wrap;gap:8px;justify-content:center}
+.ocard{min-width:82px;min-height:92px;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:2px;border:3px solid var(--line);border-radius:16px;background:#fff;font:inherit;cursor:pointer;box-shadow:0 4px 0 #c9d6ef;color:var(--ink)}
+.ocard b{font-size:1.9rem}
+.ocard i{font-style:normal;font-size:1.2rem}
+.cards.sm .ocard{min-width:64px;min-height:76px}
+.cards.sm .ocard b{font-size:1.5rem}
+.ocard.pick{background:#dcfce7;border-color:var(--green);box-shadow:none;transform:translateY(-4px)}
+
+/* تمساح */
+.croc{display:flex;align-items:center;justify-content:center;gap:14px;direction:ltr}
+.croc .num{font-size:2rem;font-weight:900;background:#fff;border:3px solid var(--line);border-radius:14px;padding:8px 16px}
+.croc .cface{font-size:3rem;transition:transform .4s}
+.croc .cface.eatL{transform:scaleX(-1)}
+.croc .cface.sleep{transform:rotate(90deg)}
+
+/* نرد */
+.dice{display:flex;gap:14px;align-items:center;justify-content:center}
+.die{display:grid;grid-template-columns:repeat(3,16px);grid-template-rows:repeat(3,16px);gap:3px;background:#fff;border:3px solid var(--line);border-radius:12px;padding:6px}
+.die i{width:16px;height:16px;border-radius:50%;background:#eceafd}
+.die i.on{background:var(--ink)}
+
+/* تنين */
+.drag{font-size:3rem}
+
+/* سرعة */
+#flash{display:flex;gap:26px;align-items:center;justify-content:center}
+.fnum{font-size:3rem;font-weight:900;background:#fff;border:3px solid var(--line);border-radius:16px;padding:6px 22px;transition:opacity .3s}
+#flash.hid .fnum{font-size:0;color:transparent;position:relative}
+#flash.hid .fnum::after{content:'؟';font-size:2rem;color:var(--ink)}
+
+/* ذاكرة */
+.mem{display:grid;grid-template-columns:repeat(4,minmax(58px,74px));gap:8px;justify-content:center}
+.mcard{position:relative;height:84px;border:0;background:transparent;cursor:pointer;perspective:500px}
+.mcard .mf,.mcard .mb{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;border-radius:14px;border:3px solid var(--line);font-weight:900;font-size:1.6rem;backface-visibility:hidden;transition:transform .25s}
+.mcard .mf{background:var(--acc);color:#fff;box-shadow:0 4px 0 #4a30b0}
+.mcard .mb{background:#fff;color:var(--ink);transform:rotateY(180deg)}
+.mcard.flip .mf{transform:rotateY(180deg)}
+.mcard.flip .mb{transform:rotateY(360deg)}
+
+/* شاشة الفوز */
+#won{position:fixed;inset:0;z-index:70;display:none;flex-direction:column;align-items:center;justify-content:center;gap:10px;padding:16px;text-align:center;background:rgba(255,255,255,.95)}
+#won.show{display:flex}
+#won p{margin:0;font-weight:900;font-size:1.25rem;line-height:1.7}
+#won .sc{font-size:1rem;color:#5b5390}
+
+/* الشريط السفلي الموحّد */
+.footer-bar{position:fixed;bottom:0;left:50%;transform:translateX(-50%);z-index:60;width:100%;max-width:660px;display:flex;flex-wrap:wrap;justify-content:center;align-items:center;gap:6px;padding:6px 4px max(8px,env(safe-area-inset-bottom));background:linear-gradient(180deg,rgba(255,255,255,0),rgba(255,255,255,.97) 34%)}
+.footer-bar button{min-height:42px;padding:8px 14px;border:2px solid var(--line);border-radius:12px;background:#fff;color:var(--ink);font:inherit;font-size:.78rem;font-weight:900;cursor:pointer;box-shadow:0 3px 0 #c9d6ef}
+.footer-bar button.primary{background:var(--acc);color:#fff;border-color:#4a30b0;box-shadow:0 3px 0 #37248f}
+.footer-bar button:disabled{opacity:.45;cursor:default}
+
+/* توست */
+#toast{position:fixed;left:50%;bottom:76px;z-index:99;max-width:90%;padding:8px 14px;border-radius:99px;background:var(--ink);color:#fff;font-weight:800;font-size:.76rem;opacity:0;transform:translate(-50%,10px);transition:opacity .25s,transform .25s;pointer-events:none}
+#toast.show{opacity:1;transform:translate(-50%,0)}
+
+/* قصاصات */
+#conf{position:fixed;inset:0;pointer-events:none;z-index:80}
+#conf i{position:absolute;top:26%;width:10px;height:14px;border-radius:2px;animation:fall .95s forwards}
+@keyframes fall{to{transform:translateY(52vh) rotate(320deg);opacity:0}}
+
+@media (prefers-reduced-motion:reduce){.beam,.pan,.opt,.mcard .mf,.mcard .mb,#conf i{animation:none!important;transition:none!important}}
+@media (max-width:520px){
+  .opt{min-height:64px;font-size:1.05rem}
+  .cell{min-width:36px;height:38px;font-size:.9rem}
+  .blk{width:30px;height:11px}
+  .ocard{min-width:68px;min-height:78px}
+  .fnum{font-size:2.4rem;padding:4px 16px}
+}
+@media (max-height:640px){
+  h1{font-size:1rem}
+  .q-prompt{font-size:.95rem}
+  .opt{min-height:58px}
+}
+</style>
+</head>
+<body>
+<main>
+  <h1>🔢 افهم الأعداد</h1>
+  <div id="hud"></div>
+  <div id="info"></div>
+  <div id="ladder"></div>
+  <div id="banner"></div>
+  <div id="play"></div>
+  <div id="hint"></div>
+</main>
+<div class="footer-bar">
+  <button id="mute" type="button" aria-label="الصوت">🔊</button>
+  <button id="next" class="primary" type="button">السؤال التالي ◀</button>
+  <button id="redo" type="button">إعادة السؤال ↻</button>
+  <button id="lvl" type="button">🌱 سهل</button>
+  <button id="new" class="primary hide" type="button">جولة جديدة 🔄</button>
+  <button id="city" type="button">🎡 المدينة</button>
+</div>
+<div id="won"><p id="wmsg"></p></div>
+<div id="toast" role="status"></div>
+<div id="conf"></div>
+<script>
+/* ===== «افهم الأعداد» — مقارنة الأرقام وفهم العلاقات — ملف واحد self-contained =====
+ * التوجيه: بابا (host) يتحكم — سؤال جديد/إعادة/المستوى/جولة جديدة/المدينة (§4).
+ * بالتناوب: كل سؤال دور إما لبابا أو لرقية، والتاني يشاهد فقط (§3).
+ * Seed مشترك: نفس الجولة + نفس السؤال + نفس الترتيب على الجهازين (§5 · mulberry32).
+ * لا TTS — Web Audio فقط (§6) · لا صور وقت التشغيل (§7) · لا سكرول (§9).
+ * المزامنة في ملف منفصل m4-27-numbers-sync.js — هذا الملف لا يعرف Firebase.
+ */
+const $ = s => document.querySelector(s);
+const E = '٠١٢٣٤٥٦٧٨٩', D = n => String(n).replace(/\d/g, d => E[d]);
+const esc = s => String(s).replace(/[&<>"']/g, c => '&#' + c.charCodeAt(0) + ';');
+const post = (type, extra) => { try { parent.postMessage({ type, roundId: S.roundId, ...extra }, location.origin); } catch {} };
+function mulberry32(a){ return function(){ a |= 0; a = a + 0x6D2B79F5 | 0; let t = Math.imul(a ^ a >>> 15, 1 | a); t = t + Math.imul(t ^ t >>> 7, 61 | t) ^ t; return ((t ^ t >>> 14) >>> 0) / 4294967296; }; }
+const ri = (R, a, b) => a + Math.floor(R() * (b - a + 1));
+const rep = (e, n) => e.repeat(Math.max(0, n));
+function shuf(R, arr){ const a = arr.slice(); for (let i = a.length - 1; i > 0; i--){ const j = Math.floor(R() * (i + 1)); [a[i], a[j]] = [a[j], a[i]]; } return a; }
+let toastT = 0;
+function toast(m){ const t = $('#toast'); t.textContent = m; t.classList.add('show'); clearTimeout(toastT); toastT = setTimeout(() => t.classList.remove('show'), 2200); }
+
+/* ===== نظام المستويات: كل مستوى بيغيّر أصعب حاجة في السؤال نفسها =====
+   max   : أقصى رقم في الأسئلة           close: احتمال إن المخدّع يبقى جنب الإجابة (٠/٠٫٥/١)
+   sep   : أقل تباعد بين الكميات المقارنة  gap  : أقل فرق بين العددين المقارنين
+   eq    : احتمال حالة «بنفس العدد»        k    : [أصغر,أكبر] حجم خطوة ±k
+   cards : عدد كروت الترتيب               pairs: عدد أزواج الذاكرة
+   dmax  : أقصى فرق في أسئلة الطرح        win  : نافذة تجميع أسعار العربة (٠=منتشرة) */
+const LVL = {
+  1: { max: 5,  nopt: 3, close: 0,   sep: 2, gap: 2, eq: .10, k: [1, 1], cards: 3, pairs: 2, dmax: 3,  win: 0 },
+  2: { max: 10, nopt: 3, close: .5,  sep: 1, gap: 1, eq: .25, k: [1, 2], cards: 4, pairs: 3, dmax: 6,  win: 5 },
+  3: { max: 20, nopt: 4, close: 1,   sep: 1, gap: 0, eq: .40, k: [2, 4], cards: 5, pairs: 4, dmax: 10, win: 2 }
+};
+const LVL_NAME = { 1: '🌱 سهل', 2: '🌿 متوسط', 3: '🌳 تحدٍّ' };
+const C_ = L => LVL[L] || LVL[1];
+
+/* ===== الحالة ===== */
+let S = { role: 'host', childName: 'رقية', otherName: 'بابا', roundId: 0, seed: 1, level: 1, turnIndex: 1, totalTurns: 10, scores: { host: 0, guest: 0 }, champion: null };
+let Q = null, answered = false, soundOn = true, ac = null, readySent = false;
+const isHost = () => S.role === 'host';
+const me = () => (isHost() ? 'host' : 'guest');
+const other = () => (isHost() ? 'guest' : 'host');
+const myName = () => S.childName || 'رقية';
+const otherName = () => S.otherName || 'بابا';
+function nameOf(p){ return p === 'host' ? (isHost() ? myName() : otherName()) : (isHost() ? otherName() : myName()); }
+
+/* ===== Web Audio فقط (ممنوع speechSynthesis) ===== */
+function acOn(){ try { ac = ac || new (window.AudioContext || window.webkitAudioContext)(); if (ac.state === 'suspended') ac.resume(); } catch {} }
+document.addEventListener('pointerdown', acOn);
+function tone(f, at, d, type, v, f2){
+  if (!soundOn || !ac) return;
+  try {
+    const o = ac.createOscillator(), g = ac.createGain(), t = ac.currentTime + at;
+    o.type = type; o.frequency.setValueAtTime(f, t);
+    if (f2) o.frequency.exponentialRampToValueAtTime(f2, t + d);
+    g.gain.setValueAtTime(v, t); g.gain.exponentialRampToValueAtTime(.001, t + d);
+    o.connect(g); g.connect(ac.destination); o.start(t); o.stop(t + d);
+  } catch {}
+}
+const sfx = {
+  pick: () => tone(660, 0, .06, 'triangle', .12),
+  ok:   () => { tone(784, 0, .1, 'triangle', .2); tone(1047, .1, .18, 'triangle', .2); },
+  bad:  () => tone(233, 0, .16, 'sine', .08, 180),                 // لطيفة غير مخيفة (§6)
+  step: () => tone(523, 0, .07, 'triangle', .12),
+  win:  () => [523, 659, 784, 1047, 784, 1047, 1319].forEach((f, k) => tone(f, k * .12, .22, 'triangle', .11))
+};
+$('#mute').onclick = () => { soundOn = !soundOn; $('#mute').textContent = soundOn ? '🔊' : '🔇'; };
+
+/* ===== قصاصات احتفال خفيفة ===== */
+function celebrate(){
+  const box = $('#conf');
+  const cols = ['#f0b429', '#6d4ce0', '#22c55e', '#db2777', '#2563eb'];
+  for (let i = 0; i < 14; i++){
+    const p = document.createElement('i');
+    p.style.left = (6 + (i * 6.6)) + '%';
+    p.style.background = cols[i % 5];
+    p.style.animationDelay = (i % 5) * .05 + 's';
+    box.append(p);
+    setTimeout(() => p.remove(), 1300);
+  }
+}
+/* ===== بنك الأنشطة — كل نشاط = سؤال واحد (كل دور نشاط جديد) ===== */
+/* ===== مولّدات مشتركة — كلها seeded وبنفس ترتيب الـcalls على الجهازين ===== */
+function nums(R, ans, min, max, L){                 // خيارات: فيها الإجابة + مخدّعات على مدى المستوى
+  const C = C_(L), n = C.nopt, set = new Set([ans]);
+  const span = Math.max(1, max - min);
+  const wLo = Math.max(1, Math.ceil(span / 3)), wHi = Math.max(wLo, span); // مخدّع بعيد = واضح
+  const nLo = 1, nHi = Math.max(1, Math.min(2, span));                      // مخدّع قريب = مجاور بإشارة
+  let g = 0;
+  while (set.size < n && g++ < 500){
+    /* close = احتمال إن المخدّع يبقى جنب الإجابة: سهل ٠، متوسط نص، صعب دايم */
+    const near = R() < C.close;
+    const d = near ? ri(R, nLo, nHi) : ri(R, wLo, wHi);
+    let v = R() < .5 ? ans - d : ans + d;
+    if (v < min || v > max || v === ans) v = R() < .5 ? ans + d : ans - d;
+    if (v < min || v > max || v === ans) v = ri(R, min, max);
+    if (v !== ans) set.add(v);
+  }
+  let g2 = 0;
+  while (set.size < n && g2++ < 500){ const v = ri(R, min, max); if (v !== ans) set.add(v); }
+  return shuf(R, [...set]).map(v => ({ t: D(v), v, ok: v === ans }));
+}
+function pairDiff(R, C, lo, hi){                      // عدّدان: سهل=مختلفان بوضوح، صعب=متساويان أو بفارق واحد
+  const a = ri(R, lo, hi); let b = a, g = 0;
+  if (R() >= C.eq){ while (Math.abs(a - b) < C.gap && g++ < 400) b = ri(R, lo, hi); }
+  return [a, b];
+}
+function spreadSet(R, n, lo, hi, sep){                // n قيم متفرقة بحد أدنى للتباعد
+  const arr = []; let g = 0;
+  while (arr.length < n && g++ < 500){ const v = ri(R, lo, hi); if (arr.every(x => Math.abs(x - v) >= Math.max(1, sep))) arr.push(v); }
+  g = 0;
+  while (arr.length < n && g++ < 500){ const v = ri(R, lo, hi); if (!arr.includes(v)) arr.push(v); }
+  return arr;
+}
+function clusterSet(R, n, lo, hi, win){               // n قيم: صفر=منتشرة، وإلا متجمّعة في نافذة ضيقة
+  const arr = []; let g = 0;
+  if (win > 0){
+    const start = ri(R, lo, Math.max(lo, hi - win)), top = Math.min(hi, start + win);
+    while (arr.length < n && g++ < 500){ const v = ri(R, start, top); if (!arr.includes(v)) arr.push(v); }
+  }
+  while (arr.length < n && g++ < 500){ const v = ri(R, lo, hi); if (!arr.includes(v)) arr.push(v); }
+  return arr;
+}
+function cup(h){ return `<div style="width:54px;height:100px;border:3px solid #c7d2fe;border-top:0;border-radius:0 0 16px 16px;background:#fff;display:flex;align-items:flex-end;overflow:hidden"><div style="width:100%;height:${h}%;background:#7dd3fc"></div></div>`; }
+function cupsRow(lv){ return `<div style="display:flex;gap:16px;align-items:flex-end;direction:ltr">${lv.map((h, i) => `<div style="text-align:center">${cup(h)}<b>${D(i + 1)}</b></div>`).join('')}</div>`; }
+
+const ACT = {
+  /* — أ: أكتر/أقل/تساوي — */
+  balance: { e: '🎈', t: 'ميزان البالونات', make(R, L){
+    const C = C_(L), m = C.max, [a, b] = pairDiff(R, C, 2, m);
+    const c = a > b ? 'a' : b > a ? 'b' : 'e', tilt = c === 'a' ? -7 : c === 'b' ? 7 : 0;
+    return { kind: 'choice', prompt: 'مين أكتر من بالونات؟ 🎈', tilt,
+      art: `<div class="balw" style="direction:ltr"><div class="beam" style="--t:${tilt}deg"><div class="pan">${rep('🎈', a)}<span class="prc">${D(a)}</span></div><div class="mid">⚖️</div><div class="pan">${rep('🎈', b)}<span class="prc">${D(b)}</span></div></div></div>`,
+      opts: shuf(R, [{ t: 'الأيسر ⬅️', ok: c === 'a' }, { t: 'الأيمن ➡️', ok: c === 'b' }, { t: 'نفس العدد 🤝', ok: c === 'e' }]),
+      note: c === 'e' ? 'الاتنين بنفس العدد — الميزان استوى! ⚖️' : `${D(Math.max(a, b))} أكتر من ${D(Math.min(a, b))}` }; } },
+  samecount: { e: '🐣', t: 'نفس العدد؟', make(R, L){
+    const C = C_(L), m = C.max, [a, b] = pairDiff(R, C, 2, m);
+    const c = a > b ? 'a' : b > a ? 'b' : 'e';
+    return { kind: 'choice', prompt: 'فيهم أكتر ولا بنفس العدد؟',
+      art: `<div style="display:flex;flex-direction:column;gap:8px;width:100%;max-width:420px"><div class="set${a > 10 ? ' big' : ''}">${rep('🐣', a)}</div><div class="set${b > 10 ? ' big' : ''}">${rep('🐥', b)}</div></div>`,
+      opts: shuf(R, [{ t: 'أكتر 🐣', ok: c === 'a' }, { t: 'أكتر 🐥', ok: c === 'b' }, { t: 'بنفس العدد 🤝', ok: c === 'e' }]),
+      note: c === 'e' ? 'نفس العدد! 🥰' : `في ${D(Math.max(a, b))}، والثاني ${D(Math.min(a, b))}` }; } },
+  cups: { e: '🥛', t: 'كوب الماء', make(R, L){
+    /* ارتفاعات المية: سهل=فروق واضحة، صعب=فروق صغيرة جداً — كلها بعيّنة seeded */
+    const sp = [0, 55, 32, 16][L] || 32, mid = ri(R, 40, 60);
+    const lv = shuf(R, [mid - sp / 2, mid, mid + sp / 2].map(x => Math.max(20, Math.min(95, Math.round(x)))));
+    const hi = lv.indexOf(Math.max(...lv));
+    return { kind: 'choice', prompt: 'أيّه أكتر مية؟ 🥛',
+      art: cupsRow(lv),
+      opts: shuf(R, [0, 1, 2].map(i => ({ t: 'الكوب ' + D(i + 1), ok: i === hi }))),
+      note: 'الكوب المليان أكتر مية هو الأكتر' }; } },
+  cookies: { e: '🍪', t: 'صينية البسكويت', make(R, L){
+    const C = C_(L), m = Math.min(C.max, 8), [a, b] = pairDiff(R, C, 2, m);
+    const c = a > b ? 'a' : b > a ? 'b' : 'e';
+    return { kind: 'choice', prompt: 'أيّ صف أكتر بسكويت؟ 🍪',
+      art: `<div style="display:flex;flex-direction:column;gap:10px;width:100%;max-width:440px"><div class="set" style="letter-spacing:10px">${rep('🍪', a)}</div><div class="set" style="letter-spacing:2px">${rep('🍪', b)}</div></div>`,
+      opts: shuf(R, [{ t: 'الأول ⬆️', ok: c === 'a' }, { t: 'التاني ⬇️', ok: c === 'b' }, { t: 'بنفس العدد 🤝', ok: c === 'e' }]),
+      note: c === 'e' ? 'الصفوف بنفس العدد رغم الشكل المختلف — ممتاز! ⭐' : `في ${D(Math.max(a, b))} بسكويت` }; } },
+
+  /* — ب: الفرق — */
+  missing: { e: '🏗️', t: 'ينقصنا كام؟', make(R, L){
+    const C = C_(L), m = Math.min(C.max, 12);
+    const big = ri(R, 3, m), small = ri(R, Math.max(1, big - C.dmax), big - 1), d = big - small;
+    return { kind: 'choice', prompt: 'ينقص البرج القصير كام طوبة عشان يستووا؟ 🏗️',
+      art: `<div style="display:flex;gap:20px;align-items:flex-end;direction:ltr"><div style="text-align:center">${rep('🧱', big)}<br><span class="prc">${D(big)}</span></div><div style="text-align:center">${rep('🧱', small)}<br><span class="prc">${D(small)}</span></div></div>`,
+      opts: nums(R, d, 1, m, L), note: `${D(big)} ناقص ${D(small)} = ${D(d)}` }; } },
+  towers: { e: '🧱', t: 'البرجين', kind: 'towers', make(R, L){
+    const C = C_(L), m = Math.min(C.max, 10);
+    const hi = ri(R, 4, m), lo = ri(R, Math.max(1, hi - C.dmax), hi - 1);
+    return { kind: 'towers', prompt: 'لمس البرج القصير يزوّد طوبة — كم ينقصه عشان يستووا؟ 🧱', a: hi, b: lo,
+      note: 'استووا! البرجين بقوا زي بعض 🎉' }; } },
+  coins: { e: '🐱', t: 'فلوس القطة', make(R, L){
+    const C = C_(L), m = C.max;
+    const have = ri(R, 1, m - 1), price = ri(R, have + 1, Math.min(m, have + C.dmax)), d = price - have;
+    return { kind: 'choice', prompt: `القطة عندها ${D(have)} 🪙 ولعبة بـ${D(price)} — ناقصها كام؟`,
+      art: `<div style="text-align:center;font-size:1.5rem">${rep('🪙', have)}</div><div class="prc">🧸 بـ${D(price)} فلّوس</div>`,
+      opts: nums(R, d, 1, m), note: `${D(price)} − ${D(have)} = ${D(d)}` }; } },
+
+  /* — ج: قبل/بعد/±١ — */
+  neighbor: { e: '➕', t: 'الجار المدلل', make(R, L){
+    const C = C_(L), m = C.max;
+    /* سهل: جار بـ١ | متوسط: ±١ و±٢ | صعب: ±٢ و±٣ — أي سؤال أعقد */
+    const vs = [
+      { p: `مين الجار اللي بعد ${D(0)}؟`, d: 1 },
+      { p: `مين الجار اللي قبل ${D(0)}؟`, d: -1 }
+    ];
+    if (L >= 2){ vs.push({ p: `بعد ${D(0)} بـ${D(2)} كام؟`, d: 2 }, { p: `قبل ${D(0)} بـ${D(2)} كام؟`, d: -2 }); }
+    if (L >= 3){ vs.push({ p: `بعدها بـ${D(3)} كام؟`, d: 3 }, { p: `قبلها بـ${D(3)} كام؟`, d: -3 }); }
+    const V = vs[ri(R, 0, vs.length - 1)];
+    const n = ri(R, 1 + Math.abs(V.d), m - Math.abs(V.d)), ans = n + V.d;
+    return { kind: 'choice', prompt: V.p.replace(D(0), D(n)),
+      art: `<div class="bub">${D(n)}</div>`, opts: nums(R, ans, 1, m, L),
+      note: V.d === 1 || V.d === -1 ? `الجار بيبعد عنه بواحدة واحدة فقط` : `بنعد ${D(Math.abs(V.d))} خطوات ${V.d > 0 ? 'للوصول' : 'للاسترجاع'}` }; } },
+  hide: { e: '🔦', t: 'مين يخفي؟', make(R, L){
+    const C = C_(L), m = C.max, k = ri(R, C.k[0], C.k[1]);
+    const big = R() < .5, x = big ? ri(R, 1, m - k) : ri(R, k + 1, m), ans = big ? x + k : x - k;
+    return { kind: 'choice', prompt: big ? `الرقم أكبر من ${D(x)} بـ${D(k)} — أيّه هو؟ 🔦` : `الرقم أصغر من ${D(x)} بـ${D(k)} — أيّه هو؟ 🔦`,
+      art: `<div style="font-size:3rem">🎁<span style="font-weight:900">؟</span></div>`, opts: nums(R, ans, 1, m, L),
+      note: big ? `${D(x)} + ${D(k)} = ${D(ans)}` : `${D(x)} − ${D(k)} = ${D(ans)}` }; } },
+  slide: { e: '🧗', t: 'زحليقة الأعداد', make(R, L){
+    const C = C_(L), m = C.max, k = ri(R, C.k[0], C.k[1]);
+    const start = ri(R, 1 + k, m - k), down = R() < .55, ans = down ? start - k : start + k;
+    return { kind: 'choice', prompt: `زحّلت من ${D(start)} ${down ? 'لتحت' : 'لأعلى'} ${D(k)} درجة — وصلت لكام؟ 🧗`,
+      art: `<div class="bub">${D(start)}</div><div style="font-size:1.6rem">${down ? '⬇️' : '⬆️'}</div>`,
+      opts: nums(R, ans, 1, m, L), note: down ? `${D(start)} − ${D(k)} = ${D(ans)}` : `${D(start)} + ${D(k)} = ${D(ans)}` }; } },
+  bridge: { e: '🌉', t: 'الجسر المقطوع', make(R, L){
+    /* سهل ومتوسط: عدّاد ١،٢،٣… | صعب أحياناً: سلسلة بقفزات ٢ — أعقد */
+    const C = C_(L), step = (L === 3 && R() < .35) ? 2 : 1;
+    const m = Math.min(C.max, step === 1 ? 12 : 10);
+    const size = step === 1 ? m : Math.floor(m / 2);
+    const gap = ri(R, 2, Math.max(2, size - 1));
+    let chain = ''; for (let i = 1; i <= size; i++) chain += i === gap ? ' <b style="color:#db2777">❓</b> ' : ' <b>' + D(i * step) + '</b> ';
+    return { kind: 'choice', prompt: 'الجسر وقع عند أيّ رقم؟ 🌉', art: `<div class="set" style="font-size:1.4rem">${chain}</div>`,
+      opts: nums(R, gap * step, step, size * step, L), note: `السلسلة: ${D((gap - 1) * step)} ثم ${D(gap * step)} ثم ${D((gap + 1) * step)}` }; } },
+
+  /* — د: خط الأعداد والمسافة — */
+  line: { e: '🐱', t: 'التمساح على الخط', kind: 'line', make(R, L){
+    const C = C_(L), m = C.max;
+    /* سهل: السؤال مباشر | متوسط/صعب: الرقم بتاعه وصف غير مباشر — أعقد */
+    const indirect = (L === 2 && R() < .4) || (L === 3 && R() < .65);
+    let n = ri(R, 1, m), label = D(n);
+    if (indirect){
+      const k = ri(R, 1, Math.min(3, Math.max(1, m - 2)));
+      const ref = ri(R, 1 + k, m - k), up = R() < .5;
+      n = up ? ref + k : ref - k;
+      label = (up ? 'اللي بعد ' : 'اللي قبل ') + D(ref) + ' بـ' + D(k);
+    }
+    return { kind: 'line', prompt: `حطّ التمساح عند ${label} 🐊`, n, m, note: `وصلنا للرقم ${D(n)}!` }; } },
+  rabbits: { e: '🏁', t: 'سباق الأرانب', make(R, L){
+    const C = C_(L), [a, b] = pairDiff(R, C, 1, C.max);
+    const c = a > b ? 'a' : b > a ? 'b' : 'e';
+    return { kind: 'choice', prompt: 'مين أبعد عن خط النهاية؟ 🏁',
+      art: `<div style="display:flex;flex-direction:column;gap:8px;width:100%;max-width:420px"><div class="set${a > 10 ? ' big' : ''}">🐰${rep('🐾', a)}</div><div class="set${b > 10 ? ' big' : ''}">🦊${rep('🐾', b)}</div></div>`,
+      opts: shuf(R, [{ t: '🐰 الأرنب', ok: c === 'a' }, { t: '🦊 الثعلب', ok: c === 'b' }, { t: 'بنفس المسافة 🤝', ok: c === 'e' }]),
+      note: c === 'e' ? 'وصلوا بنفس المسافة 🤝' : `مشي ${D(Math.max(a, b))} خطوة` }; } },
+  far: { e: '📏', t: 'مين بعيد أكتر؟', make(R, L){
+    const C = C_(L), m = C.max, home = ri(R, 3, m - 2);
+    /* فرق المسافتين: سهل فرق كبير، صعب فرق خطوة واحدة */
+    let x = ri(R, 1, m), y = ri(R, 1, m), g = 0;
+    while ((Math.abs(Math.abs(x - home) - Math.abs(y - home)) < C.gap + 1 || x === home || y === home) && g++ < 400){ x = ri(R, 1, m); y = ri(R, 1, m); }
+    const fx = Math.abs(x - home), fy = Math.abs(y - home), c = fx > fy ? 'x' : 'y';
+    return { kind: 'choice', prompt: 'مين أبعد عن البيت؟ 🏠',
+      art: `<div class="set" style="font-size:1.3rem">🏠 عند ${D(home)} &nbsp;•&nbsp; ⭐ عند ${D(x)} &nbsp;•&nbsp; 🎈 عند ${D(y)}</div>`,
+      opts: shuf(R, [{ t: '⭐ ' + D(x), ok: c === 'x' }, { t: '🎈 ' + D(y), ok: c === 'y' }]),
+      note: `المسافة بالخطوات هي الفرق عن البيت` }; } },
+
+  /* — هـ: الترتيب — */
+  order: { e: '🎪', t: 'أيّهم الأول؟', kind: 'order', make(R, L){
+    const C = C_(L), set = new Set(); let g = 0;
+    while (set.size < C.cards && g++ < 300) set.add(ri(R, 1, C.max));
+    return { kind: 'order', prompt: 'لمسهم من الأصغر للكبير ⬆️', nums: shuf(R, [...set]), dir: 1, note: 'رتبناهم صح! ⭐' }; } },
+  queue: { e: '🐢', t: 'الطابور', kind: 'order', make(R, L){
+    const C = C_(L), set = new Set(); let g = 0;
+    while (set.size < C.cards && g++ < 300) set.add(ri(R, 1, C.max));
+    return { kind: 'order', prompt: 'رتبهم من الكبير لصغير ⬇️', nums: shuf(R, [...set]), dir: -1, note: 'الطابور كله اترتب! 🐢' }; } },
+
+  /* — و: التمساح وعلامات المقارنة — */
+  croc: { e: '🐊', t: 'تمساح جعان', make(R, L){
+    const C = C_(L), [a, b] = pairDiff(R, C, 1, C.max);
+    const c = a > b ? 'a' : b > a ? 'b' : 'e';
+    return { kind: 'choice', prompt: 'التمساح جعان — الفم بياكل أيّهم؟ 🐊',
+      art: `<div style="display:flex;gap:18px;align-items:center;direction:ltr"><div class="bub" style="width:84px;height:84px;font-size:2rem">${D(a)}</div><div style="font-size:2.6rem">🐊</div><div class="bub" style="width:84px;height:84px;font-size:2rem;background:#db2777">${D(b)}</div></div>`,
+      opts: shuf(R, [{ t: D(a) + ' ⬅️', ok: c === 'a' }, { t: '➡️ ' + D(b), ok: c === 'b' }, { t: 'نفس العدد 😴', ok: c === 'e' }]),
+      note: c === 'e' ? 'نفس العدد — التمساح مش جعان 😴' : `الفم بياكل الأكبر: ${D(Math.max(a, b))}` }; } },
+  cart: { e: '🛒', t: 'عربة التسوق', make(R, L){
+    const C = C_(L), want = R() < .5;
+    const arr = clusterSet(R, 3, 1, C.max, C.win); const best = want ? Math.min(...arr) : Math.max(...arr);
+    return { kind: 'choice', prompt: want ? 'هات الأرخص! 🛒' : 'هات الأكبر! 💰',
+      art: `<div class="set">🧸 ${D(arr[0])} &nbsp; 🎨 ${D(arr[1])} &nbsp; 🛁 ${D(arr[2])}</div>`,
+      opts: shuf(R, arr.map((v, i) => ({ t: ['🧸', '🎨', '🛁'][i] + ' ' + D(v), ok: v === best }))),
+      note: want ? 'الأرخص هو الأقل' : 'الأكبر هو الأغلى' }; } },
+
+  /* — ز: سرعة وذاكرة — */
+  quick: { e: '⚡', t: 'بسرعة أيّهم أكبر؟', make(R, L){
+    const C = C_(L), m = C.max;
+    let a = ri(R, 1, m), b = ri(R, 1, m), g = 0;
+    if (L === 3 && R() < .5) b = a < m ? a + 1 : a - 1;          // صعب: أرقام متجاورة
+    while (Math.abs(a - b) < Math.max(1, C.gap) && g++ < 400) b = ri(R, 1, m);
+    if (a === b) b = a < m ? a + 1 : a - 1;
+    return { kind: 'choice', prompt: 'بسرعة… أيّهم أكبر؟ ⚡',
+      art: `<div style="display:flex;gap:18px;align-items:center"><div class="bub" style="width:88px;height:88px;font-size:2.2rem">${D(a)}</div><div style="font-size:1.8rem">VS</div><div class="bub" style="width:88px;height:88px;font-size:2.2rem;background:#db2777">${D(b)}</div></div>`,
+      opts: shuf(R, [{ t: D(a) + ' ⬅️', ok: a > b }, { t: '➡️ ' + D(b), ok: b > a }]),
+      note: `${D(Math.max(a, b))} أكبر من ${D(Math.min(a, b))}` }; } },
+  memory: { e: '🃏', t: 'ذاكرة الأرقام', kind: 'memory', make(R, L){
+    const C = C_(L), m = Math.min(C.max, 10), set = new Set(); let g = 0;
+    while (set.size < C.pairs && g++ < 300) set.add(ri(R, 1, m));
+    return { kind: 'memory', prompt: 'اقلب الكروت ولاقي الأرقام المتشابهة 🃏', cards: shuf(R, [...set, ...set]), note: 'لاقيتهم كلهم! ذاكرة قوية ⭐' }; } },
+  dice: { e: '🎲', t: 'نردّين', make(R, L){
+    const C = C_(L), dmax = [0, 2, 3, 5][L] || 3;
+    const a = ri(R, 1, 6); let d = ri(R, 0, dmax);
+    let b = a - d >= 1 ? a - d : a + d; if (b > 6 || b < 1) b = a;
+    d = Math.abs(a - b);
+    let opts = nums(R, d, 0, 6, L);
+    if (d === 0) opts = opts.map(o => o.ok ? { t: '٠ — نفس العدد 🎲', ok: true } : o);
+    return { kind: 'choice', prompt: 'الفرق بين النردين كام؟ 🎲',
+      art: `<div style="display:flex;gap:18px;font-size:3rem;direction:ltr"><div class="bub" style="width:84px;height:84px;font-size:2.4rem">🎲</div><div>${D(a)} &nbsp;−&nbsp; ${D(b)}</div><div class="bub" style="width:84px;height:84px;font-size:2.4rem;background:#db2777">🎲</div></div>`,
+      opts, note: `${D(Math.max(a, b))} − ${D(Math.min(a, b))} = ${D(d)}` }; } },
+  power: { e: '🔢', t: 'قوّة الرقم', make(R, L){
+    const C = C_(L), m = C.max, k = ri(R, C.k[0], C.k[1]);
+    const inv = L >= 2 && R() < .4;                              // متوسط وصعب: عكس اتجاه السؤال
+    const x = inv ? ri(R, 1, m - k) : ri(R, k + 1, m), ans = inv ? x + k : x - k;
+    return { kind: 'choice', prompt: inv ? `الرقم ${D(x)} أصغر من كام بـ${D(k)}؟ 🔢` : `الرقم ${D(x)} أكبر من كام بـ${D(k)}؟ 🔢`,
+      art: `<div class="bub">${D(x)}</div>`, opts: nums(R, ans, 1, m, L),
+      note: inv ? `${D(x)} + ${D(k)} = ${D(ans)}` : `${D(x)} − ${D(k)} = ${D(ans)}` }; } },
+  dragon: { e: '🐉', t: 'التنين الجعان', make(R, L){
+    const C = C_(L), m = C.max, k = ri(R, C.k[0], C.k[1]);
+    const big = R() < .6, x = big ? ri(R, 1, m - k) : ri(R, k + 1, m), ans = big ? x + k : x - k;
+    return { kind: 'choice', prompt: big ? `التنين جعان — أعطه الرقم اللي أكبر من ${D(x)} بـ${D(k)} 🐉` : `التنين جعان — أعطه الرقم اللي أصغر من ${D(x)} بـ${D(k)} 🐉`,
+      art: `<div style="font-size:3rem">🐉🔥</div>`, opts: nums(R, ans, 1, m, L),
+      note: big ? `${D(x)} + ${D(k)} = ${D(ans)} — التنين اشبع!` : `${D(x)} − ${D(k)} = ${D(ans)} — التنين اشبع!` }; } }
+};
+const ACT_IDS = Object.keys(ACT);
+
+/* ===== اشتقاق السؤال من الـseed (نفس النتيجة على الجهازين) ===== */
+function roundOrder(seed){ return shuf(mulberry32((seed + 7717) >>> 0), ACT_IDS); }
+function activityFor(seed, turnIndex){ const o = roundOrder(seed); return o[(turnIndex - 1) % o.length]; }
+function questionFor(seed, turnIndex, level){ const id = activityFor(seed, turnIndex); const R = mulberry32((seed * 997 + turnIndex * 31 + 5) >>> 0); const q = ACT[id].make(R, level); q.id = id; q.emoji = ACT[id].e; q.title = ACT[id].t; return q; }
+/* ===== شريط اللاعبين + السلم ===== */
+function hud(){
+  const sc = S.scores || { host: 0, guest: 0 };
+  $('#hud').innerHTML = ['host', 'guest'].map(p => {
+    const lead = sc[p] > sc[p === 'host' ? 'guest' : 'host'] ? ' lead' : '';
+    const tag = p === me() ? ' <span class="you">(إنت)</span>' : '';
+    const c = p === 'host' ? '#2563eb' : '#db2777';
+    return `<div class="pl${lead}" style="--c:${c}"><b>${esc(nameOf(p))}${tag}</b><span>⭐ ${D(sc[p] || 0)}</span></div>`;
+  }).join('');
+  const total = S.totalTurns || 10, done = Math.min(total, (S.turnIndex || 1) - 1);
+  let lad = ''; for (let i = 0; i < total; i++) lad += `<i class="${i < done ? 'on' : ''}"></i>`;
+  $('#ladder').innerHTML = lad;
+  const lvl = LVL_NAME[S.level || 1];
+  $('#info').textContent = `الجولة ${D(S.roundId || 1)} • سؤال ${D(Math.min(S.turnIndex || 1, total))} من ${D(total)} • ${lvl}`;
+}
+
+/* ===== من صاحب الدور؟ (مشتق من الـseed — نفس القرار على الجهازين) ===== */
+const turnOwner = () => ((S.turnIndex || 1) % 2 === 1 ? 'host' : 'guest');
+const roundOver = () => !!S.champion || (S.turnIndex || 1) > (S.totalTurns || 10);
+const canPlay = () => !answered && !roundOver() && turnOwner() === me();
+
+/* ===== الرسم ===== */
+function render(){
+  hud();
+  const banner = $('#banner'), hint = $('#hint'), play = $('#play');
+  const over = roundOver();
+  $('#next').disabled = over || !answered;
+  $('#redo').disabled = over || !Q;
+  $('#new').classList.toggle('hide', !over || !isHost());
+  if (S.champion){
+    $('#wmsg').innerHTML = `🎉 ${esc(nameOf(S.champion))} كسبت الجولة!<br><span class="sc">⭐ ${D((S.scores || {})[S.champion] || 0)}</span>`;
+    $('#won').classList.add('show');
+    banner.textContent = '';
+    play.innerHTML = `<div class="idle">🎉 انتهت الجولة!</div>`;
+    hint.textContent = isHost() ? 'اضغطي «جولة جديدة» 🔄' : `${esc(nameOf(S.champion))} كسب! ⭐ ${D((S.scores || {})[S.champion] || 0)}`;
+    return;
+  }
+  $('#won').classList.remove('show');
+  if (!Q){ play.innerHTML = '<div class="idle">🕐 استنّي بابا يبدأ الجولة</div>'; banner.textContent = ''; hint.textContent = ''; return; }
+  if (roundOver()){ banner.textContent = 'خلصت الجولة 🎉'; }
+  else if (turnOwner() === me()){ banner.textContent = 'إنتِ اللي تلعب دلوقتي 🌟'; }
+  else { banner.textContent = `دور ${nameOf(turnOwner())} ⏳ — إنتِ بس بتتفرجي`; }
+
+  if (!play.dataset.q || play.dataset.q !== String((S.roundId || 0) + ':' + (S.turnIndex || 1) + ':' + (S.seed || 0))){
+    play.dataset.q = (S.roundId || 0) + ':' + (S.turnIndex || 1) + ':' + (S.seed || 0);
+    drawQuestion();
+  }
+  hint.textContent = roundOver() ? 'بابا يبدأ جولة جديدة 🔄'
+    : answered ? `✅ الحل: ${Q.note} — ${turnOwner() === me() ? 'اضغطي «السؤال التالي» لما تكونوا جاهزين' : nameOf(turnOwner()) + ' حلّت الصح!'}`
+    : (turnOwner() === me() ? 'اختاري الإجابة الصح 🌟' : 'شوفي دور ' + nameOf(turnOwner()) + ' بس 👀');
+}
+
+function drawQuestion(){
+  const play = $('#play');
+  const lock = !canPlay();
+  let h = `<div class="q-prompt">${Q.prompt}</div><div class="q-art">${Q.art || ''}</div>`;
+  if (Q.kind === 'choice'){
+    h += '<div class="opts' + (Q.opts.length <= 2 ? ' n2' : Q.opts.length >= 5 ? ' n5' : Q.opts.length === 4 ? ' n4' : '') + '">' + Q.opts.map((o, i) =>
+      `<button class="opt${answered && o.ok ? ' good' : ''}" data-i="${i}" type="button"${lock ? ' disabled' : ''}>${o.t}</button>`).join('') + '</div>';
+  } else if (Q.kind === 'line'){
+    let cells = ''; for (let i = 1; i <= Q.m; i++) cells += `<button class="cell${answered && i <= Q.n ? ' lit' : ''}" data-v="${i}" type="button"${lock ? ' disabled' : ''}>${D(i)}</button>`;
+    h += `<div class="cells" style="direction:ltr">${cells}</div>`;
+  } else if (Q.kind === 'towers'){
+    if (!Q.h) Q.h = [Q.a, Q.b];
+    h += `<div class="tows2" id="tw" style="direction:ltr">
+      <div style="text-align:center"><div class="tow" id="tw0">${rep('<div class="blk"></div>', Q.h[0])}</div><div class="tn" id="tn0">${D(Q.h[0])}</div></div>
+      <div style="text-align:center"><div class="tow" id="tw1">${rep('<div class="blk"></div>', Q.h[1])}</div><div class="tn" id="tn1">${D(Q.h[1])}</div></div>
+    </div>`;
+  } else if (Q.kind === 'memory'){
+    if (!Q.open) Q.open = []; if (!Q.matched) Q.matched = [];
+    h += '<div class="mem" style="direction:ltr">' + Q.cards.map((v, i) => {
+      const up = Q.open.includes(i) || Q.matched.includes(i) || answered;
+      return `<button class="mcard${up ? ' flip' : ''}" data-i="${i}" type="button"${lock ? ' disabled' : ''}><span class="mf">؟</span><span class="mb">${D(v)}</span></button>`;
+    }).join('') + '</div>';
+  } else if (Q.kind === 'order'){
+    if (!Q.picked) Q.picked = [];
+    h += '<div class="cards' + (Q.nums.length >= 5 ? ' sm' : '') + '">' + Q.nums.map((v, i) => {
+      const pk = Q.picked.includes(i) || answered;
+      return `<button class="ocard${pk ? ' pick' : ''}" data-i="${i}" type="button"${(lock || pk) ? ' disabled' : ''}><b>${D(v)}</b><i>${['🎈', '🐠', '🌟', '🐤'][i % 4]}</i></button>`;
+    }).join('') + '</div>';
+  }
+  if (answered || roundOver()) h += `<div id="note" class="prc">✅ ${Q.note}</div>`;
+  play.innerHTML = h;
+  bindPlay();
+}
+
+/* ===== التفاعل ===== */
+function solve(){
+  answered = true;
+  redraw();
+  sfx.ok(); celebrate();
+  post('roqaya-numbers-answer', { player: me(), turnIndex: S.turnIndex, activity: Q.id, ok: true });
+}
+const redraw = () => { const p = $('#play'); if (p) p.dataset.q = ''; render(); };
+function gentle(btn){ sfx.bad(); if (btn){ btn.classList.add('shk'); setTimeout(() => btn.classList.remove('shk'), 420); } }
+
+let memBusy = false;
+function bindPlay(){
+  const play = $('#play');
+  if (Q.kind === 'choice'){
+    play.querySelectorAll('.opt').forEach(b => b.onclick = () => {
+      if (!canPlay()) return;
+      const o = Q.opts[+b.dataset.i];
+      if (o.ok){ b.classList.add('good'); solve(); } else gentle(b);
+    });
+  } else if (Q.kind === 'line'){
+    play.querySelectorAll('.cell').forEach(b => b.onclick = () => {
+      if (!canPlay()) return;
+      if (+b.dataset.v === Q.n){
+        play.querySelectorAll('.cell').forEach((c, i) => { if (i < Q.n) setTimeout(() => c.classList.add('lit'), i * 45); });
+        solve();
+      } else gentle(b);
+    });
+  } else if (Q.kind === 'towers'){
+    if (!Q.h) Q.h = [Q.a, Q.b];
+    const short = () => (Q.h[0] <= Q.h[1] ? 0 : 1);
+    const upd = () => { for (let k = 0; k < 2; k++){ play.querySelector('#tw' + k).innerHTML = rep('<div class="blk"></div>', Q.h[k]); play.querySelector('#tn' + k).textContent = D(Q.h[k]); } };
+    play.querySelectorAll('.tow').forEach((t, k) => t.parentElement.onclick = () => {
+      if (!canPlay()) return;
+      if (k !== short() || Q.h[0] === Q.h[1]) return gentle(null);
+      Q.h[k]++; sfx.step(); upd();
+      if (Q.h[0] === Q.h[1]) solve();
+    });
+  } else if (Q.kind === 'memory'){
+    if (!Q.open) Q.open = []; if (!Q.matched) Q.matched = [];
+    play.querySelectorAll('.mcard').forEach(b => b.onclick = () => {
+      if (!canPlay() || memBusy || b.classList.contains('flip')) return;
+      b.classList.add('flip'); sfx.pick(); Q.open.push(+b.dataset.i);
+      if (Q.open.length === 2){
+        const [x, y] = Q.open, same = Q.cards[x] === Q.cards[y];
+        Q.open = [];
+        if (same){ Q.matched.push(x, y); if (Q.matched.length === Q.cards.length) solve(); }
+        else { memBusy = true; setTimeout(() => { [x, y].forEach(i => { const c = play.querySelector('.mcard[data-i="' + i + '"]'); if (c) c.classList.remove('flip'); }); memBusy = false; }, 750); }
+      }
+    });
+  } else if (Q.kind === 'order'){
+    if (!Q.picked) Q.picked = [];
+    const sorted = Q.nums.slice().sort((a, b) => Q.dir * (a - b));
+    play.querySelectorAll('.ocard').forEach(b => b.onclick = () => {
+      if (!canPlay() || b.disabled) return;
+      if (Q.nums[+b.dataset.i] === sorted[Q.picked.length]){ b.classList.add('pick'); b.disabled = true; Q.picked.push(+b.dataset.i); sfx.pick(); if (Q.picked.length === sorted.length) solve(); }
+      else gentle(b);
+    });
+  }
+}
+
+/* ===== أزرار بابا (§4: التحكم عند بابا فقط) ===== */
+$('#next').onclick = () => {
+  if (!isHost()) return toast('بابا بس اللي يكمّل السؤال 🙂');
+  if (roundOver()) return toast('الجولة خلصت — اضغط «جولة جديدة» 🔄');
+  if (!answered) return toast('الإجابة لسه ما اتحلتش ✋');
+  post('roqaya-numbers-next', { from: S.turnIndex });
+};
+$('#redo').onclick = () => {
+  if (!isHost()) return toast('بابا بس اللي يعيد السؤال 🙂');
+  if (roundOver() || !Q) return;
+  answered = false; post('roqaya-numbers-redo', { turnIndex: S.turnIndex });
+  redraw();
+};
+$('#lvl').onclick = () => {
+  if (!isHost()) return toast('بابا بس اللي يغيّر المستوى 🙂');
+  if (roundOver()) return;
+  const n = (S.level || 1) % 3 + 1;
+  S.level = n;                                     // تحديث فوري محلي (الأب هو المرجع النهائي)
+  $('#lvl').textContent = LVL_NAME[n];
+  post('roqaya-numbers-level', { level: n });
+  if (answered) hud();                              // السؤال محلول — نخلي ملاحظة الحل ظاهرة
+  else {                                             // لسه — نولّد سؤال جديد فعلاً بنطاق المستوى الجديد
+    Q = questionFor(S.seed || 1, S.turnIndex || 1, n);
+    redraw();
+  }
+};
+$('#new').onclick = () => { if (!isHost()) return toast('بابا بس اللي يبدأ جولة 🙂'); post('roqaya-numbers-new', {}); };
+$('#city').onclick = () => { if (!isHost()) return toast('بابا بس اللي يرجع للمدينة 🙂'); post('roqaya-numbers-city', {}); };
+
+/* ===== رسائل الوحدة الأم ===== */
+addEventListener('message', e => {
+  if (e.origin !== location.origin) return;
+  const d = e.data || {};
+  if (d.type === 'roqaya-numbers-config'){
+    const c = d.config || {};
+    const prevKey = (S.roundId || 0) + ':' + (S.turnIndex || 1) + ':' + (S.seed || 0);
+    const prevLvl = S.level || 1;
+    S = { ...S, ...c };
+    S.scores = c.scores || S.scores;
+    const key = (S.roundId || 0) + ':' + (S.turnIndex || 1) + ':' + (S.seed || 0);
+    const p = $('#play');
+    if (key !== prevKey || !Q){ Q = questionFor(S.seed || 1, S.turnIndex || 1, S.level || 1); answered = false; if (p) p.dataset.q = ''; }
+    else if ((S.level || 1) !== prevLvl && !answered){
+      /* غيّرنا المستوى والسؤال لسه ما اتحلش — نولّده من جديد بنفس الـseed فيتشابه على الجهازين */
+      Q = questionFor(S.seed || 1, S.turnIndex || 1, S.level || 1);
+      if (p) p.dataset.q = '';
+    }
+    $('#lvl').textContent = LVL_NAME[S.level || 1];
+    render(); return;
+  }
+  if (d.type === 'roqaya-numbers-new' && d.round){
+    const r = d.round;
+    S = { ...S, ...r, scores: r.scores || S.scores };
+    Q = questionFor(S.seed || 1, S.turnIndex || 1, S.level || 1); answered = false;
+    render(); return;
+  }
+  if (d.type === 'roqaya-numbers-answer'){       // إجابة الطرف التاني → نعرضها لحظياً
+    if (d.player && d.player !== me() && d.ok){ answered = true; redraw(); }
+    return;
+  }
+  if (d.type === 'roqaya-numbers-reset'){ S.champion = null; Q = null; answered = false; const p = $('#play'); if (p) p.dataset.q = ''; render(); return; }
+});
+
+/* ===== الإقلاع ===== */
+function init(){ answered = false; render(); post('roqaya-numbers-ready'); setTimeout(() => post('roqaya-numbers-ready'), 700); }
+if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', init);
+else init();
+</script>
+</body>
+</html>
