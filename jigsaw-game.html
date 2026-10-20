@@ -20,36 +20,60 @@ body{
   font-family:system-ui,"Segoe UI",Tahoma,sans-serif
 }
 h1{margin:0;font-size:1.05rem}
-/* [M15] شريط واحد مدمج: الدور + التقدّم + التحكّم في سطر واحد */
-#bar{
-  width:100%;max-width:1000px;display:flex;align-items:center;gap:4px;
-  flex-wrap:nowrap;min-width:0
+/* [M16] الهيدر = سطرين بس، وأغلب المحتوى أيقونات:
+   السطر ١: حالة النت 🟢/🔴 · الصوت 🎤 · العودة لعالم رقية 🎡
+   السطر ٢: الدور (بابا/رقية) · عدد القطع · الوقت · الصعوبة · المساعدة · التشجيع · لعبة جديدة */
+#hdr{width:100%;max-width:1000px;display:flex;flex-direction:column;gap:3px}
+.hrow{display:flex;align-items:center;gap:4px;min-width:0;flex-wrap:nowrap}
+
+/* ===== السطر ١ ===== */
+#net{
+  display:inline-flex;align-items:center;gap:3px;flex:0 0 auto;
+  padding:3px 7px;border-radius:9px;background:var(--card);
+  font-weight:900;font-size:.66rem
 }
+#net .dot{
+  width:9px;height:9px;border-radius:50%;background:#e0574f;
+  box-shadow:0 0 0 2px rgba(224,87,79,.25)
+}
+#net.on .dot{background:#22a06b;box-shadow:0 0 0 2px rgba(34,160,107,.25)}
+#snd,#home{
+  flex:0 0 auto;min-width:34px;min-height:28px;padding:3px 6px;border-radius:9px;
+  background:var(--card);font-size:.82rem;line-height:1;position:relative
+}
+#snd.off::after{
+  content:'';position:absolute;left:50%;top:50%;width:24px;height:2.5px;
+  background:#e0574f;border-radius:2px;transform:translate(-50%,-50%) rotate(-45deg)
+}
+#home{background:var(--accent);color:#fff}
+
+/* ===== السطر ٢ ===== */
 #turn{
-  flex:1 1 auto;min-width:0;margin:0;padding:4px 8px;border-radius:10px;
-  background:var(--card);text-align:center;font-weight:900;font-size:.7rem;
-  white-space:nowrap;overflow:hidden;text-overflow:ellipsis
+  flex:0 0 auto;max-width:38%;margin:0;padding:4px 9px;border-radius:9px;
+  background:var(--card);font-weight:900;font-size:.68rem;
+  white-space:nowrap;overflow:hidden;text-overflow:ellipsis;
+  display:inline-flex;align-items:center;gap:4px
 }
 #turn.mine{background:#dff7ea;color:#155e43}
 #turn.watch{background:#f1eafb;color:#60428a}
-#meta{
-  flex:0 0 auto;display:flex;align-items:center;gap:4px;
-  color:var(--muted);font-size:.6rem;font-weight:900
-}
+#meta{flex:0 0 auto;display:flex;align-items:center;gap:3px;font-weight:900;font-size:.6rem}
 #meta b,#meta i{
-  font-style:normal;background:rgba(255,255,255,.6);padding:2px 5px;
+  font-style:normal;background:rgba(255,255,255,.62);padding:2px 5px;
   border-radius:7px;white-space:nowrap
 }
-#bar select,#bar button{flex:0 0 auto;padding:4px 7px;font-size:.68rem;border-radius:9px;min-height:26px}
+#size{
+  flex:0 0 auto;padding:3px 4px;font-size:.64rem;border-radius:8px;min-height:26px;
+  background:rgba(255,255,255,.62)
+}
+#hdr button{flex:0 0 auto;min-height:26px;padding:3px 6px;border-radius:8px;font-size:.72rem}
+#hdr .sp{flex:1 1 auto;min-width:0}
 #cheer{
-  display:none;padding:3px 7px;border:0;border-radius:9px;
-  background:linear-gradient(145deg,#ffde75,#ff9fc6);color:#57334c;
-  font-weight:950;font-size:.66rem;box-shadow:0 3px 0 #d87ea5;
-  animation:cheerPulse 1.4s ease-in-out infinite
+  display:none;background:linear-gradient(145deg,#ffde75,#ff9fc6);color:#57334c;
+  font-weight:950;box-shadow:0 2px 0 #d87ea5;animation:cheerPulse 1.4s ease-in-out infinite
 }
 #cheer.show{display:inline-flex;align-items:center;justify-content:center}
 #cheer:active{transform:translateY(2px);box-shadow:0 1px 0 #d87ea5}
-@keyframes cheerPulse{50%{filter:brightness(1.06);transform:scale(1.025)}}
+@keyframes cheerPulse{50%{filter:brightness(1.06);transform:scale(1.03)}}
 #cheerFx{
   display:none;width:100%;max-width:1000px;margin:0;padding:4px 8px;border-radius:10px;
   background:#fff7d7;color:#765217;text-align:center;font-weight:950;font-size:.68rem
@@ -60,6 +84,16 @@ button,select{min-width:0;border:0;font:inherit;cursor:pointer;background:var(--
 #new{background:var(--accent);color:white;font-weight:900}
 #hint{font-weight:850}
 button:disabled,select:disabled{opacity:.48;cursor:not-allowed}
+/* [M16] قصاصات الورق الملوّنة عند التشجيع */
+.confetti{position:fixed;inset:0;z-index:9999;pointer-events:none;overflow:hidden}
+.confetti i{
+  position:absolute;top:-16px;width:9px;height:14px;border-radius:2px;
+  animation:confFall linear forwards
+}
+@keyframes confFall{
+  0%{transform:translateY(0) rotate(0);opacity:1}
+  100%{transform:translateY(105vh) rotate(720deg);opacity:.9}
+}
 
 /* ===== منطقة اللعب: الصورة + رفّ القطع ===== */
 #stage{
@@ -115,8 +149,8 @@ button:disabled,select:disabled{opacity:.48;cursor:not-allowed}
   box-shadow:inset 0 0 0 2px rgba(196,160,110,.5)
 }
 #tray::before{
-  content:'🧩 القطع';position:absolute;top:2px;left:50%;transform:translateX(-50%);
-  font-size:.54rem;font-weight:900;color:var(--muted);pointer-events:none;z-index:1
+  content:'🧩';position:absolute;top:2px;left:50%;transform:translateX(-50%);
+  font-size:.6rem;opacity:.55;pointer-events:none;z-index:1
 }
 #tray.empty::after{
   content:'✅ خلصت القطع!';position:absolute;inset:0;display:flex;
@@ -147,43 +181,59 @@ button:disabled,select:disabled{opacity:.48;cursor:not-allowed}
    عشان يطابق حساب المقاسات بالظبط */
 body.stack #board{flex-direction:column-reverse}
 body.side  #board{flex-direction:row}
-body.stack #tray::before{content:'🧩 اسحب قطعة من تحت لفوق'}
+body.stack #tray::before{display:none}
 
 @media(max-width:520px){
   body{padding:3px 3px 56px;gap:3px}
-  #bar{gap:3px}
-  #turn{font-size:.62rem;padding:3px 5px}
-  #meta{font-size:.54rem;gap:3px}
+  #hdr{gap:2px}
+  .hrow{gap:3px}
+  #net{padding:2px 5px}
+  #snd,#home{min-width:30px;min-height:25px;padding:2px 5px;font-size:.76rem}
+  #turn{font-size:.6rem;padding:3px 6px;max-width:34%}
+  #meta{font-size:.54rem;gap:2px}
   #meta b,#meta i{padding:1px 4px}
-  #bar select,#bar button{padding:3px 5px;font-size:.6rem;min-height:24px}
-  #cheer{padding:2px 5px;font-size:.6rem}
+  #size{padding:2px 3px;font-size:.6rem;min-height:25px}
+  #hdr button{min-height:25px;padding:2px 5px;font-size:.66rem}
   #cheerFx{font-size:.6rem;padding:3px 6px}
   #wrap{padding:4px;border-radius:10px}
   #tray{border-radius:10px}
   #tray::before{font-size:.5rem}
 }
 @media(max-width:380px){
-  #meta #lvl{display:none}
+  #turn{max-width:30%}
+  #meta #time{display:none}
 }
-@media(prefers-reduced-motion:reduce){.ghost,.pc{transition:none}}
+@media(prefers-reduced-motion:reduce){.ghost,.pc{transition:none}.confetti{display:none}}
 </style>
 <link rel="stylesheet" href="game-shell.css?v=1">
 </head>
 <body>
-<!-- [M15] شريط واحد مدمج: الدور + التقدّم/الوقت + التحكّم — يوفر مساحة عمودية
-     مهمة على الموبايل فتظهر القطع أكبر. -->
-<div id="bar">
-  <p id="turn">جاري التجهيز…</p>
-  <span id="meta"><b id="lvl">١/١٠</b><i id="placed">٠/٩</i><i id="time">٠:٠٠</i></span>
-  <select id="size" aria-label="عدد القطع">
-    <option value="3">٩</option>
-    <option value="4">١٦</option>
-    <option value="5">٢٥</option>
-    <option value="6">٣٦</option>
-  </select>
-  <button id="new" title="لعبة جديدة">🔄</button>
-  <button id="hint" title="شوف الصورة كاملة لثانيتين">👁️</button>
-  <button id="cheer" type="button" title="شجّع">👏</button>
+<!-- [M16] هيدر من سطرين، أغلبها أيقونات لتوفير مساحة عمودية = قطع أكبر -->
+<div id="hdr">
+  <!-- السطر ١: نت · صوت · العودة للمدينة -->
+  <div class="hrow">
+    <span id="net" title="حالة الاتصال"><span class="dot"></span></span>
+    <button id="snd" title="الصوت" aria-label="الصوت">🎤</button>
+    <button id="home" title="العودة لعالم رقية" aria-label="العودة لعالم رقية">🎡</button>
+  </div>
+  <!-- السطر ٢: الدور · عدد القطع · الوقت · الصعوبة · مساعدة · تشجيع · جديد -->
+  <div class="hrow">
+    <p id="turn"><span id="who">👤</span><span id="turntxt">جاري التجهيز…</span></p>
+    <span id="meta">
+      <b id="placed" title="عدد القطع المركّبة">🧩 ٠/٩</b>
+      <i id="time" title="الوقت">⏱ ٠:٠٠</i>
+    </span>
+    <span class="sp"></span>
+    <select id="size" aria-label="عدد القطع" title="عدد القطع / الصعوبة">
+      <option value="3">🧩 ٩</option>
+      <option value="4">🧩 ١٦</option>
+      <option value="5">🧩 ٢٥</option>
+      <option value="6">🧩 ٣٦</option>
+    </select>
+    <button id="hint" title="شوف الصورة كاملة لثانيتين">👁️</button>
+    <button id="cheer" type="button" title="شجّع">👏</button>
+    <button id="new" title="لعبة جديدة">🔄</button>
+  </div>
 </div>
 <div id="cheerFx" aria-live="polite"></div>
 
@@ -198,10 +248,6 @@ body.stack #tray::before{content:'🧩 اسحب قطعة من تحت لفوق'}
     </div></div>
     <div id="tray" aria-label="رفّ القطع"></div>
   </div>
-</div>
-
-<div class="footer-bar">
-  <button id="city" class="btn alt">🎡 المدينة</button>
 </div>
 
 <script>
@@ -225,6 +271,9 @@ const dpr=Math.min(devicePixelRatio||1,2);
 
 let cfg={imageIndex:0,n:3,seed:1,placed:[],turn:'host',role:'guest',startedAt:Date.now(),finished:false,roundId:0,childName:'رقية',cheer:null};
 let src=null,ps=0,m=0,fw=0,trayScale=0.62,H=[],V=[],z=10,drag=null,waitingAck=false,lastBuildKey='',celebrated=false;
+/* [M16] حالة الصوت (كتم/تشغيل) — معرّفة بدري عشان cheerTone/boom يستخدموها */
+let soundOn=true;
+try{soundOn=localStorage.getItem('roqaya-jigsaw-snd')!=='0'}catch{}
 let timer=0,lastCheerSeq=0,cheerReady=false,cheerHideTimer=0;
 const CHEERS=[
   ['👏','برافو! كمّل يا بطل!'],
@@ -255,6 +304,7 @@ function elapsed(){
 }
 function cheerTone(type=0){
   try{
+    if(typeof soundOn!=='undefined'&&!soundOn)return;
     const AC=window.AudioContext||window.webkitAudioContext;
     if(!AC)return;
     const ac=window._jigsawCheerAudio||(window._jigsawCheerAudio=new AC());
@@ -279,6 +329,7 @@ function cheerTone(type=0){
 /* [M13] صوت لطيف + وميض لما قطعة تلزق في مكانها */
 function boom(){
   try{
+    if(typeof soundOn!=='undefined'&&!soundOn)return;
     const AC=window.AudioContext||window.webkitAudioContext;
     if(AC){
       const ac=window._jigsawAudio||(window._jigsawAudio=new AC());
@@ -305,8 +356,26 @@ function showCheer(cheer){
   fx.textContent=`${emoji} ${nameOf(cheer.from)} بيشجّعك: ${text}`;
   fx.classList.add('show');
   cheerTone(type);
+  confetti();
   try{navigator.vibrate?.([35,30,35])}catch(_){}
   cheerHideTimer=setTimeout(()=>fx.classList.remove('show'),2200);
+}
+/* [M16] قصاصات ورق ملوّنة تنزل على الشاشة عند التشجيع */
+function confetti(){
+  const box=document.createElement('div');
+  box.className='confetti';
+  const colors=['#f0b429','#2a7f62','#e0574f','#7c5bd6','#ff8fb8','#3aa0e6','#ff9f43'];
+  for(let i=0;i<36;i++){
+    const c=document.createElement('i');
+    c.style.left=(Math.random()*100).toFixed(1)+'%';
+    c.style.background=colors[i%colors.length];
+    c.style.animationDuration=(1.5+Math.random()*1.4).toFixed(2)+'s';
+    c.style.animationDelay=(Math.random()*.5).toFixed(2)+'s';
+    c.style.transform=`rotate(${Math.round(Math.random()*180)}deg)`;
+    box.append(c);
+  }
+  document.body.append(box);
+  setTimeout(()=>box.remove(),3200);
 }
 function checkCheer(){
   const cheer=cfg.cheer;
@@ -319,23 +388,19 @@ function checkCheer(){
 }
 function updateText(){
   const total=cfg.n*cfg.n,placed=cfg.placed?.length||0;
-  /* [M15] لافتات مختصرة: صورة • تقدّم • وقت */
-  $('#lvl').textContent=`🖼 ${ar(cfg.imageIndex+1)}/${ar(LEVELS.length)}`;
+  /* [M16] لافتات أيقونية مختصرة */
   $('#placed').textContent=`🧩 ${ar(placed)}/${ar(total)}`;
   $('#time').textContent=`⏱ ${ar(fmt(elapsed()))}`;
   $('#size').value=String(cfg.n);
   $('#size').disabled=cfg.role!=='host';
   $('#new').disabled=cfg.role!=='host'||$('#new').dataset.busy==='1';
-  const turn=$('#turn');
+  const who=$('#who'),txt=$('#turntxt'),turn=$('#turn');
   if(cfg.finished){
-    turn.className='mine';
-    turn.textContent='🎉 خلّصتوا البازل!';
+    turn.className='mine';who.textContent='🎉';txt.textContent='خلّصتوا البازل!';
   }else if(canPlay()){
-    turn.className='mine';
-    turn.textContent=`✨ دورك يا ${nameOf(cfg.role)}`;
+    turn.className='mine';who.textContent='👤';txt.textContent=`دور ${nameOf(cfg.role)}`;
   }else{
-    turn.className='watch';
-    turn.textContent=`👀 دور ${nameOf(cfg.turn)}`;
+    turn.className='watch';who.textContent='👀';txt.textContent=`دور ${nameOf(cfg.turn)}`;
   }
   area.classList.toggle('spectating',!canPlay());
   won.classList.toggle('show',Boolean(cfg.finished));
@@ -800,18 +865,47 @@ $('#hint').onclick=()=>{
   if(frame.classList.contains('peek')){clearTimeout(peekT);frame.classList.remove('peek');return}
   showPeek(2500);
 };
+/* [M16] تشجيع: صوت تحفيزي + قصاصات ورق ملوّنة على الشاشة */
 $('#cheer').onclick=()=>{
   if(cfg.finished||cfg.turn===cfg.role)return;
   const b=$('#cheer');
-  b.disabled=true;
-  b.textContent='💜';
+  b.disabled=true;b.textContent='💜';
   parent.postMessage({type:'roqaya-jigsaw-cheer',roundId:cfg.roundId},location.origin);
+  cheerTone(securePick(4));
   setTimeout(()=>{b.textContent='👏';updateText()},850);
 };
 $('#new').onclick=()=>{
   if(cfg.role!=='host')return;
   parent.postMessage({type:'roqaya-jigsaw-new',n:+$('#size').value},location.origin);
 };
+/* [M16] زر العودة لعالم رقية (أيقونة الملاهي في الهيدر) */
+$('#home').onclick=()=>parent.postMessage({type:'roqaya-jigsaw-city'},location.origin);
+/* [M16] أيقونة الصوت: كتم/تشغيل — بتأثر على أصوات اللعبة بس */
+function paintSound(){
+  const b=$('#snd');
+  b.textContent='🎤';
+  b.classList.toggle('off',!soundOn);
+  b.title=soundOn?'الصوت شغال':'الصوت مقفول';
+  b.setAttribute('aria-pressed',String(soundOn));
+}
+$('#snd').onclick=()=>{
+  soundOn=!soundOn;
+  try{localStorage.setItem('roqaya-jigsaw-snd',soundOn?'1':'0')}catch{}
+  paintSound();
+  if(soundOn)cheerTone(0);
+};
+paintSound();
+/* [M16] مؤشر الاتصال: أخضر متصل / أحمر مفصول.
+   بنعتمد على online/offline وبنعمل فحص خفيف جدًا بشكل دوري. */
+function paintNet(){
+  const on=navigator.onLine!==false;
+  $('#net').classList.toggle('on',on);
+  $('#net').title=on?'متصل':'مفيش اتصال';
+}
+addEventListener('online',paintNet);
+addEventListener('offline',paintNet);
+paintNet();
+setInterval(paintNet,4000);
 /* [M13] تغيير عدد القطع = لعبة جديدة فورًا. قبل كده كان التغيير بيتحفظ بس،
    وupdateText كانت بترجّع القيمة القديمة → الزرار «مش بيستجيب». */
 $('#size').onchange=e=>{
@@ -825,9 +919,6 @@ $('#size').onchange=e=>{
   parent.postMessage({type:'roqaya-jigsaw-new',n,keepImage:true},location.origin);
   setTimeout(()=>{nb.textContent='🔄';nb.dataset.busy='0';updateText()},1600);
 };
-/* [M11] زر المدينة الموحّد أسفل اللعبة */
-const cityBtn=document.getElementById('city');
-if(cityBtn)cityBtn.onclick=()=>parent.postMessage({type:'roqaya-jigsaw-city'},location.origin);
 /* [M13] إعادة الرسم عند تغيير المقاس أو الدوران — القطعة اللي في الإيد ما تتلغبطش */
 let resizeT=0,lastW=innerWidth,lastH=innerHeight;
 addEventListener('resize',()=>{
