@@ -13,61 +13,72 @@
   :root{--bg:#101c17;--ink:#e8f3ed;--card:#1b2d26;--muted:#9bb8ab}
 }
 *{box-sizing:border-box}
-html,body{margin:0;min-height:0}
+html,body{margin:0;height:100%}
 body{
-  display:flex;flex-direction:column;align-items:center;gap:8px;
-  padding:10px 8px 24px;overflow-x:hidden;background:var(--bg);color:var(--ink);
+  display:flex;flex-direction:column;align-items:center;gap:4px;
+  padding:6px 6px 62px;overflow:hidden;background:var(--bg);color:var(--ink);
   font-family:system-ui,"Segoe UI",Tahoma,sans-serif
 }
-h1{margin:0;font-size:clamp(1.25rem,5vw,1.7rem)}
+h1{margin:0;font-size:1.05rem}
 #turnbar{
-  width:min(96vw,620px);display:flex;align-items:center;gap:6px
+  width:100%;max-width:1000px;display:flex;align-items:center;gap:6px
 }
 #turn{
-  flex:1;margin:0;padding:7px 10px;border-radius:12px;
-  background:var(--card);text-align:center;font-weight:900;font-size:.86rem
+  flex:1;margin:0;padding:5px 9px;border-radius:11px;
+  background:var(--card);text-align:center;font-weight:900;font-size:.78rem
 }
 #turn.mine{background:#dff7ea;color:#155e43}
 #turn.watch{background:#f1eafb;color:#60428a}
 #cheer{
-  display:none;min-width:86px;min-height:38px;padding:6px 10px;
-  border:0;border-radius:12px;background:linear-gradient(145deg,#ffde75,#ff9fc6);
-  color:#57334c;font-weight:950;box-shadow:0 4px 0 #d87ea5;
+  display:none;min-width:70px;min-height:32px;padding:4px 8px;
+  border:0;border-radius:11px;background:linear-gradient(145deg,#ffde75,#ff9fc6);
+  color:#57334c;font-weight:950;font-size:.72rem;box-shadow:0 4px 0 #d87ea5;
   animation:cheerPulse 1.4s ease-in-out infinite
 }
 #cheer.show{display:inline-flex;align-items:center;justify-content:center}
 #cheer:active{transform:translateY(2px);box-shadow:0 2px 0 #d87ea5}
 @keyframes cheerPulse{50%{filter:brightness(1.06);transform:scale(1.025)}}
 #cheerFx{
-  display:none;width:min(96vw,620px);margin:0;padding:6px 10px;border-radius:11px;
-  background:#fff7d7;color:#765217;text-align:center;font-weight:950;font-size:.78rem
+  display:none;width:100%;max-width:1000px;margin:0;padding:5px 9px;border-radius:10px;
+  background:#fff7d7;color:#765217;text-align:center;font-weight:950;font-size:.72rem
 }
 #cheerFx.show{display:block;animation:cheerIn .28s ease-out}
 @keyframes cheerIn{from{transform:translateY(-5px);opacity:0}to{transform:none;opacity:1}}
 #meta{
-  width:min(96vw,620px);display:flex;justify-content:center;gap:8px;flex-wrap:wrap;
-  color:var(--muted);font-size:.72rem;font-weight:800
+  width:100%;max-width:1000px;display:flex;justify-content:center;gap:6px;flex-wrap:wrap;
+  color:var(--muted);font-size:.66rem;font-weight:800
 }
-#meta span{background:rgba(255,255,255,.58);padding:4px 8px;border-radius:9px}
+#meta span{background:rgba(255,255,255,.58);padding:3px 7px;border-radius:8px}
 .control-row{
-  width:min(96vw,680px);display:grid;grid-template-columns:1fr 1.55fr 1.1fr .9fr;
-  gap:6px;align-items:stretch
+  width:100%;max-width:1000px;display:grid;grid-template-columns:1fr 1.15fr 1fr .8fr;
+  gap:5px;align-items:stretch
 }
 .best-card,button,select{
-  min-width:0;border:0;border-radius:10px;font:inherit
+  min-width:0;border:0;border-radius:9px;font:inherit
 }
 .best-card{
-  background:var(--card);padding:5px 6px;text-align:center;font-weight:900;
+  background:var(--card);padding:3px 5px;text-align:center;font-weight:900;
   display:flex;flex-direction:column;align-items:center;justify-content:center
 }
-.best-card small{color:var(--muted);font-weight:500;font-size:.61rem}
-.best-card strong{font-size:.84rem}
-button,select{padding:8px 7px;cursor:pointer;background:var(--card);color:var(--ink)}
+.best-card small{color:var(--muted);font-weight:500;font-size:.56rem}
+.best-card strong{font-size:.76rem}
+button,select{padding:7px 6px;cursor:pointer;background:var(--card);color:var(--ink);font-size:.74rem}
 #new{background:var(--accent);color:white;font-weight:900}
 #hint{font-weight:850}
 button:disabled,select:disabled{opacity:.48;cursor:not-allowed}
+
+/* ===== منطقة اللعب: الصورة + رفّ القطع ===== */
+#stage{
+  flex:1 1 auto;min-height:0;width:100%;max-width:1000px;
+  display:flex;flex-direction:column;gap:6px
+}
+#board{
+  flex:1 1 auto;min-height:0;display:flex;gap:6px;
+  align-items:stretch;justify-content:center
+}
 #wrap{
-  max-width:100%;padding:10px;background:#d9bb8c;border-radius:15px;
+  flex:0 0 auto;align-self:center;display:flex;align-items:center;justify-content:center;
+  min-width:0;min-height:0;padding:7px;background:#d9bb8c;border-radius:14px;
   box-shadow:inset 0 0 0 3px #c4a06e
 }
 #area{position:relative;direction:ltr}
@@ -76,32 +87,62 @@ button:disabled,select:disabled{opacity:.48;cursor:not-allowed}
 #frame.peek .ghost{opacity:.62}
 #frame.done{outline-color:var(--gold)}
 #frame.done .ghost{opacity:1}
+#frame.flash{box-shadow:0 0 0 5px rgba(255,222,117,.95),0 0 26px rgba(255,190,80,.85)}
+
+/* رفّ القطع — عمود على الجنب */
+#tray{
+  flex:0 0 auto;position:relative;overflow:hidden;touch-action:none;
+  border-radius:14px;background:rgba(255,255,255,.5);
+  box-shadow:inset 0 0 0 2px rgba(196,160,110,.5)
+}
+#tray::before{
+  content:'🧩 القطع';position:absolute;top:2px;left:50%;transform:translateX(-50%);
+  font-size:.54rem;font-weight:900;color:var(--muted);pointer-events:none;z-index:1
+}
+#tray.empty::after{
+  content:'✅ خلصت القطع!';position:absolute;inset:0;display:flex;
+  align-items:center;justify-content:center;text-align:center;padding:6px;
+  font-size:.66rem;font-weight:900;color:var(--muted)
+}
+
 .pc{
   position:absolute;z-index:2;touch-action:none;cursor:grab;user-select:none;
-  transition:left .24s ease,top .24s ease,opacity .2s,filter .2s
+  transition:left .24s ease,top .24s ease,opacity .2s,filter .2s;
+  will-change:left,top
 }
-.pc.drag{cursor:grabbing;filter:drop-shadow(0 6px 8px rgba(0,0,0,.45));transition:none}
+.pc.drag{cursor:grabbing;filter:drop-shadow(0 6px 8px rgba(0,0,0,.45));transition:none;z-index:999!important}
 .pc.set{pointer-events:none}
+.pc.near{filter:drop-shadow(0 0 7px #f0b429) brightness(1.08)}
+.pc.home{opacity:1;pointer-events:auto}
 #area.spectating .pc:not(.set){pointer-events:none;cursor:default;filter:saturate(.72);opacity:.83}
 #won{
   position:absolute;z-index:8;display:none;align-items:center;justify-content:center;
   padding:14px;direction:rtl;text-align:center;border-radius:14px;
-  background:rgba(255,255,255,.82);color:#17332a;font-weight:900
+  background:rgba(255,255,255,.86);color:#17332a;font-weight:900;font-size:.86rem
 }
 #won.show{display:flex}
 .tip{
-  margin:0;color:var(--muted);font-size:.73rem;text-align:center;max-width:520px
+  margin:0;color:var(--muted);font-size:.66rem;text-align:center;max-width:520px
 }
+/* اتجاه منطقة اللعب يحدده الجافاسكربت (body.stack / body.side)
+   عشان يطابق حساب المقاسات بالظبط */
+body.stack #board{flex-direction:column-reverse}
+body.side  #board{flex-direction:row}
+body.stack #tray::before{content:'🧩 اسحب قطعة من تحت لفوق'}
+
 @media(max-width:520px){
-  body{padding:7px 4px 18px;gap:6px}
-  .control-row{gap:4px;grid-template-columns:.95fr 1.6fr 1.05fr .78fr}
-  .best-card{padding:4px 3px}.best-card small{font-size:.53rem}.best-card strong{font-size:.72rem}
-  button,select{padding:7px 4px;font-size:.68rem}
-  #turn{font-size:.75rem;padding:6px}
-  #cheer{min-width:74px;min-height:34px;padding:5px 7px;font-size:.67rem}
-  #cheerFx{font-size:.68rem;padding:5px 7px}
-  #meta{font-size:.63rem}
-  #wrap{padding:8px}
+  body{padding:4px 4px 58px;gap:3px}
+  h1{font-size:.95rem}
+  .control-row{gap:4px;grid-template-columns:.9fr 1.15fr .95fr .72fr}
+  .best-card{padding:2px 3px}.best-card small{font-size:.5rem}.best-card strong{font-size:.68rem}
+  button,select{padding:6px 4px;font-size:.67rem}
+  #turn{font-size:.7rem;padding:5px}
+  #cheer{min-width:64px;min-height:29px;padding:3px 6px;font-size:.64rem}
+  #cheerFx{font-size:.64rem;padding:4px 7px}
+  #meta{font-size:.6rem}
+  #wrap{padding:5px;border-radius:11px}
+  #tray{border-radius:11px}
+  #tray::before{font-size:.5rem}
 }
 @media(prefers-reduced-motion:reduce){.ghost,.pc{transition:none}}
 </style>
@@ -132,19 +173,24 @@ button:disabled,select:disabled{opacity:.48;cursor:not-allowed}
 </div>
 <div id="cheerFx" aria-live="polite"></div>
 
-<div id="wrap"><div id="area">
-  <div id="frame"></div>
-  <div id="won" aria-live="polite">🎉 برافو! خلّصتوا البازل سوا.</div>
-</div></div>
+<div id="stage">
+  <div id="board">
+    <div id="wrap"><div id="area">
+      <div id="frame"></div>
+      <div id="won" aria-live="polite">🎉 برافو! خلّصتوا البازل سوا.</div>
+    </div></div>
+    <div id="tray" aria-label="رفّ القطع"></div>
+  </div>
+</div>
 
-<p class="tip">كل مرة لاعب واحد يحرك القطعة. لما يركّب قطعة صح، الدور يروح للتاني تلقائيًا.</p>
+<p class="tip">اسحب القطعة من الرفّ لحد ما تلزق مكانها. لما تركّب قطعة صح، الدور يروح للتاني تلقائيًا.</p>
 
 <div class="footer-bar">
   <button id="city" class="btn alt">🎡 المدينة</button>
 </div>
 
 <script>
-const $=s=>document.querySelector(s),area=$('#area'),frame=$('#frame'),won=$('#won');
+const $=s=>document.querySelector(s),area=$('#area'),frame=$('#frame'),won=$('#won'),wrap=$('#wrap'),tray=$('#tray');
 const LEVELS=[
   'assets/puzzles/farm.webp',
   'assets/puzzles/dinosaurs.webp',
@@ -163,7 +209,7 @@ const fmt=s=>Math.floor(s/60)+':'+String(s%60).padStart(2,'0');
 const dpr=Math.min(devicePixelRatio||1,2);
 
 let cfg={imageIndex:0,n:3,seed:1,placed:[],turn:'host',role:'guest',startedAt:Date.now(),finished:false,roundId:0,childName:'رقية',cheer:null};
-let src=null,ps=0,m=0,fw=0,H=[],V=[],z=10,drag=null,waitingAck=false,lastBuildKey='';
+let src=null,ps=0,m=0,fw=0,trayScale=0.62,H=[],V=[],z=10,drag=null,waitingAck=false,lastBuildKey='';
 let timer=0,lastCheerSeq=0,cheerReady=false,cheerHideTimer=0;
 const CHEERS=[
   ['👏','برافو! كمّل يا بطل!'],
@@ -212,6 +258,27 @@ function cheerTone(type=0){
     });
   }catch(_){}
 }
+/* [M13] صوت لطيف + وميض لما قطعة تلزق في مكانها */
+function boom(){
+  try{
+    const AC=window.AudioContext||window.webkitAudioContext;
+    if(AC){
+      const ac=window._jigsawAudio||(window._jigsawAudio=new AC());
+      if(ac.state==='suspended')ac.resume?.();
+      const t=ac.currentTime;
+      [[784,.0],[1046,.07]].forEach(([f,d])=>{
+        const o=ac.createOscillator(),g=ac.createGain();
+        o.type='triangle';o.frequency.value=f;
+        g.gain.setValueAtTime(.0001,t+d);
+        g.gain.exponentialRampToValueAtTime(.05,t+d+.012);
+        g.gain.exponentialRampToValueAtTime(.0001,t+d+.13);
+        o.connect(g).connect(ac.destination);o.start(t+d);o.stop(t+d+.16);
+      });
+    }
+  }catch(_){}
+  frame.classList.add('flash');
+  setTimeout(()=>frame.classList.remove('flash'),320);
+}
 function showCheer(cheer){
   if(!cheer||cheer.from===cfg.role)return;
   const type=Number(cheer.type)||0,[emoji,text]=CHEERS[type%CHEERS.length];
@@ -239,7 +306,7 @@ function updateText(){
   $('#time').textContent=`الوقت ${ar(fmt(elapsed()))}`;
   $('#size').value=String(cfg.n);
   $('#size').disabled=cfg.role!=='host';
-  $('#new').disabled=cfg.role!=='host';
+  if($('#new').textContent==='لعبة جديدة')$('#new').disabled=cfg.role!=='host';
   const turn=$('#turn');
   if(cfg.finished){
     turn.className='mine';
@@ -285,31 +352,122 @@ function makeEdges(){
   H=Array.from({length:cfg.n},()=>Array.from({length:cfg.n},()=>r()<.5?1:-1));
   V=Array.from({length:cfg.n},()=>Array.from({length:cfg.n},()=>r()<.5?1:-1));
 }
-function deterministicPos(index,maxX,maxY){
-  const r=rng(cfg.seed+index*7919+cfg.n*97);
-  return [Math.max(0,Math.floor(r()*Math.max(1,maxX))),Math.max(0,Math.floor(r()*Math.max(1,maxY)))];
+/* [M13] تحميل مضمون: أي فشل أو تعليق = نكمّل بعد مهلة قصيرة أو نرجّع صورة بديلة */
+function loadImage(){
+  const url=LEVELS[cfg.imageIndex%LEVELS.length];
+  return new Promise(resolve=>{
+    const im=new Image();
+    let done=false;
+    const finish=ok=>{if(done)return;done=true;resolve(ok?im:null)};
+    const timer=setTimeout(()=>finish(false),6000);
+    im.onload=()=>{clearTimeout(timer);finish(true)};
+    im.onerror=()=>{clearTimeout(timer);finish(false)};
+    try{im.decoding='async'}catch{}
+    im.src=url;
+    if(im.complete&&im.naturalWidth){clearTimeout(timer);finish(true)}
+  }).then(im=>{
+    if(im){src=im;return true}
+    /* محاولة تانية بصورة من مكتبة البازل */
+    return new Promise(resolve=>{
+      const alt=new Image();let done=false;
+      const t2=setTimeout(()=>{if(!done){done=true;resolve(false)}},5000);
+      alt.onload=()=>{if(done)return;done=true;clearTimeout(t2);src=alt;resolve(true)};
+      alt.onerror=()=>{if(done)return;done=true;clearTimeout(t2);resolve(false)};
+      alt.src=LEVELS[(cfg.imageIndex+1)%LEVELS.length];
+    });
+  });
 }
-async function loadImage(){
-  const im=new Image();
-  im.decoding='async';
-  im.src=LEVELS[cfg.imageIndex%LEVELS.length];
-  if(im.decode){try{await im.decode()}catch{}}
-  if(!im.complete)await new Promise((resolve,reject)=>{im.onload=resolve;im.onerror=reject});
-  src=im;
-}
-function build(){
+function build(tries){
   if(!src)return;
+  tries=Number(tries)||0;
   z=10;drag=null;waitingAck=false;
   const n=cfg.n,total=n*n;
-  const wide=innerWidth>=900;
-  const avail=wide?Math.min(innerHeight-210,(innerWidth-100)/2,560):Math.min(innerWidth-38,480);
-  ps=Math.max(n===6?34:38,Math.floor(avail/n));
-  m=Math.round(ps*.3);fw=ps*n;
-  const cw=ps+2*m,tx=wide?fw+22:0,ty=wide?0:fw+14,th=wide?fw:Math.round(fw*1.04);
-  area.style.cssText=`width:${tx+fw}px;height:${ty+th}px`;
+  /* ===== قياس المساحة المتاحة فعليًا: صندوق الصورة + صندوق الرفّ ===== */
+  const stage=document.getElementById('stage');
+  const board=document.getElementById('board');
+  /* [M13] لو الصفحة لسه ما استقرّتش، قيس تاني بعد ما المتصفح يرسم (بحد أقصى ٥ محاولات) */
+  if(stage&&tries<5&&(stage.clientWidth<160||stage.clientHeight<140)){
+    requestAnimationFrame(()=>{if(src)build(tries+1)});
+    return;
+  }
+  /* [M13] في الوضع الأفقي العريض نحط القطع على الجنب (الصورة تبقى أكبر).
+     العتبة 760 عشان تابلت 11 بوصة في اللاندسكيب (1024×768) يستفيد. */
+  const stack=!(innerWidth>=760&&innerWidth>innerHeight*1.05);
+  const gap=6;
+  document.body.classList.toggle('stack',stack);
+  document.body.classList.toggle('side',!stack);
+  const stageW=Math.max(180,stage.clientWidth||innerWidth-14);
+  const stageH=Math.max(140,(board&&board.clientHeight)||(innerHeight-250));
+  const wrapPad=stack?10:12;
+
+  /* القطع المحتاجة تتوصّل (مش في مكانها) */
+  const placedSet=new Set((cfg.placed||[]).map(Number));
+  const loose=[];
+  for(let rr=0;rr<n;rr++)for(let cc=0;cc<n;cc++)if(!placedSet.has(rr*n+cc))loose.push(rr*n+cc);
+
+  /* ===== إيجاد أفضل مقاس =====
+     ندور على أكبر مقاس صورة ممكن بحيث الصورة + الرفّ الاتنين يدخلوا
+     جوّه المساحة المتاحة (بدون أي سكرول).
+     بنجرّب كمان تصغير قطع الرفّ — الرفّ الأصغر = صورة أكبر. */
+  const trayMaxW=stack?stageW:Math.min(320,Math.round(stageW*0.36));
+
+  let solved=null,bestScore=-1;
+  /* سقف البحث: لازم يسمح للصورة تاخد معظم عرض/ارتفاع المساحة المتاحة */
+  const hi=Math.min(700,Math.max(stageW,stageH));
+  const SCALES=[1,.86,.74,.62,.52,.44,.36];
+  for(let tryPs=20;tryPs<=hi;tryPs++){
+    const tryM=Math.round(tryPs*.17), tryCw=tryPs+2*tryM, tryFw=tryPs*n;
+    const capW=stack?stageW:trayMaxW;
+    /* سقف ارتفاع الرفّ: أقل مساحة ممكنة، وبحد أقصى نص الشاشة في الستاك */
+    const capH=stack?Math.round(stageH*0.5):stageH;
+    for(const sc of SCALES){
+      const trySw=Math.round(tryCw*sc);
+      const colsMax=Math.max(1,Math.min(loose.length||1,Math.floor((capW-PIECE_PAD)/(trySw+PIECE_PAD))||1));
+      let trayFit=null;
+      /* نجرّب الأعمدة من الأكبر للأصغر وناخد أول شبكة تدخل في السقف */
+      for(let cols=colsMax;cols>=1;cols--){
+        const rows=Math.ceil((loose.length||1)/cols);
+        const w=cols*trySw+(cols+1)*PIECE_PAD;
+        const h=rows*trySw+(rows+1)*PIECE_PAD+PIECE_PAD_TOP;
+        if(w<=capW&&h<=capH){trayFit={cols,rows,w,h,s:sc};break}
+      }
+      if(!loose.length)trayFit={cols:1,rows:0,w:trySw+PIECE_PAD*2,h:PIECE_PAD_TOP+PIECE_PAD,s:sc};
+      if(!trayFit)continue;
+      /* الصورة + الرفّ لازم يدخلوا مع بعض جوّه المساحة */
+      const totalW=stack?Math.max(tryFw+wrapPad,trayFit.w+wrapPad):tryFw+wrapPad+trayFit.w+gap;
+      const totalH=stack?tryFw+wrapPad+trayFit.h+gap:Math.max(tryFw+wrapPad,trayFit.h);
+      if(totalW>stageW||totalH>stageH)continue;
+      /* نفضّل أكبر صورة، لكن بشرط إن قطع الرفّ تفضل كبيرة كفاية
+         للأصابع الصغيرة. لو المقياس صغير جدًا نخصم من النتيجة. */
+      const piecePx=trySw;
+      const smallPenalty=piecePx<64?Math.round((64-piecePx)*900):0;
+      const score=tryFw*10000+Math.round(trayFit.s*100)-Math.round(trayFit.h)-smallPenalty;
+      if(score>bestScore){bestScore=score;solved={ps:tryPs,m:tryM,cw:tryCw,fw:tryFw,trayFit}}
+    }
+  }
+  /* لو مفيش حل مثالي، انزل لأصغر مقاس ممكن (مع سكرول داخل الرفّ كحل أخير) */
+  if(!solved){
+    const tryPs=20,tryM=Math.round(tryPs*.17),tryCw=tryPs+2*tryM;
+    const trySw=Math.round(tryCw*TRAY_SCALE);
+    solved={ps:tryPs,m:tryM,cw:tryCw,fw:tryPs*n,
+      trayFit:{cols:1,rows:(loose.length||n*n),w:trySw+PIECE_PAD*2,h:trySw*(loose.length||n*n)+PIECE_PAD*9+PIECE_PAD_TOP,s:TRAY_SCALE}};
+  }
+  ps=solved.ps;m=solved.m;cw=solved.cw;fw=solved.fw;
+  const trayBoxW=stack?stageW:Math.min(trayMaxW,solved.trayFit.w);
+  const trayBoxH=stack?Math.min(Math.round(stageH*0.5),solved.trayFit.h):stageH;
+  tray.style.cssText=stack
+    ? `height:${trayBoxH}px;width:100%`
+    : `width:${trayBoxW}px;height:${trayBoxH}px`;
+  tray.dataset.mode=stack?'h':'v';
+  trayScale=solved.trayFit.s;
+  const homes=pieceHomes(loose,cw,tray.clientWidth,tray.clientHeight,trayScale);
+
+  /* الصندوق = مقاس الصورة بالظبط، مفيش أي مساحة مهدورة */
+  wrap.style.cssText='';
+  area.style.cssText=`width:${fw}px;height:${fw}px`;
   frame.style.cssText=`width:${fw}px;height:${fw}px`;
   frame.className=cfg.finished?'done':'';
-  won.style.cssText=`left:0;top:${Math.max(8,fw*.4)}px;width:${fw}px`;
+  won.style.cssText=`left:0;top:${Math.max(6,Math.round(fw*.38))}px;width:${fw}px`;
 
   const full=document.createElement('canvas');
   full.width=full.height=Math.max(1,Math.round(fw*dpr));
@@ -320,8 +478,9 @@ function build(){
   frame.replaceChildren(full);
 
   makeEdges();
+  /* [M13] نشيل القطع القديمة من الصورة ومن الرفّ — قبل كده كانت بتتراكم */
   area.querySelectorAll('.pc').forEach(p=>p.remove());
-  const placedSet=new Set((cfg.placed||[]).map(Number));
+  tray.querySelectorAll('.pc').forEach(p=>p.remove());
 
   for(let rr=0;rr<n;rr++)for(let cc=0;cc<n;cc++){
     const index=rr*n+cc,cv=document.createElement('canvas'),x=cv.getContext('2d'),p=shape(rr,cc);
@@ -332,60 +491,215 @@ function build(){
     x.lineWidth=1.5;x.strokeStyle='rgba(0,0,0,.48)';x.stroke(p);
     cv.className='pc';cv.dataset.index=index;
     cv._tx=cc*ps-m;cv._ty=rr*ps-m;
+    cv._cw=cw;
     if(placedSet.has(index)){
       cv.style.left=cv._tx+'px';cv.style.top=cv._ty+'px';cv.style.zIndex=1;cv.classList.add('set');
+      cv._home=null;
+      area.append(cv);
     }else{
-      const [px,py]=deterministicPos(index,fw-cw,th-cw);
-      cv.style.left=(tx+px)+'px';cv.style.top=(ty+py)+'px';
+      const h=homes.get(index);
+      cv._home=h;
+      cv.classList.add('home');
+      cv.style.left=h.x+'px';cv.style.top=h.y+'px';
+      cv.onpointerdown=down;
+      tray.append(cv);
     }
-    cv.onpointerdown=down;cv.onpointermove=move;cv.onpointerup=cv.onpointercancel=up;
-    area.append(cv);
   }
+  layoutTray();
   updateText();showBest();
+}
+
+/* ===== مقاسات شبكة الرفّ ===== */
+const PIECE_PAD=3, PIECE_PAD_TOP=13;
+/* [M13] مقاس القطعة داخل الرفّ = 62% من مقاسها الحقيقي.
+   كده الرفّ بيبقى أنحف والصورة تكبر، والقطعة بتكبر لحجمها الكامل
+   أول ما الطفل يمسكها. */
+const TRAY_SCALE=0.62;
+
+/* ===== مواضع القطع داخل الرفّ =====
+   نرجّع Map(index → {x,y}) بإحداثيات نسبةً للرفّ (لأن القطع أبناء #tray مباشرة).
+   مهم: الشبكة لازم تدخل جوّه الرفّ فعلًا (عرضًا وارتفاعًا) وإلا القطع تخرج برّه. */
+function pieceHomes(list,cw,trayW,trayH,sc){
+  const homes=new Map();
+  const N=list.length;
+  if(!N||trayW<=0||trayH<=0||cw<=0)return homes;
+  const pad=PIECE_PAD,padT=PIECE_PAD_TOP;
+  if(!(sc>0))sc=trayScaleFor(cw,trayW,trayH,N);
+  const sw=Math.round(cw*sc);
+  /* نجرّب عدد الأعمدة من الأكبر للأصغر وناخد أول واحد يدخل فعلًا */
+  const maxCols=Math.max(1,Math.floor((trayW-pad)/(sw+pad)));
+  let cols=0;
+  for(let c=maxCols;c>=1;c--){
+    const rows=Math.ceil(N/c);
+    if(c*sw+(c+1)*pad<=trayW&&rows*sw+(rows+1)*pad+padT<=trayH){cols=c;break}
+  }
+  if(!cols)cols=maxCols;
+  const rows=Math.ceil(N/cols);
+  const gW=cols*sw+(cols+1)*pad, gH=rows*sw+(rows+1)*pad+padT;
+  const ox=Math.max(pad,(trayW-gW)/2+pad), oy=Math.max(padT,(trayH-gH)/2+padT);
+  /* [RTL] نملأ من اليمين للشمال */
+  list.forEach((idx,i)=>{
+    const r=Math.floor(i/cols),c=i%cols;
+    /* الموضع = ركن الشبكة؛ القطعة بتتقاس من نفس الركن (transform-origin) فالمقاس المصغّر يملأ الخانة بالظبط */
+    homes.set(idx,{x:ox+(cols-1-c)*(sw+pad),y:oy+r*(sw+pad),s:sc,sq:sw});
+  });
+  return homes;
+}
+/* مقياس القطعة في الرفّ: الأساس 62%، وبنصغّره لو مش داخل بـ62% */
+function trayScaleFor(cw,trayW,trayH,N){
+  const pad=PIECE_PAD,padT=PIECE_PAD_TOP;
+  for(let sc=TRAY_SCALE;sc>=0.3;sc-=0.04){
+    const sw=cw*sc;
+    const maxCols=Math.max(1,Math.floor((trayW-pad)/(sw+pad)));
+    for(let c=maxCols;c>=1;c--){
+      const rows=Math.ceil(N/c);
+      if(c*sw+(c+1)*pad<=trayW&&rows*sw+(rows+1)*pad+padT<=trayH)return sc;
+    }
+  }
+  return 0.3;
+}
+/* [M13] القطعة في الرفّ بتتعرض مصغّرة؛ عند الإمساك بها تتكبّر.
+   بنستخدم transform عشان ما نغيّرش مقاس الكانفس (النقش ثابت). */
+function setTrayScale(el,on){
+  el.style.transformOrigin='top left';
+  el.style.transform=on?'':`scale(${el._trayScale||TRAY_SCALE})`;
+}
+
+/* ترتيب القطع المتبقية في الرفّ بعد كل تركيب */
+function layoutTray(){
+  const list=[...tray.querySelectorAll('.pc')];
+  if(!list.length){tray.classList.add('empty');return}
+  tray.classList.remove('empty');
+  const cw=Number(list[0]._cw)||list[0].offsetWidth;
+  const homes=pieceHomes(list.map(cv=>Number(cv.dataset.index)),cw,tray.clientWidth,tray.clientHeight,trayScale);
+  list.forEach(cv=>{
+    const h=homes.get(Number(cv.dataset.index));
+    if(!h)return;
+    cv._home=h;
+    cv._trayScale=h.s;
+    if(!cv.classList.contains('drag')){
+      cv.classList.add('home');
+      cv.style.left=h.x+'px';cv.style.top=h.y+'px';
+      setTrayScale(cv,false);
+    }
+  });
 }
 function applyPlaced(){
   const placedSet=new Set((cfg.placed||[]).map(Number));
-  area.querySelectorAll('.pc').forEach(cv=>{
+  tray.querySelectorAll('.pc').forEach(cv=>{
     const idx=Number(cv.dataset.index);
-    if(placedSet.has(idx)&&!cv.classList.contains('set')){
-      cv.classList.remove('drag');
-      cv.style.left=cv._tx+'px';cv.style.top=cv._ty+'px';cv.style.zIndex=1;
-      cv.classList.add('set');
-    }
+    if(!placedSet.has(idx))return;
+    cv.classList.remove('drag','home','near');
+    cv.style.left=cv._tx+'px';cv.style.top=cv._ty+'px';cv.style.zIndex=1;
+    cv.classList.add('set');
+    cv.onpointerdown=null;
+    area.append(cv);
   });
   frame.classList.toggle('done',Boolean(cfg.finished));
+  layoutTray();
   waitingAck=false;updateText();
 }
+
+/* اللعبة الحالية نظيفة؟ (نفس الصورة ونفس المقاس ونفس لبنة القطع) */
+function sameBoard(){
+  return !!(src&&lastBuildKey===`${cfg.roundId}:${cfg.imageIndex}:${cfg.n}:${cfg.seed}`);
+}
+/* [M13] ضغطة واحدة على أي قطعة = القطعة تلزق في صباع الطفل (سواء كانت في
+   الرفّ أو فوق الصورة). لو كانت في الرفّ نطلّعها فوق الصورة فورًا. */
 function down(e){
-  if(!canPlay()||e.button>0||e.currentTarget.classList.contains('set'))return;
-  e.preventDefault();
+  if(!canPlay()||e.button>0)return;
   const el=e.currentTarget;
-  el.setPointerCapture?.(e.pointerId);
-  drag={el,x:e.clientX,y:e.clientY,l:el.offsetLeft,t:el.offsetTop};
+  if(el.classList.contains('set'))return;
+  e.preventDefault();
+  /* القطعة تفضل تحت الصباع من أول لحظة؛ لو كانت في الرفّ بننقلها لمنطقة
+     الصورة بنفس إحداثياتها عشان ما يحصلش «قفزة» مربكة للطفل. */
+  let l=el.offsetLeft,t=el.offsetTop;
+  if(el.parentElement===tray){
+    const tr=tray.getBoundingClientRect(),ar=area.getBoundingClientRect();
+    const sc=el._trayScale||1;
+    /* [M13] القطعة في الرفّ مصغّرة (transform). إحداثيات الصباع نسبةً
+       للمقاس المصغّر، فلما تكبر لازم نضربها في المقياس عشان القطعة
+       تفضل تحت الصباع بالظبط. */
+    const rb=el.getBoundingClientRect();
+    const fx=Math.min(1,Math.max(0,(e.clientX-rb.left)/Math.max(1,rb.width)));
+    const fy=Math.min(1,Math.max(0,(e.clientY-rb.top)/Math.max(1,rb.height)));
+    el.classList.remove('home');
+    setTrayScale(el,true);
+    /* نضع القطعة الكاملة بحيث الصباع يقع على نفس النقطة النسبية */
+    l=Math.round(rb.left-ar.left-fx*el.offsetWidth);
+    t=Math.round(rb.top-ar.top-fy*el.offsetHeight);
+    el.style.left=l+'px';el.style.top=t+'px';
+    area.append(el);
+    el.classList.remove('near');
+    drag={el,parent:area,x:e.clientX,y:e.clientY,l,t,cw:el.offsetWidth};
+    el.style.zIndex=++z;el.classList.add('drag');
+    return;
+  }
+  el.classList.remove('near');
+  drag={el,parent:el.parentElement,x:e.clientX,y:e.clientY,l,t,cw:el.offsetWidth};
   el.style.zIndex=++z;el.classList.add('drag');
 }
 function move(e){
-  if(!drag||drag.el!==e.currentTarget)return;
+  if(!drag)return;
   e.preventDefault();
-  const el=drag.el,w=el.offsetWidth;
-  el.style.left=Math.max(-m,Math.min(area.offsetWidth-w+m,drag.l+e.clientX-drag.x))+'px';
-  el.style.top=Math.max(-m,Math.min(area.offsetHeight-w+m,drag.t+e.clientY-drag.y))+'px';
+  const el=drag.el,cw=drag.cw;
+  const rawX=drag.l+e.clientX-drag.x, rawY=drag.t+e.clientY-drag.y;
+  /* القطعة بتتحرك فوق صندوق الصورة، وبنسمح بشوية بروز برّه عشان اللسان */
+  const pos=[
+    Math.max(-m,Math.min(area.offsetWidth-cw+m,rawX)),
+    Math.max(-m,Math.min(area.offsetHeight-cw+m,rawY))
+  ];
+  el.style.left=pos[0]+'px';el.style.top=pos[1]+'px';
+  /* تنبيه بصري: لما الصباع يقرّب من المكان الصح، القطعة تلمع */
+  el.classList.toggle('near',Math.hypot(pos[0]-el._tx,pos[1]-el._ty)<ps*.34);
 }
 function up(){
   if(!drag)return;
-  const el=drag.el;drag=null;el.classList.remove('drag');
-  if(Math.hypot(el.offsetLeft-el._tx,el.offsetTop-el._ty)<ps*.31){
+  const el=drag.el;
+  drag=null;
+  el.classList.remove('drag','near');
+  /* قريبة كفاية من مكانها الصح → تلزق وتتثبّت */
+  const close=Math.hypot(el.offsetLeft-el._tx,el.offsetTop-el._ty)<ps*.34;
+  if(close){
     el.style.left=el._tx+'px';el.style.top=el._ty+'px';el.style.zIndex=1;el.classList.add('set');
+    el.onpointerdown=null;
     waitingAck=true;updateText();
+    boom();
     parent.postMessage({type:'roqaya-jigsaw-piece',piece:Number(el.dataset.index),roundId:cfg.roundId},location.origin);
+    return;
   }
+  /* بعيدة → ترجع للرفّ وترتّب نفسه من جديد (أسهل للطفل من إنها تفضل معلّقة) */
+  returnToTray(el);
+}
+/* النقل والتركيب: نستمع على مستوى الصفحة كلها مرة واحدة —
+   كده السحب يفضل شغال لو الصباع خرج برّه القطعة أو برّه منطقة اللعب. */
+addEventListener('pointermove',e=>move(e),{passive:false});
+addEventListener('pointerup',()=>up(),{passive:false});
+addEventListener('pointercancel',()=>up(),{passive:false});
+
+/* رجوع القطعة للرفّ + إعادة ترتيب الرفّ */
+function returnToTray(el){
+  el.classList.remove('drag','near');
+  el.classList.add('home');
+  /* نلغي الأنيميشن لحظة الرجوع عشان الموضع يبان فورًا وما يبقاش فيه وميض */
+  el.style.transition='none';
+  el.style.left='0px';el.style.top='0px';
+  setTrayScale(el,false);
+  tray.append(el);
+  el.onpointerdown=down;
+  layoutTray();
+  /* نرجّع الأنيميشن بعد ما الموضع يستقر */
+  requestAnimationFrame(()=>{el.style.transition=''});
 }
 async function applyConfig(next){
   const oldKey=`${cfg.roundId}:${cfg.imageIndex}:${cfg.n}:${cfg.seed}`;
   cfg={...cfg,...next,n:[3,4,5,6].includes(Number(next.n))?Number(next.n):3};
   const newKey=`${cfg.roundId}:${cfg.imageIndex}:${cfg.n}:${cfg.seed}`;
-  if(newKey!==oldKey||!src){
-    await loadImage();build();lastBuildKey=newKey;
+  const needsBuild=newKey!==oldKey||!sameBoard();
+  if(needsBuild){
+    await loadImage();
+    build();
+    lastBuildKey=newKey;
   }else{
     applyPlaced();
   }
@@ -404,13 +718,36 @@ $('#new').onclick=()=>{
   if(cfg.role!=='host')return;
   parent.postMessage({type:'roqaya-jigsaw-new',n:+$('#size').value},location.origin);
 };
+/* [M13] تغيير عدد القطع = لعبة جديدة فورًا. قبل كده كان التغيير بيتحفظ بس،
+   وupdateText كانت بترجّع القيمة القديمة → الزرار «مش بيستجيب». */
 $('#size').onchange=e=>{
-  try{localStorage.setItem('roqaya-jigsaw-n',String(e.target.value))}catch{}
+  const n=Number(e.target.value);
+  if(![3,4,5,6].includes(n))return;
+  try{localStorage.setItem('roqaya-jigsaw-n',String(n))}catch{}
+  if(cfg.role!=='host'){updateText();return}
+  if(cfg.n===n&&!cfg.finished)return;
+  $('#new').textContent='⏳ بنجهّز…';
+  $('#new').disabled=true;
+  parent.postMessage({type:'roqaya-jigsaw-new',n,keepImage:true},location.origin);
+  setTimeout(()=>{$('#new').textContent='لعبة جديدة';updateText()},1600);
 };
 /* [M11] زر المدينة الموحّد أسفل اللعبة */
 const cityBtn=document.getElementById('city');
 if(cityBtn)cityBtn.onclick=()=>parent.postMessage({type:'roqaya-jigsaw-city'},location.origin);
-addEventListener('resize',()=>{if(src)build()});
+/* [M13] إعادة الرسم عند تغيير المقاس أو الدوران — القطعة اللي في الإيد ما تتلغبطش */
+let resizeT=0,lastW=innerWidth,lastH=innerHeight;
+addEventListener('resize',()=>{
+  if(Math.abs(innerWidth-lastW)<24&&Math.abs(innerHeight-lastH)<60)return;
+  clearTimeout(resizeT);
+  resizeT=setTimeout(()=>{
+    lastW=innerWidth;lastH=innerHeight;
+    if(!src)return;
+    if(drag){const d=drag;drag=null;d.el.classList.remove('drag');}
+    /* القطع المرفوعة فوق الصورة ترجع للرفّ عند إعادة الرسم */
+    build();lastBuildKey=`${cfg.roundId}:${cfg.imageIndex}:${cfg.n}:${cfg.seed}`;
+  },220);
+});
+addEventListener('orientationchange',()=>{lastW=lastH=0;dispatchEvent(new Event('resize'))});
 addEventListener('message',e=>{
   if(e.origin!==location.origin||e.data?.type!=='roqaya-jigsaw-config')return;
   applyConfig(e.data.config).catch(console.error);
