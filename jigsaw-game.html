@@ -493,6 +493,7 @@ function build(tries){
     cv._tx=cc*ps-m;cv._ty=rr*ps-m;
     cv._cw=cw;
     if(placedSet.has(index)){
+      clearTrayScale(cv);
       cv.style.left=cv._tx+'px';cv.style.top=cv._ty+'px';cv.style.zIndex=1;cv.classList.add('set');
       cv._home=null;
       area.append(cv);
@@ -564,6 +565,11 @@ function setTrayScale(el,on){
   el.style.transformOrigin='top left';
   el.style.transform=on?'':`scale(${el._trayScale||TRAY_SCALE})`;
 }
+/* [M13] إزالة تصغير الرفّ تمامًا (لما القطعة تتحط في مكانها النهائي) */
+function clearTrayScale(el){
+  el.style.transform='';
+  el.style.transformOrigin='';
+}
 
 /* ترتيب القطع المتبقية في الرفّ بعد كل تركيب */
 function layoutTray(){
@@ -590,6 +596,11 @@ function applyPlaced(){
     const idx=Number(cv.dataset.index);
     if(!placedSet.has(idx))return;
     cv.classList.remove('drag','home','near');
+    /* [M13] مهم جداً: نشيل تصغير الرفّ وإلا القطعة تظهر صغيرة ومرزاحة
+       لأن transform-origin مش ركن الموضع الصح. ده كان سبب اختلاف الشكل
+       بين الجهازين: اللي بتحط القطعة عندها بتظهر صح، والتانية بتستقبلها
+       مصغّرة في مكان غلط. */
+    clearTrayScale(cv);
     cv.style.left=cv._tx+'px';cv.style.top=cv._ty+'px';cv.style.zIndex=1;
     cv.classList.add('set');
     cv.onpointerdown=null;
@@ -661,6 +672,7 @@ function up(){
   /* قريبة كفاية من مكانها الصح → تلزق وتتثبّت */
   const close=Math.hypot(el.offsetLeft-el._tx,el.offsetTop-el._ty)<ps*.34;
   if(close){
+    clearTrayScale(el);
     el.style.left=el._tx+'px';el.style.top=el._ty+'px';el.style.zIndex=1;el.classList.add('set');
     el.onpointerdown=null;
     waitingAck=true;updateText();
