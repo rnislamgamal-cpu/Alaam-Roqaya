@@ -247,13 +247,13 @@ const LVL_NAME = { 1: '🌱 سهل', 2: '🌿 متوسط', 3: '🌳 تحدٍّ' 
 const C_ = L => LVL[L] || LVL[1];
 
 /* ===== الحالة ===== */
-let S = { role: 'host', childName: 'رقية', otherName: 'بابا', roundId: 0, seed: 1, level: 1, turnIndex: 1, totalTurns: 10, scores: { host: 0, guest: 0 }, champion: null };
+let S = { role: 'host', childName: 'رقية', hostName: 'بابا', otherName: 'بابا', roundId: 0, seed: 1, level: 1, turnIndex: 1, totalTurns: 10, scores: { host: 0, guest: 0 }, champion: null };
 let Q = null, answered = false, soundOn = true, ac = null, readySent = false;
 const isHost = () => S.role === 'host';
 const me = () => (isHost() ? 'host' : 'guest');
 const other = () => (isHost() ? 'guest' : 'host');
-const myName = () => S.childName || 'رقية';
-const otherName = () => S.otherName || 'بابا';
+const myName = () => (isHost() ? (S.hostName || 'بابا') : (S.childName || 'رقية'));
+const otherName = () => (isHost() ? (S.childName || 'رقية') : (S.hostName || 'بابا'));
 function nameOf(p){ return p === 'host' ? (isHost() ? myName() : otherName()) : (isHost() ? otherName() : myName()); }
 
 /* ===== Web Audio فقط (ممنوع speechSynthesis) ===== */

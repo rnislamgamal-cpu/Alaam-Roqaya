@@ -16,8 +16,11 @@
 }
 body.numbers-v1-active{overflow:hidden!important}
 body.numbers-v1-active #screen{display:none!important}
-/* الهيدر المصغّر (.m4-25) لازم يبقى فوق الأوفيرلاي بس مش يغطيه */
-body.numbers-v1-active .header{z-index:210}
+/* اللعبة جواها هيدرها الخاص (🔢 + 🔊 + 🎡 المدينة) → نخفي هيدر العالم والفوتر
+ * عشان مفيش تكرار ومفيش تداخل مع هيدر اللعبة. */
+body.numbers-v1-active .header,
+body.numbers-v1-active footer,
+body.numbers-v1-active .message{display:none!important}
 
 @media(max-width:520px){
   .numbers-v1-overlay{padding:max(1px,env(safe-area-inset-top)) 2px max(2px,env(safe-area-inset-bottom))}

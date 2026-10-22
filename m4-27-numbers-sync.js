@@ -24,7 +24,9 @@ const TOTAL_TURNS = 23;
 
 const currentRoom = () => location.hash.match(/^#room=([A-Z2-9]{8})$/)?.[1] || '';
 const childName = () => String(shared?.childName || 'رقية');
-const otherName = () => (role === 'host' ? 'اللاعب التاني' : childName());
+const hostName = () => 'بابا';
+/* اسم اللاعب التاني: بابا (للبنت) / رقية (للبابا) */
+const otherName = () => (role === 'host' ? childName() : hostName());
 const now = () => Date.now() + (Number(serverOffset) || 0);
 
 /* حالة الجولة كاملة (§3) */
@@ -157,7 +159,7 @@ function ensureOverlay() {
   if (overlay) return overlay;
   overlay = document.createElement('section');
   overlay.id = 'numbers-v1-overlay'; overlay.className = 'numbers-v1-overlay'; overlay.hidden = true;
-  overlay.innerHTML = '<iframe class="numbers-v1-frame" src="numbers-game.html?v=1" title="افهم الأعداد" loading="eager"></iframe>';
+  overlay.innerHTML = '<iframe class="numbers-v1-frame" src="numbers-game.html?v=2" title="افهم الأعداد" loading="eager"></iframe>';
   screen.insertAdjacentElement('afterend', overlay);
   frame = overlay.querySelector('iframe'); frame.addEventListener('load', sendConfig);
   return overlay;
@@ -171,7 +173,7 @@ function sendConfig() {
   frame.contentWindow.postMessage({
     type: 'roqaya-numbers-config',
     config: {
-      role, childName: childName(), otherName: otherName(),
+      role, childName: childName(), hostName: hostName(), otherName: otherName(),
       roundId: Number(g.roundId) || Number(shared.round) || 0,
       seed: Number(g.seed) || 1,
       level: Number(g.level) || 1,
