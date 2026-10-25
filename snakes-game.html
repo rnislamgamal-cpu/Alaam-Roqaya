@@ -19,11 +19,11 @@ body{display:flex;flex-direction:column;align-items:center;gap:10px;padding:58px
 .players{width:min(94vw,560px);display:grid;grid-template-columns:1fr 1fr;gap:7px}
 .player{background:var(--card);border:1px solid rgba(255,255,255,.13);border-radius:11px;padding:6px 8px;display:flex;justify-content:space-between;align-items:center;font-size:.72rem;font-weight:800}
 .player.turn{outline:2px solid var(--accent)}
-#dice{width:62px;height:62px;padding:9px;border-radius:14px;background:#fff;display:grid;grid-template:repeat(3,1fr)/repeat(3,1fr);place-items:center;box-shadow:0 4px 0 #b9c3d3;cursor:pointer;user-select:none;-webkit-tap-highlight-color:transparent;margin:0 auto}
-#dice i{width:10px;height:10px;border-radius:50%;background:#1b2a41;visibility:hidden}#dice i.on{visibility:visible}
+#dice{width:62px;height:62px;padding:0;border-radius:14px;background:transparent;display:grid;grid-template:repeat(3,1fr)/repeat(3,1fr);place-items:center;cursor:pointer;user-select:none;-webkit-tap-highlight-color:transparent;margin:0 auto;border:none;box-shadow:none}
+#dice i{width:12px;height:12px;border-radius:50%;background:#fff;box-shadow:0 2px 4px rgba(0,0,0,.4);visibility:hidden}#dice i.on{visibility:visible}
 #dice.roll{animation:shake .25s infinite}@keyframes shake{50%{transform:rotate(14deg) scale(1.08)}}
 button{font:inherit;padding:9px 14px;border:0;border-radius:11px;cursor:pointer;background:var(--card);color:#fff}
-button:disabled{opacity:.48;cursor:default}#roll{background:var(--accent);color:#1b2a41;font-weight:900;font-size:1.02rem}
+button:disabled{opacity:.48;cursor:default}
 #board{position:relative;width:var(--s);aspect-ratio:1;direction:ltr;margin-bottom:calc(var(--s)*.09);border-radius:12px;box-shadow:0 0 0 5px var(--accent),0 10px 30px rgba(0,0,0,.45);touch-action:manipulation}
 #svg{display:block;width:100%;height:100%;border-radius:12px}
 .tok{position:absolute;width:6%;aspect-ratio:1;border-radius:50%;border:2px solid #fff;box-shadow:0 2px 5px rgba(0,0,0,.5);transform:translate(-50%,-50%);transition:left .2s,top .2s;display:grid;place-items:center;font-size:calc(var(--s)*.032);line-height:1;font-weight:800;color:#fff}
@@ -46,14 +46,9 @@ button:disabled{opacity:.48;cursor:default}#roll{background:var(--accent);color:
     <p id="status" aria-live="polite">جاري تجهيز اللعبة…</p>
   </div>
 </div>
-<div class="players">
-  <div id="hostP" class="player"><span>👨 بابا</span><b>٠</b></div>
-  <div id="guestP" class="player"><span>👧 رقية</span><b>٠</b></div>
-</div>
-<div class="row" style="flex-direction:column;gap:8px"><div id="dice" role="img" aria-label="النرد"></div><button id="roll">🎲 ارمي النرد</button></div>
+<div class="row" style="flex-direction:column;gap:8px"><div id="dice" role="img" aria-label="النرد"></div></div>
 <div id="board"><svg id="svg" viewBox="0 0 100 100"></svg></div>
 <div class="actions" style="display:none!important" hidden></div>
-<p class="tip">اضغط على النرد يلف، واضغط تاني يقف. بعدين عدّ الخطوات واضغط على المربع الصح. السلم بيطلّعك والثعبان بينزّلك، ولازم توصل ١٠٠ بالظبط. لو جبت ٦ بتلعب تاني.</p>
 <script>
 const $=s=>document.querySelector(s),board=$('#board');
 const LAD={1:38,4:14,9:31,21:42,28:84,36:44,51:67,71:91,80:100};
@@ -80,7 +75,7 @@ function flash(n){const[x,y]=ctr(n),r=document.createElementNS('http://www.w3.or
 function setEvent(text,ms=1700){eventText=text;clearTimeout(eventTimer);eventTimer=setTimeout(()=>{eventText='';renderStatus()},ms);renderStatus()}
 function checkEvent(){const ev=cfg.lastEvent,id=Number(ev?.id)||0;if(!initialized){seenEventId=id;return}if(id<=seenEventId)return;seenEventId=id;if(ev.type==='overshoot')setEvent(`😅 ${nameOf(ev.player)} محتاج رقم بالظبط عشان يوصل ١٠٠`);if(ev.type==='six')setEvent(`🎉 ${nameOf(ev.player)} جاب ٦ — دور إضافي!`);if(ev.type==='win'){setEvent(`🏆 ${nameOf(ev.player)} كسب!`,3500);sfx.win()}}
 function renderStatus(){const s=$('#status');if(eventText){s.textContent=eventText;return}if(cfg.winner){s.textContent=`🎉 ${nameOf(cfg.winner)} كسب!`;return}if(animating||cfg.phase==='moving'){s.textContent=`👣 ${nameOf(cfg.turn)} بيتحرك…`;return}if(cfg.phase==='spinning'){s.textContent=myTurn()?'النرد بيلف! اضغط عليه عشان يقف ✋':`${nameOf(cfg.turn)} بيرمي النرد 🎲`;return}if(cfg.phase==='choose'){s.textContent=myTurn()?`طلع ${ar(cfg.dice)}! عدّ ${ar(cfg.dice)} مربعات واضغط المربع الصح 👆`:`${nameOf(cfg.turn)} طلع له ${ar(cfg.dice)} وبيعد الخطوات…`;return}s.textContent=myTurn()?'دورك! ارمي النرد 🎲':`دور ${nameOf(cfg.turn)} — استنى دورك 👀`}
-function renderControls(){const ready=cfg.phase==='ready',spinning=cfg.phase==='spinning',active=myTurn()&&!animating,roll=$('#roll');roll.disabled=!(active&&(ready||spinning));roll.textContent=spinning&&active?'✋ وقّف النرد':'🎲 ارمي النرد';dice.style.pointerEvents=roll.disabled?'none':'auto';$('#new').disabled=cfg.role!=='host';$('#city').disabled=cfg.role!=='host';$('#hostP').classList.toggle('turn',cfg.turn==='host'&&!cfg.winner);$('#guestP').classList.toggle('turn',cfg.turn==='guest'&&!cfg.winner);$('#hostP').querySelector('b').textContent=ar(cfg.positions?.host||0);$('#guestP').querySelector('b').textContent=ar(cfg.positions?.guest||0);$('#guestP').querySelector('span').textContent=`👧 ${cfg.childName||'رقية'}`;$('#w-host').textContent=ar(Number(cfg.snakeWins?.host)||0);$('#w-guest').textContent=ar(Number(cfg.snakeWins?.guest)||0)}
+function renderControls(){const ready=cfg.phase==='ready',spinning=cfg.phase==='spinning',active=myTurn()&&!animating;dice.style.pointerEvents=active&&(ready||spinning)?'auto':'none';$('#new').disabled=cfg.role!=='host';$('#city').disabled=cfg.role!=='host';$('#w-host').textContent=ar(Number(cfg.snakeWins?.host)||0);$('#w-guest').textContent=ar(Number(cfg.snakeWins?.guest)||0)}
 function startBigSpin(){
   let el=document.getElementById('big-dice');
   if(!el){
@@ -116,7 +111,7 @@ async function animateMove(move){if(!move||Number(move.id)<=seenMoveId)return;se
 function applyConfig(next){const first=!initialized;cfg={...cfg,...next};if(cfg.snakeWins){} if(first){initialized=true;seenMoveId=Number(cfg.move?.id)||0;seenEventId=Number(cfg.lastEvent?.id)||0;placeAll()}else{checkEvent();if(cfg.phase==='moving'&&cfg.move&&Number(cfg.move.id)>seenMoveId)animateMove(cfg.move).catch(()=>{animating=false;placeAll();render()});else if(!animating)placeAll()}render();if(Number.isInteger(cfg.dice)&&cfg.phase!=='spinning')stopBigSpin(cfg.dice)}
 function pressRoll(){if(animating||!myTurn())return;unlock();/* النرد يلف فى النص ويلف لحد ما أضغط تانى */if(cfg.phase==='ready'){startBigSpin();parent.postMessage({type:'roqaya-snakes-roll-start',roundId:cfg.roundId},location.origin);return} if(cfg.phase==='spinning'){parent.postMessage({type:'roqaya-snakes-roll-stop',roundId:cfg.roundId},location.origin);return}}
 board.onclick=e=>{if(animating||!myTurn()||cfg.phase!=='choose')return;const b=board.getBoundingClientRect(),c=Math.floor((e.clientX-b.left)/b.width*10),w=9-Math.floor((e.clientY-b.top)/b.height*10);if(c<0||c>9||w<0||w>9)return;const n=w*10+(w%2?9-c:c)+1,target=(Number(cfg.positions?.[cfg.role])||0)+Number(cfg.dice||0);if(n!==target){sfx.bad();flash(n);setEvent(`❌ غلط! عدّ ${ar(cfg.dice)} مربعات وجرّب تاني`,1400);return}setEvent('تمام! 👍',700);parent.postMessage({type:'roqaya-snakes-square',square:n,roundId:cfg.roundId},location.origin)};
-$('#roll').onclick=dice.onclick=pressRoll;$('#new').onclick=()=>parent.postMessage({type:'roqaya-snakes-new'},location.origin);$('#city').onclick=()=>parent.postMessage({type:'roqaya-snakes-city'},location.origin);
+dice.onclick=pressRoll;$('#new').onclick=()=>parent.postMessage({type:'roqaya-snakes-new'},location.origin);$('#city').onclick=()=>parent.postMessage({type:'roqaya-snakes-city'},location.origin);
 addEventListener('message',e=>{if(e.origin===location.origin&&e.data?.type==='roqaya-snakes-config')applyConfig(e.data.config)});
 draw();face(1);placeAll();render();parent.postMessage({type:'roqaya-snakes-ready'},location.origin);
 </script>
