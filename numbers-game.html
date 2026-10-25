@@ -9,7 +9,7 @@
 *{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
 html,body{margin:0;height:100%}
 body{display:flex;flex-direction:column;height:100svh;overflow:hidden;background:var(--bg);color:var(--ink);font-family:"Segoe UI",Tahoma,"Noto Sans Arabic",sans-serif;user-select:none}
-main{flex:1 1 auto;display:flex;flex-direction:column;min-height:0;width:100%;max-width:660px;margin:0 auto;align-items:center;gap:4px;padding:4px 8px 66px}
+main{flex:1 1 auto;display:flex;flex-direction:column;min-height:0;width:100%;max-width:660px;margin:0 auto;align-items:center;gap:3px;padding:4px 8px 76px}
 h1{margin:0;font-size:1.15rem;font-weight:900;text-align:center}
 .hide{display:none!important}
 
@@ -163,13 +163,13 @@ h1{margin:0;font-size:1.15rem;font-weight:900;text-align:center}
 #won .sc{font-size:1rem;color:#5b5390}
 
 /* الشريط السفلي الموحّد */
-.footer-bar{position:fixed;bottom:0;left:50%;transform:translateX(-50%);z-index:60;width:100%;max-width:660px;display:flex;flex-wrap:wrap;justify-content:center;align-items:center;gap:6px;padding:6px 4px max(8px,env(safe-area-inset-bottom));background:linear-gradient(180deg,rgba(255,255,255,0),rgba(255,255,255,.97) 34%)}
-.footer-bar button{min-height:42px;padding:8px 14px;border:2px solid var(--line);border-radius:12px;background:#fff;color:var(--ink);font:inherit;font-size:.78rem;font-weight:900;cursor:pointer;box-shadow:0 3px 0 #c9d6ef}
-.footer-bar button.primary{background:var(--acc);color:#fff;border-color:#4a30b0;box-shadow:0 3px 0 #37248f}
+.footer-bar{position:fixed;bottom:0;left:50%;transform:translateX(-50%);z-index:60;width:100%;max-width:660px;display:flex;flex-wrap:nowrap;justify-content:center;align-items:center;gap:5px;padding:6px 6px max(8px,env(safe-area-inset-bottom));background:rgba(230,240,255,.98);border-top:1px solid rgba(109,76,224,.18)}
+.footer-bar button{min-height:38px;padding:6px 10px;border:2px solid var(--line);border-radius:10px;background:#fff;color:var(--ink);font:inherit;font-size:.72rem;font-weight:900;cursor:pointer;box-shadow:0 2px 0 #c9d6ef;white-space:nowrap}
+.footer-bar button.primary{background:var(--acc);color:#fff;border-color:#4a30b0;box-shadow:0 2px 0 #37248f}
 .footer-bar button:disabled{opacity:.45;cursor:default}
 
 /* توست */
-#toast{position:fixed;left:50%;bottom:76px;z-index:99;max-width:90%;padding:8px 14px;border-radius:99px;background:var(--ink);color:#fff;font-weight:800;font-size:.76rem;opacity:0;transform:translate(-50%,10px);transition:opacity .25s,transform .25s;pointer-events:none}
+#toast{position:fixed;left:50%;bottom:64px;z-index:99;max-width:90%;padding:8px 14px;border-radius:99px;background:var(--ink);color:#fff;font-weight:800;font-size:.76rem;opacity:0;transform:translate(-50%,10px);transition:opacity .25s,transform .25s;pointer-events:none}
 #toast.show{opacity:1;transform:translate(-50%,0)}
 
 /* قصاصات */
@@ -179,6 +179,9 @@ h1{margin:0;font-size:1.15rem;font-weight:900;text-align:center}
 
 @media (prefers-reduced-motion:reduce){.beam,.pan,.opt,.mcard .mf,.mcard .mb,#conf i{animation:none!important;transition:none!important}}
 @media (max-width:520px){
+  main{padding:4px 6px 84px}
+  .footer-bar{gap:4px;padding:5px 4px max(8px,env(safe-area-inset-bottom))}
+  .footer-bar button{font-size:.68rem;padding:5px 7px;min-height:36px}
   .opt{min-height:64px;font-size:1.05rem}
   .cell{min-width:36px;height:38px;font-size:.9rem}
   .blk{width:30px;height:11px}
@@ -194,7 +197,6 @@ h1{margin:0;font-size:1.15rem;font-weight:900;text-align:center}
 </head>
 <body>
 <main>
-  <h1>🔢 افهم الأعداد</h1>
   <div id="hud"></div>
   <div id="info"></div>
   <div id="ladder"></div>
@@ -203,12 +205,12 @@ h1{margin:0;font-size:1.15rem;font-weight:900;text-align:center}
   <div id="hint"></div>
 </main>
 <div class="footer-bar">
-  <button id="mute" type="button" aria-label="الصوت">🔊</button>
-  <button id="next" class="primary" type="button">السؤال التالي ◀</button>
-  <button id="redo" type="button">إعادة السؤال ↻</button>
-  <button id="lvl" type="button">🌱 سهل</button>
-  <button id="new" class="primary hide" type="button">جولة جديدة 🔄</button>
   <button id="city" type="button">🎡 المدينة</button>
+  <button id="mute" type="button" aria-label="الصوت">🔊</button>
+  <button id="lvl" type="button">🌱 سهل</button>
+  <button id="redo" type="button">إعادة السؤال ↻</button>
+  <button id="next" class="primary" type="button">السؤال التالي ◀</button>
+  <button id="new" class="primary hide" type="button">جولة جديدة 🔄</button>
 </div>
 <div id="won"><p id="wmsg"></p></div>
 <div id="toast" role="status"></div>
