@@ -65,10 +65,10 @@ const MEMORY_EMOJI = [
 const MEMORY_SIZES = [4,6,8,12,16,20,24,30];
 // The age is a gameplay setting chosen by the adult, not a date of birth.
 const AGE_GAME_LEVELS = [
-  {max:3,games:['memory','count','colors','compare','coloring','sorting'],memory:[4,6]},
-  {max:5,games:['draw','memory','odd','count','pattern','animals','colors','compare','spot','numbers','space','coloring','jigsaw','sorting','phonics'],memory:[6,8,12]},
-  {max:7,games:['draw','memory','ttt','odd','count','pattern','animals','colors','math','treasure','read','english','compare','numberline','snakes','spot','numbers','space','coloring','jigsaw','sorting','phonics'],memory:[8,12,16,20]},
-  {max:10,games:['draw','memory','ttt','odd','count','pattern','animals','colors','math','treasure','read','english','compare','numberline','snakes','spot','numbers','space','coloring','jigsaw','sorting','phonics'],memory:[12,16,20,24,30]}
+  {max:3,games:['memory','count','compare','coloring'],memory:[4,6]},
+  {max:5,games:['draw','memory','odd','count','pattern','compare','spot','numbers','space','coloring','jigsaw','phonics'],memory:[6,8,12]},
+  {max:7,games:['draw','memory','ttt','odd','count','pattern','math','treasure','english','compare','numberline','snakes','spot','numbers','space','coloring','jigsaw','phonics'],memory:[8,12,16,20]},
+  {max:10,games:['draw','memory','ttt','odd','count','pattern','math','treasure','english','compare','numberline','snakes','spot','numbers','space','coloring','jigsaw','phonics'],memory:[12,16,20,24,30]}
 ];
 function normalizeAge(value) {
   const age=Number(value);
@@ -83,8 +83,8 @@ function ageOptions(chosen) {
 function effectiveMemoryPreference(age) {
   return memorySizesForAge(age).includes(Number(memoryPreference)) ? memoryPreference : 'random';
 }
-const QUIZ_GAMES = ['odd','count','pattern','animals','colors','math','read','english','compare','numberline'];
-const GAMES = ['draw','memory','ttt',...QUIZ_GAMES,'spot','numbers','space','treasure','snakes','coloring','jigsaw','sorting','phonics'];
+const QUIZ_GAMES = ['odd','count','pattern','math','english','compare','numberline'];
+const GAMES = ['draw','memory','ttt',...QUIZ_GAMES,'spot','numbers','space','treasure','snakes','coloring','jigsaw','phonics'];
 const GAME_LABELS = {
   draw:['🎨','ارسم وخمّن','واحد يرسم والتاني يخمّن'],
   memory:['🃏','كروت الذاكرة','8–30 كارت أو عدد متغيّر'],
@@ -92,11 +92,8 @@ const GAME_LABELS = {
   odd:['🔍','مين المختلف؟','رسوم كرتونية ممتعة للمقارنة'],
   count:['🔢','عدّ الصور','احسب عدد الرموز'],
   pattern:['🧩','كمّل النمط','خمن الصورة الجاية'],
-  animals:['🐾','بيوت الحيوانات','اختار مكان الحيوان'],
-  colors:['🌈','ألوان وأشكال','اختار اللون المطلوب'],
   math:['➕','حساب الملاهي','جمع بسيط وممتع'],
   treasure:['🗝️','رحلة الكنز','4 مفاتيح بالتناوب'],
-  read:['📖','اقرئي واختاري','اقرئي كلمة عربية واختاري صورتها'],
   english:['🔤','عربي وإنجليزي','معاني كلمات بسيطة'],
   compare:['🔢','ترتيب ومقارنة الأرقام','تصاعدي • تنازلي • مين الأكبر؟'],
   numberline:['🔢','الرقم الناقص','كمّلي تسلسل الأرقام'],
@@ -106,7 +103,6 @@ const GAME_LABELS = {
   snakes:['🐍','السلم والثعبان','نرد متحرك • خطوات حقيقية • سلالم وثعابين'],
   coloring:['🎨','كتاب التلوين','اختاري لون واضغطي لتلوين الرسمة'],
   jigsaw:['🧩','البازل','٤ / ١٠ / ٢٠ / ٥٠ قطعة • لكل لاعب بازل مستقل'],
-  sorting:['🧺','فرز الألوان والأشكال','اسحبي كل عنصر للصندوق المناسب'],
   phonics:['🔤','الحروف والصور','وصّلي الحرف بالصورة التي تبدأ به']
 };
 
