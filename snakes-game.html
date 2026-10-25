@@ -19,8 +19,8 @@ body{display:flex;flex-direction:column;align-items:center;gap:8px;padding:58px 
 .players{width:min(94vw,560px);display:grid;grid-template-columns:1fr 1fr;gap:7px}
 .player{background:var(--card);border:1px solid rgba(255,255,255,.13);border-radius:11px;padding:6px 8px;display:flex;justify-content:space-between;align-items:center;font-size:.72rem;font-weight:800}
 .player.turn{outline:2px solid var(--accent)}
-#dice{width:62px;height:62px;padding:0;border-radius:14px;background:transparent;display:grid;grid-template:repeat(3,1fr)/repeat(3,1fr);place-items:center;cursor:pointer;user-select:none;-webkit-tap-highlight-color:transparent;margin:0 auto;border:none;box-shadow:none}
-#dice i{width:12px;height:12px;border-radius:50%;background:#fff;box-shadow:0 2px 4px rgba(0,0,0,.4);visibility:hidden}#dice i.on{visibility:visible}
+#dice{width:62px;height:62px;padding:9px;border-radius:14px;background:#ff7a2a;display:grid;grid-template:repeat(3,1fr)/repeat(3,1fr);place-items:center;box-shadow:0 4px 0 #b94f0a;cursor:pointer;user-select:none;-webkit-tap-highlight-color:transparent;margin:0 auto}
+#dice i{width:10px;height:10px;border-radius:50%;background:#1b2a41;visibility:hidden}#dice i.on{visibility:visible}
 #dice.roll{animation:shake .25s infinite}@keyframes shake{50%{transform:rotate(14deg) scale(1.08)}}
 button{font:inherit;padding:9px 14px;border:0;border-radius:11px;cursor:pointer;background:var(--card);color:#fff}
 button:disabled{opacity:.48;cursor:default}
