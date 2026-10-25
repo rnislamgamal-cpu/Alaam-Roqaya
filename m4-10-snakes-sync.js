@@ -74,6 +74,7 @@ function soundEnabled(){
 function sendConfig(){
   const g=shared?.snakeV2;
   if(!frame?.contentWindow||shared?.game!=='snakes'||!g||!role)return;
+  /* نقرأ عدد فوز السلم والثعبان من state.snakeWins لو موجود */
   frame.contentWindow.postMessage({type:'roqaya-snakes-config',config:{
     role,
     childName:childName(),
@@ -86,7 +87,8 @@ function sendConfig(){
     winner:g.winner||null,
     lastEvent:g.lastEvent||null,
     move:g.move||null,
-    soundEnabled:soundEnabled()
+    soundEnabled:soundEnabled(),
+    snakeWins:shared.snakeWins||{host:0,guest:0}
   }},location.origin);
 }
 function activate(){
@@ -165,10 +167,12 @@ async function moveDone(moveId,roundId){
     const g=old.snakeV2,m=g?.move;
     if(old.game!=='snakes'||!g||g.phase!=='moving'||!m||Number(m.id)!==Number(moveId)||Number(g.roundId)!==Number(roundId))return;
     const scores={...(old.scores||{host:0,guest:0})};
+    const sw={...(old.snakeWins||{host:0,guest:0})};
     const id=(Number(g.lastEvent?.id)||0)+1;
     if(m.winner){
       scores[m.winner]=(Number(scores[m.winner])||0)+5;
-      return {...old,scores,phase:'finished',result:m.winner,snakeV2:{
+      sw[m.winner]=(Number(sw[m.winner])||0)+1;
+      return {...old,scores,snakeWins:sw,phase:'finished',result:m.winner,snakeV2:{
         ...g,phase:'finished',winner:m.winner,dice:null,
         lastEvent:{id,type:'win',player:m.winner,dice:m.dice,at:Date.now()}
       }};

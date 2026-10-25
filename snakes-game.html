@@ -9,7 +9,10 @@
 *{box-sizing:border-box}html,body{margin:0;min-height:0}
 body{display:flex;flex-direction:column;align-items:center;gap:10px;padding:58px 8px 90px;background:var(--bg);color:#fff;font-family:system-ui,"Segoe UI",Tahoma,sans-serif;position:relative}
 .top-bar{position:fixed;top:0;left:0;right:0;z-index:12;background:linear-gradient(180deg,rgba(15,42,74,.98) 0%,rgba(15,42,74,.9) 100%);backdrop-filter:blur(6px);padding:6px 8px;border-bottom:1px solid rgba(255,255,255,.12)}
-.top-row{display:flex;align-items:center;gap:6px;justify-content:flex-start;flex-direction:row-reverse;width:min(94vw,560px);margin:0 auto}
+.top-row{display:flex;align-items:center;gap:6px;justify-content:space-between;width:min(94vw,560px);margin:0 auto;flex-direction:row}
+.top-left{display:flex;align-items:center;gap:5px;flex-direction:row-reverse}
+.win-pill{background:var(--card);border:1px solid rgba(255,255,255,.16);border-radius:999px;padding:3px 8px;font-weight:800;font-size:.76rem;display:flex;align-items:center;gap:4px}
+#status{margin:0;flex:1;text-align:right;font-weight:800;font-size:.86rem;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;min-height:1.4em}
 .top-btn{width:36px;height:36px;border-radius:10px;background:var(--card);color:#fff;border:1px solid rgba(255,255,255,.16);font-size:1rem;display:grid;place-items:center;padding:0}
 #status{margin:0;flex:1;text-align:center;font-weight:800;font-size:.86rem;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;min-height:1.4em}
 .row{display:flex;gap:10px;align-items:center;justify-content:center;flex-wrap:wrap}
@@ -35,8 +38,11 @@ button:disabled{opacity:.48;cursor:default}#roll{background:var(--accent);color:
 <body>
 <div class="top-bar">
   <div class="top-row">
-    <button id="city" class="top-btn" title="المدينة">🎡</button>
-    <button id="new" class="top-btn" title="لعبة جديدة">🔄</button>
+    <div class="top-left">
+      <button id="city" class="top-btn" title="المدينة">🎡</button>
+      <button id="new" class="top-btn" title="لعبة جديدة">🔄</button>
+      <span class="win-pill">👨<b id="w-host">٠</b> • 👧<b id="w-guest">٠</b></span>
+    </div>
     <p id="status" aria-live="polite">جاري تجهيز اللعبة…</p>
   </div>
 </div>
@@ -55,7 +61,7 @@ const SNK={16:6,47:26,49:11,56:53,62:19,64:60,87:24,93:73,95:75,98:78};
 const COLS=['#2e9e44','#f08a24','#8e44ad','#16a6b6','#e75480','#c9a227','#3b82f6','#d9480f','#0f9d8a','#7c4dff'];
 const PIPS=[[4],[0,8],[0,4,8],[0,2,6,8],[0,2,4,6,8],[0,2,3,5,6,8]];
 const EASTERN='٠١٢٣٤٥٦٧٨٩',ar=v=>String(v).replace(/[0-9]/g,d=>EASTERN[d.charCodeAt(0)-48]);
-let cfg={role:'guest',childName:'رقية',positions:{host:0,guest:0},turn:'host',phase:'ready',dice:null,spinId:0,roundId:0,winner:null,lastEvent:null,move:null,soundEnabled:true};
+let cfg={role:'guest',childName:'رقية',positions:{host:0,guest:0},turn:'host',phase:'ready',dice:null,spinId:0,roundId:0,winner:null,lastEvent:null,move:null,soundEnabled:true,snakeWins:{host:0,guest:0}};
 let spinTimer=0,cur=1,animating=false,initialized=false,seenMoveId=0,seenEventId=0,eventText='',eventTimer=0,ac=null;
 const rc=n=>{const i=n-1,r=i/10|0;return[r%2?9-i%10:i%10,r]},ctr=n=>{const[c,r]=rc(n);return[c*10+5,(9-r)*10+5]},nameOf=r=>r==='host'?'بابا':(cfg.childName||'رقية'),myTurn=()=>cfg.turn===cfg.role&&!cfg.winner,wait=ms=>new Promise(r=>setTimeout(r,ms));
 function ladder(a,b){const[x1,y1]=ctr(a),[x2,y2]=ctr(b),dx=x2-x1,dy=y2-y1,L=Math.hypot(dx,dy),ux=dx/L,uy=dy/L,px=-uy*1.7,py=ux*1.7,ln=(ax,ay,bx,by,c,w)=>`<line x1="${ax}" y1="${ay}" x2="${bx}" y2="${by}" stroke="${c}" stroke-width="${w}" stroke-linecap="round"/>`;let s=ln(x1+px,y1+py,x2+px,y2+py,'#7a4b1e',1.2)+ln(x1-px,y1-py,x2-px,y2-py,'#7a4b1e',1.2);for(let d=3;d<L-2;d+=4.2){const cx=x1+ux*d,cy=y1+uy*d;s+=ln(cx+px,cy+py,cx-px,cy-py,'#c58a4a',1)}return s}
@@ -74,11 +80,41 @@ function flash(n){const[x,y]=ctr(n),r=document.createElementNS('http://www.w3.or
 function setEvent(text,ms=1700){eventText=text;clearTimeout(eventTimer);eventTimer=setTimeout(()=>{eventText='';renderStatus()},ms);renderStatus()}
 function checkEvent(){const ev=cfg.lastEvent,id=Number(ev?.id)||0;if(!initialized){seenEventId=id;return}if(id<=seenEventId)return;seenEventId=id;if(ev.type==='overshoot')setEvent(`😅 ${nameOf(ev.player)} محتاج رقم بالظبط عشان يوصل ١٠٠`);if(ev.type==='six')setEvent(`🎉 ${nameOf(ev.player)} جاب ٦ — دور إضافي!`);if(ev.type==='win'){setEvent(`🏆 ${nameOf(ev.player)} كسب!`,3500);sfx.win()}}
 function renderStatus(){const s=$('#status');if(eventText){s.textContent=eventText;return}if(cfg.winner){s.textContent=`🎉 ${nameOf(cfg.winner)} كسب!`;return}if(animating||cfg.phase==='moving'){s.textContent=`👣 ${nameOf(cfg.turn)} بيتحرك…`;return}if(cfg.phase==='spinning'){s.textContent=myTurn()?'النرد بيلف! اضغط عليه عشان يقف ✋':`${nameOf(cfg.turn)} بيرمي النرد 🎲`;return}if(cfg.phase==='choose'){s.textContent=myTurn()?`طلع ${ar(cfg.dice)}! عدّ ${ar(cfg.dice)} مربعات واضغط المربع الصح 👆`:`${nameOf(cfg.turn)} طلع له ${ar(cfg.dice)} وبيعد الخطوات…`;return}s.textContent=myTurn()?'دورك! ارمي النرد 🎲':`دور ${nameOf(cfg.turn)} — استنى دورك 👀`}
-function renderControls(){const ready=cfg.phase==='ready',spinning=cfg.phase==='spinning',active=myTurn()&&!animating,roll=$('#roll');roll.disabled=!(active&&(ready||spinning));roll.textContent=spinning&&active?'✋ وقّف النرد':'🎲 ارمي النرد';dice.style.pointerEvents=roll.disabled?'none':'auto';$('#new').disabled=cfg.role!=='host';$('#city').disabled=cfg.role!=='host';$('#hostP').classList.toggle('turn',cfg.turn==='host'&&!cfg.winner);$('#guestP').classList.toggle('turn',cfg.turn==='guest'&&!cfg.winner);$('#hostP').querySelector('b').textContent=ar(cfg.positions?.host||0);$('#guestP').querySelector('b').textContent=ar(cfg.positions?.guest||0);$('#guestP').querySelector('span').textContent=`👧 ${cfg.childName||'رقية'}`}
-function render(){renderControls();renderStatus();if(cfg.phase==='spinning')startSpin();else stopSpin(cfg.dice||1)}
-async function animateMove(move){if(!move||Number(move.id)<=seenMoveId)return;seenMoveId=Number(move.id);animating=true;render();const role=move.player,start=Number(move.from)||0,target=Number(move.target)||start;placeRole(role,start);for(let p=start+1;p<=target;p++){placeRole(role,p);await wait(210)}if(move.jumpType){setEvent(move.jumpType==='ladder'?'🪜 سلم! طلعت فوق':'🐍 ثعبان! نزلت تحت',1100);await wait(360);toks[role==='host'?0:1].classList.add('jump');move.jumpType==='ladder'?sfx.ladder():sfx.snake();placeRole(role,move.destination);await wait(760);toks[role==='host'?0:1].classList.remove('jump')}animating=false;placeAll();render();parent.postMessage({type:'roqaya-snakes-move-done',moveId:Number(move.id),roundId:Number(cfg.roundId)},location.origin)}
-function applyConfig(next){const first=!initialized;cfg={...cfg,...next};if(first){initialized=true;seenMoveId=Number(cfg.move?.id)||0;seenEventId=Number(cfg.lastEvent?.id)||0;placeAll()}else{checkEvent();if(cfg.phase==='moving'&&cfg.move&&Number(cfg.move.id)>seenMoveId)animateMove(cfg.move).catch(()=>{animating=false;placeAll();render()});else if(!animating)placeAll()}render()}
-function pressRoll(){if(animating||!myTurn())return;unlock();if(cfg.phase==='ready')parent.postMessage({type:'roqaya-snakes-roll-start',roundId:cfg.roundId},location.origin);else if(cfg.phase==='spinning')parent.postMessage({type:'roqaya-snakes-roll-stop',roundId:cfg.roundId},location.origin)}
+function renderControls(){const ready=cfg.phase==='ready',spinning=cfg.phase==='spinning',active=myTurn()&&!animating,roll=$('#roll');roll.disabled=!(active&&(ready||spinning));roll.textContent=spinning&&active?'✋ وقّف النرد':'🎲 ارمي النرد';dice.style.pointerEvents=roll.disabled?'none':'auto';$('#new').disabled=cfg.role!=='host';$('#city').disabled=cfg.role!=='host';$('#hostP').classList.toggle('turn',cfg.turn==='host'&&!cfg.winner);$('#guestP').classList.toggle('turn',cfg.turn==='guest'&&!cfg.winner);$('#hostP').querySelector('b').textContent=ar(cfg.positions?.host||0);$('#guestP').querySelector('b').textContent=ar(cfg.positions?.guest||0);$('#guestP').querySelector('span').textContent=`👧 ${cfg.childName||'رقية'}`;$('#w-host').textContent=ar(Number(cfg.snakeWins?.host)||0);$('#w-guest').textContent=ar(Number(cfg.snakeWins?.guest)||0)}
+function startBigSpin(){
+  let el=document.getElementById('big-dice');
+  if(!el){
+    el=document.createElement('div');
+    el.id='big-dice';
+    el.innerHTML='<div class="bd-face"></div>';
+    document.body.appendChild(el);
+  }
+  el.classList.add('show','rolling');
+  if(!window.__bdt) window.__bdt=setInterval(()=>{
+    const v=1+Math.floor(Math.random()*6);
+    const f=el.querySelector('.bd-face');
+    f.textContent=['','⚀','⚁','⚂','⚃','⚄','⚅'][v];
+  },70);
+}
+function stopBigSpin(v){
+  const el=document.getElementById('big-dice');
+  if(el){
+    if(window.__bdt){clearInterval(window.__bdt);window.__bdt=null;}
+    el.classList.remove('rolling');
+    const f=el.querySelector('.bd-face');
+    f.textContent=['','⚀','⚁','⚂','⚃','⚄','⚅'][v||1];
+    setTimeout(()=>el.classList.remove('show'),900);
+  }
+}
+function render(){renderControls();renderStatus();if(cfg.phase==='spinning'){startSpin();startBigSpin();}else{stopSpin(cfg.dice||1);if(cfg.phase!=='spinning')stopBigSpin(cfg.dice);}}
+/* صوت النقر لكل خطوة */
+function stepSfx(){
+  if(!cfg.soundEnabled)return;
+  try{unlock();if(!ac)return;const o=ac.createOscillator(),g=ac.createGain(),t=ac.currentTime;o.type='square';o.frequency.setValueAtTime(420,t);o.frequency.exponentialRampToValueAtTime(560,t+.08);g.gain.setValueAtTime(.09,t);g.gain.exponentialRampToValueAtTime(.001,t+.09);o.connect(g);g.connect(ac.destination);o.start(t);o.stop(t+.1);}catch{}
+}
+async function animateMove(move){if(!move||Number(move.id)<=seenMoveId)return;seenMoveId=Number(move.id);animating=true;render();const role=move.player,start=Number(move.from)||0,target=Number(move.target)||start;placeRole(role,start);for(let p=start+1;p<=target;p++){placeRole(role,p);stepSfx();await wait(170)}if(move.jumpType){setEvent(move.jumpType==='ladder'?'🪜 سلم! طلعت فوق':'🐍 ثعبان! نزلت تحت',1100);await wait(320);toks[role==='host'?0:1].classList.add('jump');move.jumpType==='ladder'?sfx.ladder():sfx.snake();placeRole(role,move.destination);await wait(700);toks[role==='host'?0:1].classList.remove('jump')}animating=false;placeAll();render();parent.postMessage({type:'roqaya-snakes-move-done',moveId:Number(move.id),roundId:Number(cfg.roundId)},location.origin)}
+function applyConfig(next){const first=!initialized;cfg={...cfg,...next};if(cfg.snakeWins){} if(first){initialized=true;seenMoveId=Number(cfg.move?.id)||0;seenEventId=Number(cfg.lastEvent?.id)||0;placeAll()}else{checkEvent();if(cfg.phase==='moving'&&cfg.move&&Number(cfg.move.id)>seenMoveId)animateMove(cfg.move).catch(()=>{animating=false;placeAll();render()});else if(!animating)placeAll()}render();if(Number.isInteger(cfg.dice)&&cfg.phase!=='spinning')stopBigSpin(cfg.dice)}
+function pressRoll(){if(animating||!myTurn())return;unlock();/* النرد يلف فى النص ويلف لحد ما أضغط تانى */if(cfg.phase==='ready'){startBigSpin();parent.postMessage({type:'roqaya-snakes-roll-start',roundId:cfg.roundId},location.origin);return} if(cfg.phase==='spinning'){parent.postMessage({type:'roqaya-snakes-roll-stop',roundId:cfg.roundId},location.origin);return}}
 board.onclick=e=>{if(animating||!myTurn()||cfg.phase!=='choose')return;const b=board.getBoundingClientRect(),c=Math.floor((e.clientX-b.left)/b.width*10),w=9-Math.floor((e.clientY-b.top)/b.height*10);if(c<0||c>9||w<0||w>9)return;const n=w*10+(w%2?9-c:c)+1,target=(Number(cfg.positions?.[cfg.role])||0)+Number(cfg.dice||0);if(n!==target){sfx.bad();flash(n);setEvent(`❌ غلط! عدّ ${ar(cfg.dice)} مربعات وجرّب تاني`,1400);return}setEvent('تمام! 👍',700);parent.postMessage({type:'roqaya-snakes-square',square:n,roundId:cfg.roundId},location.origin)};
 $('#roll').onclick=dice.onclick=pressRoll;$('#new').onclick=()=>parent.postMessage({type:'roqaya-snakes-new'},location.origin);$('#city').onclick=()=>parent.postMessage({type:'roqaya-snakes-city'},location.origin);
 addEventListener('message',e=>{if(e.origin===location.origin&&e.data?.type==='roqaya-snakes-config')applyConfig(e.data.config)});
