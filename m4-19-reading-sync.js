@@ -100,6 +100,19 @@ async function newGame(roundId){
   const rr=(Number(old.round)||0)+1;return{...old,phase:'playing',round:rr,result:null,readingV1:freshMatch(rr)};
  });
 }
+async function nextQ(msg){
+  if(role!=='host')return;
+  await mutate(old=>{
+   const g=old.readingV1;if(old.game!=='reading-v1'||!g||!g.level)return;
+   const ti=(Number(msg?.turnIndex)||Number(g.turnIndex)||1);
+   if(ti!==Number(g.turnIndex))return;
+   const nxt=ti+1;
+   if(nxt>Number(g.totalTurns||ROUNDS)){
+     return{...old,phase:'finished',result:null,readingV1:{...g,turnIndex:nxt,winner:null,answered:{host:false,guest:false}}};
+   }
+   return{...old,phase:'playing',readingV1:{...g,turnIndex:nxt,answered:{host:false,guest:false}}};
+  });
+}
 async function goCity(){if(role!=='host')return;await mutate(old=>old.game==='reading-v1'?{...old,game:'lobby',phase:'lobby'}:old)}
 
 function cardMarkup(){
