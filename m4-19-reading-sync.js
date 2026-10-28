@@ -44,7 +44,7 @@ function buildKeys(s,l,rounds){
   return take(BANK[Number(l)],rounds);
 }
 function freshPlayer(){return{index:0,stars:0,firstTry:0,tries:0,wrongs:[],done:false}}
-function freshMatch(roundId){return{v:1,roundId,seed:seed(),level:null,rounds:ROUNDS,phase:'choose',players:{host:freshPlayer(),guest:freshPlayer()},winner:null,awarded:false}}
+function freshMatch(roundId){return{v:2,roundId,seed:seed(),level:null,rounds:ROUNDS,phase:'playing',turnIndex:1,totalTurns:ROUNDS,players:{host:freshPlayer(),guest:freshPlayer()},winner:null,awarded:false,answered:{host:false,guest:false}}}
 function cleanup(){try{unsubMeta?.()}catch{};try{unsubState?.()}catch{};unsubMeta=unsubState=null;meta=null;shared=null;role=''}
 function updateRole(){role=meta?.hostUid===uid?'host':meta?.guestUid===uid?'guest':''}
 async function mutate(transform){
