@@ -9,8 +9,7 @@
 *{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
 html,body{margin:0;min-height:100%}
 body{min-height:100vh;background:var(--bg);color:var(--ink);font-family:"Segoe UI",Tahoma,"Noto Sans Arabic",sans-serif;user-select:none}
-main{max-width:640px;margin:auto;padding:9px 8px 24px}
-h1{font-size:1.35rem;margin:0 0 6px;text-align:center}
+main{max-width:640px;margin:auto;padding:6px 8px 80px}
 .duo{display:grid;grid-template-columns:1fr 1fr;gap:7px;margin-bottom:7px}
 .player{display:flex;align-items:center;gap:5px;min-width:0;padding:6px 8px;border:2px solid transparent;border-radius:12px;background:#fff;font-weight:850}
 .player.me{border-color:#111}.player b{overflow:hidden;text-overflow:ellipsis;white-space:nowrap;font-size:.68rem}.player span{margin-inline-start:auto;font-size:.72rem}
@@ -33,7 +32,13 @@ h1{font-size:1.35rem;margin:0 0 6px;text-align:center}
 .end{text-align:center;padding-top:16px}.end img.big{width:90px;height:90px}.end h2{font-size:1.35rem;margin:8px 0 3px}.bigscore{font-size:2rem;font-weight:900;margin:4px 0}
 .result{margin:8px 0;padding:9px;border-radius:12px;background:#fff8cf;font-weight:850;font-size:.76rem}
 .btn{font:inherit;font-weight:800;font-size:.8rem;border:0;border-radius:13px;padding:10px;background:var(--blue);color:#fff;width:100%;margin-top:8px;cursor:pointer}.btn.alt{width:auto;background:#fff;color:var(--ink);border:2px solid var(--line);margin-top:0}.btn:disabled{opacity:.42}
-.actions{display:flex;gap:7px;justify-content:center;margin-top:9px}.credit{font-size:.56rem;opacity:.42;text-align:center;margin-top:7px}
+.actions{display:flex;gap:7px;justify-content:center;margin-top:9px}
+.footer-bar{position:fixed;bottom:0;left:50%;transform:translateX(-50%);z-index:60;width:100%;max-width:640px;display:flex;flex-wrap:nowrap;justify-content:center;align-items:center;gap:6px;padding:6px 8px max(8px,env(safe-area-inset-bottom));background:rgba(234,244,255,.98);border-top:1px solid rgba(47,107,255,.18)}
+.footer-bar button{min-height:38px;padding:6px 12px;border:2px solid var(--line);border-radius:10px;background:#fff;color:var(--ink);font:inherit;font-size:.76rem;font-weight:800;cursor:pointer}
+.footer-bar button.primary{background:var(--blue);color:#fff;border-color:#1f57d6}
+.footer-bar button:disabled{opacity:.45;cursor:default}
+#turnbar{width:100%;text-align:center;font-weight:900;font-size:.8rem;margin:4px 0 6px;min-height:1.2em}
+.credit{position:fixed;bottom:54px;left:50%;transform:translateX(-50%);z-index:59;font-size:.5rem;opacity:.35;text-align:center;width:100%;max-width:640px}
 @media(prefers-reduced-motion:no-preference){
  .opt.ok img{animation:pop .6s}.opt.bad{animation:shake .4s}
  @keyframes pop{40%{transform:scale(1.22) rotate(-6deg)}70%{transform:scale(.96) rotate(3deg)}}
@@ -45,15 +50,19 @@ h1{font-size:1.35rem;margin:0 0 6px;text-align:center}
 </head>
 <body>
 <main>
-  <h1>📖 اقرأ</h1>
   <div class="duo">
     <div id="hostBox" class="player host"><b>بابا</b><span>⭐ ٠</span></div>
     <div id="guestBox" class="player guest"><b>رقية</b><span>⭐ ٠</span></div>
   </div>
+  <div id="turnbar"></div>
   <div id="game"></div>
-  <div class="actions"><button id="city" class="btn alt">🎡 المدينة</button></div>
-  <div class="credit">Graphics: Twemoji © Twitter, CC-BY 4.0</div>
 </main>
+<div class="footer-bar">
+  <button id="city">🎡 المدينة</button>
+  <button id="next" class="primary" type="button">السؤال التالي ◀</button>
+  <button id="new" class="primary hide" type="button">تحدّي جديد 🔄</button>
+</div>
+<div class="credit">Graphics: Twemoji © Twitter, CC-BY 4.0</div>
 
 <script>
 const $=s=>document.querySelector(s);
@@ -119,8 +128,8 @@ function confetti(){
  let f=0;(function step(){g.clearRect(0,0,cv.width,cv.height);ps.forEach(p=>{p.vy+=.42;p.x+=p.vx;p.y+=p.vy;p.vx*=.99;p.r+=p.vr;g.save();g.translate(p.x,p.y);g.rotate(p.r);g.fillStyle=p.c;g.fillRect(-p.w/2,-p.h/2,p.w,p.h);g.restore()});if(++f<95)requestAnimationFrame(step);else cv.remove()})();
 }
 
-let cfg={role:'guest',childName:'رقية',roundId:0,seed:1,level:null,rounds:10,phase:'choose',players:{host:null,guest:null},winner:null};
-let Q=[],currentMatch=-1,deferAdvance=false,pendingCfg=null;
+let cfg={role:'guest',childName:'رقية',roundId:0,seed:1,level:null,rounds:10,phase:'playing',players:{host:null,guest:null},winner:null};
+let Q=[],currentMatch=-1,deferAdvance=false,pendingCfg=null,answered=false,turnIndex=1,totalTurns=10;
 
 const mine=()=>cfg.players?.[cfg.role]||{index:0,stars:0,firstTry:0,tries:0,wrongs:[],done:false};
 const otherRole=()=>cfg.role==='host'?'guest':'host';
