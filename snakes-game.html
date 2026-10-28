@@ -7,7 +7,7 @@
 <style>
 :root{--s:min(94vw,560px);--bg:#0f2a4a;--card:#1c4373;--accent:#ffb703;--p1:#e63946;--p2:#7b3fe4}
 *{box-sizing:border-box}html,body{margin:0;height:100dvh;min-height:100dvh;overflow:hidden}
-body{display:flex;flex-direction:column;align-items:center;gap:8px;padding:58px 8px 6px;background:var(--bg);color:#fff;font-family:system-ui,"Segoe UI",Tahoma,sans-serif;position:relative}
+body{display:flex;flex-direction:column;align-items:center;gap:6px;padding:58px 8px 10px;background:var(--bg);color:#fff;font-family:system-ui,"Segoe UI",Tahoma,sans-serif;position:relative}
 .top-bar{position:fixed;top:0;left:0;right:0;z-index:12;background:linear-gradient(180deg,rgba(15,42,74,.98) 0%,rgba(15,42,74,.9) 100%);backdrop-filter:blur(6px);padding:6px 8px;border-bottom:1px solid rgba(255,255,255,.12)}
 .top-row{display:flex;align-items:center;gap:6px;justify-content:space-between;width:min(94vw,560px);margin:0 auto;flex-direction:row}
 .top-left{display:flex;align-items:center;gap:5px;flex-direction:row-reverse}
@@ -15,6 +15,7 @@ body{display:flex;flex-direction:column;align-items:center;gap:8px;padding:58px 
 #status{margin:0;flex:1;text-align:center;font-weight:800;font-size:.86rem;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;min-height:1.4em}
 .top-btn{width:36px;height:36px;border-radius:10px;background:var(--card);color:#fff;border:1px solid rgba(255,255,255,.16);font-size:1rem;display:grid;place-items:center;padding:0}
 .row{display:flex;gap:10px;align-items:center;justify-content:center;flex-wrap:wrap;background:transparent!important;box-shadow:none!important;border:none!important}
+.dice-wrap{width:100%;display:flex;align-items:center;justify-content:center;margin-top:6px;padding:4px 0 2px}
 .players{display:none!important}
 #dice{width:62px;height:62px;padding:9px;border-radius:14px;background:#ff7a2a;display:grid;grid-template:repeat(3,1fr)/repeat(3,1fr);place-items:center;box-shadow:0 4px 0 #b94f0a;cursor:pointer;user-select:none;-webkit-tap-highlight-color:transparent;margin:0 auto}
 #dice i{width:10px;height:10px;border-radius:50%;background:#1b2a41;visibility:hidden}#dice i.on{visibility:visible}
@@ -43,7 +44,7 @@ button:disabled{opacity:.48;cursor:default}
     <p id="status" aria-live="polite">جاري تجهيز اللعبة…</p>
   </div>
 </div>
-<div class="row" style="flex-direction:column;gap:8px"><div id="dice" role="img" aria-label="النرد"></div></div>
+<div class="dice-wrap"><div id="dice" role="img" aria-label="النرد"></div></div>
 <div id="board"><svg id="svg" viewBox="0 0 100 100"></svg></div>
 <div class="actions" style="display:none!important" hidden></div>
 <script>
