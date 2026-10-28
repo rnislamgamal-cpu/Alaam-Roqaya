@@ -196,6 +196,8 @@ $('#game').onclick=e=>{
  if(act==='again'&&cfg.role==='host')parent.postMessage({type:'roqaya-reading-new',roundId:cfg.roundId},location.origin);
 };
 $('#city').onclick=()=>{if(cfg.role==='host')parent.postMessage({type:'roqaya-reading-city'},location.origin)};
+document.getElementById('next').onclick=()=>{if(cfg.role!=='host')return;answered=false;parent.postMessage({type:'roqaya-reading-next',roundId:cfg.roundId,turnIndex:Number(turnIndex)||1},location.origin)};
+document.getElementById('new').onclick=()=>{if(cfg.role!=='host')return;parent.postMessage({type:'roqaya-reading-new',roundId:cfg.roundId},location.origin)};
 function applyConfig(next){
  const changed=currentMatch!==Number(next.roundId);
  cfg={...cfg,...next};paintPlayers();
