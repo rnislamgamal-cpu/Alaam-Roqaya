@@ -84,6 +84,13 @@ function effectiveMemoryPreference(age) {
   return memorySizesForAge(age).includes(Number(memoryPreference)) ? memoryPreference : 'random';
 }
 const QUIZ_GAMES = ['odd','count','pattern','math','english','compare','numberline'];
+// These games are rendered by their dedicated synced modules/iframes. Keep the
+// room state listener alive, but never paint the legacy renderer underneath.
+const MODULE_MANAGED_GAMES = new Set([
+  'memory','draw','snakes','jigsaw','odd-v2','pattern-v2','reading-v1',
+  'math-kids-v1','connect4','hide-seek-v1','sequence-v1','spot-v1',
+  'numbers-v1','space-v1'
+]);
 const GAMES = ['draw','memory','ttt',...QUIZ_GAMES,'spot','numbers','space','treasure','snakes','coloring','jigsaw','phonics'];
 const GAME_LABELS = {
   draw:['🎨','ارسم وخمّن','واحد يرسم والتاني يخمّن'],
@@ -1785,6 +1792,11 @@ function render() {
   if (state.game === 'school-arabic') return renderSchoolArabic();
   if (state.game === 'world-gate') return renderWorldGate();
   if (state.game === 'lobby') return renderLobby();
+  if (MODULE_MANAGED_GAMES.has(state.game)) { screen.replaceChildren(); return; }
+  if (state.game === 'odd' || state.game === 'pattern') {
+    screen.innerHTML = `<div class="panel center"><div class="big-emoji">✨</div><h2>حدّثنا اللعبة!</h2><p>ارجعوا للمدينة وابدؤوا الجولة الجديدة.</p><button class="primary" data-action="lobby" ${role !== 'host' ? 'disabled' : ''}>🎡 الرجوع للمدينة</button></div>`;
+    return;
+  }
   if (state.game === 'memory') return renderMemory();
   if (state.game === 'ttt') return renderTtt();
   if (state.game === 'draw') return renderDraw();
@@ -2299,6 +2311,7 @@ screen.addEventListener('click',async e=>{
   if (action==='clear-draw' && state?.game==='draw' && state.draw.drawer===role) {
     return remove(ref(db,`rooms/${roomCode}/strokes`)).catch(err=>info(humanError(err)));
   }
+  if (button.dataset.game === 'odd' || button.dataset.game === 'pattern') return;
   if (button.dataset.game) return startGame(button.dataset.game);
   if (button.dataset.memory!==undefined) return chooseCard(Number(button.dataset.memory));
   if (button.dataset.cell!==undefined) return chooseCell(Number(button.dataset.cell));
