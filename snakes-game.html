@@ -49,6 +49,8 @@ button:disabled{opacity:.48;cursor:default}
 <div class="dice-wrap"><div id="dice" role="img" aria-label="النرد"></div></div>
 <div id="board"><div id="board-grid"><svg id="svg" viewBox="0 0 100 100"></svg></div></div>
 <div class="actions" style="display:none!important" hidden></div>
+<audio id="ladder-voice" src="assets/ladder-climb.ogg" preload="auto"></audio>
+<audio id="snake-voice" src="assets/snake-descent.ogg" preload="auto"></audio>
 <script>
 const $=s=>document.querySelector(s),board=$('#board'),playfield=$('#board-grid');
 const BOARD_LAYOUTS=[
@@ -62,6 +64,7 @@ const BOARD_LAYOUTS=[
 const boardIndex=seed=>Math.abs(Number(seed)||0)%BOARD_LAYOUTS.length,boardFor=seed=>BOARD_LAYOUTS[boardIndex(seed)];
 const PIPS=[[4],[0,8],[0,4,8],[0,2,6,8],[0,2,4,6,8],[0,2,3,5,6,8]];
 const EASTERN='٠١٢٣٤٥٦٧٨٩',ar=v=>String(v).replace(/[0-9]/g,d=>EASTERN[d.charCodeAt(0)-48]);
+const ladderVoice=$('#ladder-voice'),snakeVoice=$('#snake-voice');
 let cfg={role:'guest',childName:'رقية',positions:{host:0,guest:0},turn:'host',phase:'ready',dice:null,spinId:0,roundId:0,boardSeed:0,winner:null,lastEvent:null,move:null,soundEnabled:true,snakeWins:{host:0,guest:0}};
 let spinTimer=0,cur=1,animating=false,initialized=false,seenMoveId=0,seenMoveRoundId=null,seenEventId=0,eventText='',eventTimer=0,ac=null,boardImageToken=0,hasBoardConfig=false;
 const rc=n=>{const i=n-1,r=i/10|0;return[r%2?9-i%10:i%10,r]},ctr=n=>{const[c,r]=rc(n);return[c*10+5,(9-r)*10+5]},nameOf=r=>r==='host'?'بابا':(cfg.childName||'رقية'),myTurn=()=>cfg.turn===cfg.role&&!cfg.winner,wait=ms=>new Promise(r=>setTimeout(r,ms));
@@ -74,7 +77,8 @@ function placeRole(role,pos=cfg.positions?.[role]||0){const i=role==='host'?0:1,
 function placeAll(){placeRole('host');placeRole('guest')}
 function unlock(){if(!cfg.soundEnabled)return;try{ac=ac||new(window.AudioContext||window.webkitAudioContext)();if(ac.state==='suspended')ac.resume()}catch{}}
 function tone(f,at,dur,type,vol,f2){if(!cfg.soundEnabled)return;try{unlock();if(!ac)return;const o=ac.createOscillator(),g=ac.createGain(),t=ac.currentTime+at;o.type=type;o.frequency.setValueAtTime(f,t);if(f2)o.frequency.exponentialRampToValueAtTime(f2,t+dur);g.gain.setValueAtTime(vol,t);g.gain.exponentialRampToValueAtTime(.001,t+dur);o.connect(g);g.connect(ac.destination);o.start(t);o.stop(t+dur)}catch{}}
-const sfx={ladder:()=>[523,659,784,1047].forEach((f,k)=>tone(f,k*.09,.2,'triangle',.22)),snake:()=>{tone(700,0,.75,'triangle',.22,100);tone(350,0,.75,'sawtooth',.05,50)},win:()=>[[523,0,.12],[659,.12,.12],[784,.24,.12],[1047,.36,.25],[784,.66,.1],[1047,.78,.1],[1319,.9,.6]].forEach(([f,a,d])=>tone(f,a,d,'square',.11)),bad:()=>{tone(220,0,.3,'sawtooth',.18,110);try{navigator.vibrate?.(120)}catch{}}};
+function playVoiceAfter(audio,delay){setTimeout(()=>{if(!cfg.soundEnabled)return;try{audio.currentTime=0;const playback=audio.play();playback?.catch(()=>{})}catch{}},delay)}
+const sfx={ladder:()=>{[523,659,784,1047].forEach((f,k)=>tone(f,k*.09,.2,'triangle',.22));playVoiceAfter(ladderVoice,520)},snake:()=>{tone(700,0,.75,'triangle',.22,100);tone(350,0,.75,'sawtooth',.05,50);playVoiceAfter(snakeVoice,780)},win:()=>[[523,0,.12],[659,.12,.12],[784,.24,.12],[1047,.36,.25],[784,.66,.1],[1047,.78,.1],[1319,.9,.6]].forEach(([f,a,d])=>tone(f,a,d,'square',.11)),bad:()=>{tone(220,0,.3,'sawtooth',.18,110);try{navigator.vibrate?.(120)}catch{}}};
 function startSpin(){if(spinTimer)return;dice.classList.add('roll');spinTimer=setInterval(()=>{cur=cur%6+1;face(cur)},100)}
 function stopSpin(show=cfg.dice){clearInterval(spinTimer);spinTimer=0;dice.classList.remove('roll');if(Number.isInteger(show))face(show)}
 function flash(n){const[x,y]=ctr(n),r=document.createElementNS('http://www.w3.org/2000/svg','rect');r.setAttribute('x',x-5);r.setAttribute('y',y-5);r.setAttribute('width',10);r.setAttribute('height',10);r.setAttribute('fill','#e63946');r.setAttribute('class','fl');$('#svg').append(r);setTimeout(()=>r.remove(),500)}
