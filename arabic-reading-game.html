@@ -127,9 +127,16 @@ function show(){
     $('#new').style.display=cfg.role==='host'?'inline-block':'none';
     return;
   }
-  if(!cfg.level || Q.length===0 || i<0 || i>=Q.length){
-    $('#turnbar').textContent='بانتظار بابا';
-    $('#game').innerHTML='<div class="wait">'+(cfg.role==='host'?'اضغط "السؤال التالي" لبدء أول سؤال أو لعرض السؤال الحالي':'بانتظار بابا')+'</div>';
+  if(!cfg.level){
+    $('#turnbar').textContent='بانتظار اختيار المستوى';
+    $('#game').innerHTML='<div class="wait">يجب اختيار المستوى من شاشة المدينة أولاً</div>';
+    $('#next').disabled=true;
+    $('#new').style.display='none';
+    return;
+  }
+  if(Q.length===0 || i<0 || i>=Q.length){
+    $('#turnbar').textContent='بانتظار السؤال التالي';
+    $('#game').innerHTML='<div class="wait">'+(cfg.role==='host'?'اضغط "السؤال التالي" لعرض أول سؤال':'بانتظار بابا ليضغط "السؤال التالي"')+'</div>';
     $('#next').disabled=cfg.role!=='host';
     $('#new').style.display='none';
     return;
