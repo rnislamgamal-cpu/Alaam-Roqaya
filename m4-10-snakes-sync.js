@@ -7,11 +7,11 @@ let db=null,auth=null,uid='',roomCode='',meta=null,shared=null,role='';
 let unsubMeta=null,unsubState=null,overlay=null,frame=null,initBusy=false,observerBusy=false;
 const BOARD_LAYOUTS=[
   {ladders:{1:38,4:14,9:31,21:42,28:84,36:44,51:67,71:91,80:100},snakes:{16:6,47:26,49:11,56:53,62:19,64:60,87:24,93:73,95:75,98:78}},
-  {ladders:{4:14,8:26,9:30,21:41,23:42,36:44,54:83,56:76,67:87,71:90,82:98},snakes:{99:80,96:75,93:73,89:71,68:54,64:58,62:38,49:32,46:24,26:6}},
+  {ladders:{2:22,4:14,7:17,9:30,21:41,23:38,36:44,51:68,54:83,71:91,78:98},snakes:{99:80,95:75,93:73,89:71,66:53,64:58,62:38,49:32,46:24}},
   {ladders:{4:24,8:49,28:46,30:50,39:60,52:68,64:84,71:92,72:93,83:98},snakes:{99:78,96:64,94:74,90:52,81:61,66:47,57:24,43:19,36:14,11:9}},
-  {ladders:{11:29,21:40,27:77,34:55,51:68,71:90,79:81},snakes:{94:74,91:72,84:77,63:58,62:40,56:36,53:48,15:6}},
-  {ladders:{2:22,9:31,14:28,18:37,38:58,40:60,54:75,71:90,78:83,82:97},snakes:{99:78,96:84,85:67,68:54,62:22,49:32,25:4,10:1}},
-  {ladders:{4:15,9:28,22:42,36:57,61:82,69:89,75:97,80:98},snakes:{97:76,88:54,62:39,48:12,25:4,46:32,82:63}}
+  {ladders:{10:32,12:29,21:40,27:65,51:68,71:91,79:81},snakes:{98:77,95:74,93:72,64:58,62:39,56:37,53:31,15:6}},
+  {ladders:{2:22,9:31,14:28,18:37,38:58,40:60,54:75,71:90,78:83,82:97},snakes:{99:79,93:73,85:55,68:54,64:58,62:22,49:32,16:5}},
+  {ladders:{4:16,9:29,37:57,62:82,69:89},snakes:{97:35,93:47,88:54,63:40,48:13,25:4}}
 ];
 const boardIndex=seed=>Math.abs(Number(seed)||0)%BOARD_LAYOUTS.length;
 const boardLayout=seed=>BOARD_LAYOUTS[boardIndex(seed)];
@@ -73,7 +73,7 @@ function ensureOverlay(){
   overlay.id='snakes-v2-overlay';
   overlay.className='snakes-v2-overlay';
   overlay.hidden=true;
-  overlay.innerHTML='<iframe class="snakes-v2-frame" src="snakes-game.html?v=7" title="السلم والثعبان" loading="eager"></iframe>';
+  overlay.innerHTML='<iframe class="snakes-v2-frame" src="snakes-game.html?v=8" title="السلم والثعبان" loading="eager"></iframe>';
   screen.insertAdjacentElement('afterend',overlay);
   frame=overlay.querySelector('iframe');
   frame.addEventListener('load',sendConfig);
