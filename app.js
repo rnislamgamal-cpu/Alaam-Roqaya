@@ -19,19 +19,12 @@ const HUB_ASSETS = {
   english:'assets/english.jpg',
   quran:'assets/quran.jpg'
 };
-const MEMORY_EMOJI = [
-  '🐱','🐶','🐸','🦊','🐼','🐻','🐰','🦁','🐯','🐨','🐵','🐮','🐷','🐧','🐢',
-  '🦋','🐝','🐞','🐬','🐳','🐙','🦀','🦄','🦖','🐘','🦒','🦓','🐿️','🦉','🐥',
-  '🍎','🍌','🍉','🍇','🍓','🍒','🍍','🥝','🥕','🌽','🍋','🥑','🍄','🌻','🌈',
-  '🚗','🚀','🚂','🚲','✈️','⚽','🎈','🎁','🎠','🎡','⭐','☀️','🌙','💎','🏀'
-];
-const MEMORY_SIZES = [4,6,8,12,16,20,24,30];
 // The age is a gameplay setting chosen by the adult, not a date of birth.
 const AGE_GAME_LEVELS = [
-  {max:3,games:['memory','count','compare','coloring'],memory:[4,6]},
-  {max:5,games:['draw','memory','odd','count','pattern','compare','spot','numbers','space','coloring','jigsaw','phonics'],memory:[6,8,12]},
-  {max:7,games:['draw','memory','ttt','odd','count','pattern','math','treasure','english','compare','numberline','snakes','spot','numbers','space','coloring','jigsaw','phonics'],memory:[8,12,16,20]},
-  {max:10,games:['draw','memory','ttt','odd','count','pattern','math','treasure','english','compare','numberline','snakes','spot','numbers','space','coloring','jigsaw','phonics'],memory:[12,16,20,24,30]}
+  {max:3,games:['memory','count','compare','coloring']},
+  {max:5,games:['draw','memory','odd','count','pattern','compare','spot','numbers','space','coloring','jigsaw','phonics']},
+  {max:7,games:['draw','memory','ttt','odd','count','pattern','math','treasure','english','compare','numberline','snakes','spot','numbers','space','coloring','jigsaw','phonics']},
+  {max:10,games:['draw','memory','ttt','odd','count','pattern','math','treasure','english','compare','numberline','snakes','spot','numbers','space','coloring','jigsaw','phonics']}
 ];
 function normalizeAge(value) {
   const age=Number(value);
@@ -39,12 +32,8 @@ function normalizeAge(value) {
 }
 function ageLevel(age) { return AGE_GAME_LEVELS.find(group=>normalizeAge(age)<=group.max); }
 function gamesForAge(age) { return ageLevel(age).games; }
-function memorySizesForAge(age) { return ageLevel(age).memory; }
 function ageOptions(chosen) {
   return Array.from({length:9},(_,i)=>i+2).map(age=>`<option value="${age}" ${age===chosen?'selected':''}>${age} ${age===2?'سنتين':'سنوات'}</option>`).join('');
-}
-function effectiveMemoryPreference(age) {
-  return memorySizesForAge(age).includes(Number(memoryPreference)) ? memoryPreference : 'random';
 }
 const QUIZ_GAMES = ['odd','count','pattern','math','english','compare','numberline'];
 // These games are rendered by their dedicated synced modules/iframes. Keep the
@@ -57,7 +46,7 @@ const MODULE_MANAGED_GAMES = new Set([
 const GAMES = ['draw','memory','ttt',...QUIZ_GAMES,'spot','numbers','space','treasure','snakes','coloring','jigsaw','phonics'];
 const GAME_LABELS = {
   draw:['🎨','ارسم وخمّن','واحد يرسم والتاني يخمّن'],
-  memory:['🃏','كروت الذاكرة','8–30 كارت أو عدد متغيّر'],
+  memory:['🃏','كروت الذاكرة','٤–٣٢ كارت • لعب بالأدوار'],
   ttt:['❌⭕','إكس أو','3 نقاط للفائز'],
   odd:['🔍','مين المختلف؟','رسوم كرتونية ممتعة للمقارنة'],
   count:['🔢','عدّ الصور','احسب عدد الرموز'],
@@ -505,7 +494,6 @@ function newQuestion(which,previousIndex=-1,age=6,numberSettings={}) {
   const options=shuffle([String(result),...distractors.slice(0,2).map(String)]);
   return {index:a*100+b+(subtract?10000:0),prompt:doubles?'كم ناتج جمع العددين المتماثلين؟':subtract?'كم ناتج الطرح؟':'كم ناتج الجمع؟',display:`<span class="math-equation" dir="rtl">${first} ${subtract?'−':'+'} ${second} = ❓</span>`,options,correct:options.indexOf(String(result))};
 }
-let memoryPreference = 'random';
 let agePreference = 6;
 let childNamePreference = 'رقية';
 let numberMinPreference = 1;
@@ -564,7 +552,7 @@ new MutationObserver(personalizeUi).observe(document.querySelector('.shell'),{ch
 let soundEnabled = true;
 let audioContext = null;
 let lastAudioFeedback = null;
-try { soundEnabled = localStorage.getItem('roqaya-sound') !== 'off'; memoryPreference = localStorage.getItem('roqaya-memory') || 'random'; agePreference=normalizeAge(localStorage.getItem('roqaya-child-age')); childNamePreference=normalizeChildName(localStorage.getItem('roqaya-child-name'))||'رقية'; const savedTraining=normalizeNumberTraining({min:localStorage.getItem('roqaya-number-min')??1,max:localStorage.getItem('roqaya-number-max')??10,mode:localStorage.getItem('roqaya-math-mode')||'addition'}); numberMinPreference=savedTraining.min;numberMaxPreference=savedTraining.max;mathModePreference=savedTraining.mode; englishWordLimitPreference=normalizeEnglishLimit(localStorage.getItem('roqaya-english-limit')||20); puzzlePiecePreference=normalizePuzzlePieces(localStorage.getItem('roqaya-puzzle-pieces')||10); } catch (_) {}
+try { soundEnabled = localStorage.getItem('roqaya-sound') !== 'off'; agePreference=normalizeAge(localStorage.getItem('roqaya-child-age')); childNamePreference=normalizeChildName(localStorage.getItem('roqaya-child-name'))||'رقية'; const savedTraining=normalizeNumberTraining({min:localStorage.getItem('roqaya-number-min')??1,max:localStorage.getItem('roqaya-number-max')??10,mode:localStorage.getItem('roqaya-math-mode')||'addition'}); numberMinPreference=savedTraining.min;numberMaxPreference=savedTraining.max;mathModePreference=savedTraining.mode; englishWordLimitPreference=normalizeEnglishLimit(localStorage.getItem('roqaya-english-limit')||20); puzzlePiecePreference=normalizePuzzlePieces(localStorage.getItem('roqaya-puzzle-pieces')||10); } catch (_) {}
 function sound(type='tap') {
   if (!soundEnabled) return;
   try {
@@ -679,7 +667,7 @@ function soundControl() {
     });
     document.querySelector('.header')?.append(control);
   }
-  control.textContent=soundEnabled?'🔊 الصوت شغال':'🔇 الصوت مقفول';
+  control.textContent=soundEnabled?'🔊':'🔇';
   control.setAttribute('aria-label',soundEnabled?'إيقاف الأصوات':'تشغيل الأصوات');
 }
 function feedbackSignal(old,next) {
@@ -1348,18 +1336,6 @@ function renderLobby() {
 function gameHeading(icon, title) {
   return `<div class="topline compact-game-nav"><span class="tag game-name-tag">${icon} ${title}</span><div class="topline-actions"><button class="btn soft voice-replay" data-action="welcome" ${!soundEnabled?'disabled':''}>🔊 <span>اسمع الترحيب</span></button>${role === 'host' ? '<button class="btn soft" data-action="lobby">🎡 <span>المدينة</span></button>' : '<span class="tag green">🔒</span>'}</div></div>${scorePanel()}`;
 }
-function memorySettingsInsideGame() {
-  if (role !== 'host') return '';
-  const age=normalizeAge(state?.childAge),sizes=memorySizesForAge(age),chosen=effectiveMemoryPreference(age);
-  return `<div class="in-game-settings memory-settings compact-settings">
-    <label for="memory-size-game">🃏 حجم لعبة الذاكرة</label>
-    <div class="settings-action-row"><select id="memory-size-game" class="input">
-      <option value="random" ${chosen==='random'?'selected':''}>🎲 متغيّر (${sizes[0]}–${sizes.at(-1)} كارت)</option>
-      ${sizes.map(n=>`<option value="${n}" ${chosen===String(n)?'selected':''}>${n} كارت (${n/2} أزواج)</option>`).join('')}
-    </select><button class="btn soft settings-apply" data-action="apply-memory-settings">ابدأ بالحجم ده</button></div>
-    <p class="hint">التطبيق يبدأ جولة ذاكرة جديدة فورًا.</p>
-  </div>`;
-}
 function englishSettingsInsideGame(){
   if(role!=='host')return '';
   const max=ENGLISH_BANK.length;
@@ -1392,25 +1368,7 @@ function finishBox() {
   return `<div class="finish"><div class="big-emoji">🏆</div><strong>${title}</strong><p class="hint">النقاط متجمعة بين الألعاب.</p></div>`;
 }
 function renderMemory() {
-  const game = state.memory;
-  if (!game) return;
-  const revealed = game.revealed || [], matched = game.matched || [];
-  const cards = (game.cards || []).map((emoji,i) => {
-    const open = revealed.includes(i) || matched.includes(i);
-    const css = matched.includes(i) ? 'matched' : open ? 'open' : '';
-    const disabled = state.phase !== 'playing' || game.waiting || game.turn !== role || open;
-    return `<button class="memory-card ${css}" data-memory="${i}" aria-label="كارت ${i+1}${open?' '+emoji:''}" ${disabled?'disabled':''}>${open?emoji:'؟'}</button>`;
-  }).join('');
-  screen.innerHTML = `<div class="panel">${gameHeading('🃏','كروت الذاكرة')}
-    ${memorySettingsInsideGame()}
-    <h2 class="game-title center">افتح كارتين شبه بعض • ${game.cards.length} كارت</h2>
-    <p class="status">${state.phase === 'finished' ? 'كل الكروت اتكشفت! 🎊' : game.waiting ? 'بنبص على الكروت... 👀' : game.turn === role ? 'دورك دلوقتي! ✨' : `دور ${nameOf(game.turn)} ⏳`}</p>
-    <div class="memory-grid ${game.cards.length<=6?'few':game.cards.length>=24?'very-dense':game.cards.length>=16?'dense':''} ${game.cards.length===6?'six':''}">${cards}</div>
-    ${finishBox()}
-    ${role === 'host' && state.phase === 'finished' ? '<div class="btn-row"><button class="btn primary" data-action="restart">🔁 جولة جديدة</button></div>' : ''}
-    <p class="rule center">كل زوج متطابق = ⭐ واحدة • صاحب الزوج يلعب مرة كمان</p>
-  </div>`;
-  if (game.waiting && state.phase === 'playing') scheduleHide(game);
+  screen.innerHTML = '<div class="panel center memory-v1-loading" role="status">🃏 بنجهّز كروت الذاكرة…</div>';
 }
 function outcome(board) {
   for (const [a,b,c] of WIN_LINES) {
@@ -1816,12 +1774,7 @@ function newGame(which, old) {
   const scores = {...(old?.scores || { host:0,guest:0 })};
   const round = (old?.round || 0) + 1;
   if (which === 'memory') {
-    const sizes=memorySizesForAge(childAge);
-    const requested=memoryPreference==='random'?null:Number(memoryPreference);
-    const eligible=sizes.filter(n=>n!==old?.memory?.cards?.length);
-    const size=sizes.includes(requested)?requested:(eligible.length?eligible:sizes)[Math.floor(Math.random()*(eligible.length||sizes.length))];
-    const picks=shuffle(MEMORY_EMOJI).slice(0,size/2);
-    return { ...common,game:which,phase:'playing',scores,round,memory:{cards:shuffle([...picks,...picks]),matched:[],revealed:[],roundScores:{host:0,guest:0},waiting:false,turn:round%2===0?'guest':'host'} };
+    return { ...common,game:which,phase:'playing',scores,round };
   }
   if (which === 'snakes') return {...common,game:which,phase:'playing',scores,round,snakes:{positions:{host:1,guest:1},turn:round%2===0?'guest':'host',phase:'ready',dice:null,pendingDice:null,rollId:0,moveId:0,move:null,lastRoll:null}};
   if (which === 'coloring') {
@@ -1870,37 +1823,6 @@ async function restart() {
 async function goLobby() {
   if (role !== 'host') return;
   await mutateState(old=>({...old,game:'lobby',phase:'lobby'}));
-}
-function scheduleHide(game) {
-  const key = `${roomCode}:${state.round}:${(game.revealed||[]).join(',')}`;
-  if (hideKey === key) return;
-  hideKey = key;
-  setTimeout(async()=>{
-    await mutateState(old=>{
-      if (old.game!=='memory' || old.round!==state?.round || !old.memory?.waiting || (old.memory.revealed||[]).join(',')!==(game.revealed||[]).join(',')) return;
-      const m = old.memory;
-      return {...old,memory:{...m,revealed:[],waiting:false,turn:other(m.turn)}};
-    });
-  },1350);
-}
-async function chooseCard(i) {
-  await mutateState(old=>{
-    if (old.game!=='memory'||old.phase!=='playing') return;
-    const m=old.memory;
-    if (!m || m.turn!==role || m.waiting || !Number.isInteger(i) || i<0 || i>=m.cards.length || (m.revealed||[]).includes(i) || (m.matched||[]).includes(i)) return;
-    const revealed = [...(m.revealed||[]),i];
-    if (revealed.length===1) return {...old,memory:{...m,revealed}};
-    const [a,b]=revealed;
-    if (m.cards[a]===m.cards[b]) {
-      const matched=[...(m.matched||[]),a,b];
-      const scores={...old.scores,[role]:old.scores[role]+1};
-      const roundScores={...(m.roundScores||{host:0,guest:0}),[role]:(m.roundScores?.[role]||0)+1};
-      const finished=matched.length===m.cards.length;
-      const result=finished ? (roundScores.host===roundScores.guest?'draw':roundScores.host>roundScores.guest?'host':'guest') : undefined;
-      return {...old,scores,feedback:addFeedback(old,finished?'win':'good'),phase:finished?'finished':'playing',...(finished?{result}:{}),memory:{...m,revealed:[],matched,roundScores,waiting:false}};
-    }
-    return {...old,feedback:addFeedback(old,'bad'),memory:{...m,revealed,waiting:true}};
-  });
 }
 async function chooseCell(i) {
   await mutateState(old=>{
@@ -2169,14 +2091,6 @@ screen.addEventListener('click',async e=>{
   if (button.dataset.sortBin&&state?.game==='sorting') {sortingDragSelected=false;return chooseSorting(button.dataset.sortBin,document.querySelector('.sorting-item'));}
   if (button.dataset.phonicsLetter!==undefined) return choosePhonicsLetter(Number(button.dataset.phonicsLetter));
   if (button.dataset.phonicsImage!==undefined) return choosePhonicsImage(Number(button.dataset.phonicsImage));
-  if (action==='apply-memory-settings') {
-    if(role!=='host'||state?.game!=='memory')return;
-    const value=document.querySelector('#memory-size-game')?.value||'random';
-    memoryPreference=memorySizesForAge(state?.childAge).includes(Number(value))?value:'random';
-    try{localStorage.setItem('roqaya-memory',memoryPreference);}catch(_){}
-    info('');
-    return mutateState(old=>old.game==='memory'?newGame('memory',old):undefined);
-  }
   if (action==='apply-english-settings') {
     if(role!=='host'||state?.game!=='english')return;
     englishWordLimitPreference=normalizeEnglishLimit(document.querySelector('#english-limit-game')?.value||20);saveEnglishLimit();info('✅ تم تحديث مجموعة الكلمات');
@@ -2195,7 +2109,6 @@ screen.addEventListener('click',async e=>{
   if (action==='restart') return restart();
   if (button.dataset.game === 'odd' || button.dataset.game === 'pattern') return;
   if (button.dataset.game) return startGame(button.dataset.game);
-  if (button.dataset.memory!==undefined) return chooseCard(Number(button.dataset.memory));
   if (button.dataset.cell!==undefined) return chooseCell(Number(button.dataset.cell));
   if (button.dataset.quiz!==undefined) return chooseQuiz(Number(button.dataset.quiz));
   if (button.dataset.treasure!==undefined) return chooseTreasure(Number(button.dataset.treasure));

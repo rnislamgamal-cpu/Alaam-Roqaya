@@ -3,8 +3,8 @@ import { getAuth, onAuthStateChanged } from 'https://www.gstatic.com/firebasejs/
 import { getDatabase, ref, onValue, runTransaction } from 'https://www.gstatic.com/firebasejs/12.19.0/firebase-database.js';
 
 const screen=document.getElementById('screen');
-let db=null,auth=null,uid='',roomCode='',meta=null,shared=null,role='';
-let unsubMeta=null,unsubState=null,overlay=null,frame=null,initBusy=false,hideTimer=null,scheduledWaitId=0,observerBusy=false;
+let db=null,auth=null,uid='',roomCode='',meta=null,shared=null,role='',presence={};
+let unsubMeta=null,unsubState=null,unsubPresence=null,overlay=null,frame=null,playerStatus=null,initBusy=false,hideTimer=null,scheduledWaitId=0,observerBusy=false;
 
 const EMO=[...'🐶🐱🐭🐰🦊🐻🐼🐯🦁🐮🐷🐸🐵🐔🐧🦆🦉🐺🐴🦄🐝🦋🐢🐍🐙🦀🐠🐬🐘🦒🍎🍌🍇🍓🍉🍒🍍🥕🌽🍕⚽🚗🚁🚀🌈⭐🎈🎁🔔🎵'];
 const currentRoom=()=>location.hash.match(/^#room=([A-Z2-9]{8})$/)?.[1]||'';
@@ -22,15 +22,15 @@ function shuffle(a){
 function savedPairs(){
   try{
     const n=Number(localStorage.getItem('roqaya-memory-pairs'));
-    return Number.isInteger(n)&&n>=2&&n<=50?n:8;
-  }catch{return 8}
+    return [2,3,4,6,8,10,12,16].includes(n)?n:6;
+  }catch{return 6}
 }
 function deckFor(pairs){
   const picks=shuffle(EMO).slice(0,pairs);
   return shuffle(picks.flatMap(e=>[e,e]));
 }
 function freshMemory(roundId,pairs=savedPairs()){
-  pairs=Math.max(2,Math.min(50,Number(pairs)||8));
+  pairs=[2,3,4,6,8,10,12,16].includes(Number(pairs))?Number(pairs):6;
   return {
     v:2,roundId,pairs,deck:deckFor(pairs),revealed:[],matchedBy:{},
     turn:roundId%2===0?'guest':'host',scores:{host:0,guest:0},
@@ -40,7 +40,8 @@ function freshMemory(roundId,pairs=savedPairs()){
 function cleanup(){
   try{unsubMeta?.()}catch{}
   try{unsubState?.()}catch{}
-  unsubMeta=unsubState=null;meta=null;shared=null;role='';
+  try{unsubPresence?.()}catch{}
+  unsubMeta=unsubState=unsubPresence=null;meta=null;shared=null;role='';presence={};
   clearTimeout(hideTimer);hideTimer=null;scheduledWaitId=0;
 }
 function updateRole(){role=meta?.hostUid===uid?'host':meta?.guestUid===uid?'guest':''}
@@ -55,24 +56,29 @@ async function mutate(transform){
 }
 async function ensureSync(){
   if(initBusy||role!=='host'||shared?.game!=='memory')return;
-  if(shared.memoryV2?.v===2&&Number(shared.memoryV2.roundId)===Number(shared.round))return;
+  const current=shared.memoryV2?.v===2&&Number(shared.memoryV2.roundId)===Number(shared.round);
+  if(current&&!Object.hasOwn(shared,'memory'))return;
   initBusy=true;
   try{
     await mutate(old=>{
       if(old.game!=='memory')return;
-      if(old.memoryV2?.v===2&&Number(old.memoryV2.roundId)===Number(old.round))return old;
-      return {...old,phase:'playing',memoryV2:freshMemory(Number(old.round)||1)};
+      const {memory:legacyMemory,...clean}=old;
+      if(old.memoryV2?.v===2&&Number(old.memoryV2.roundId)===Number(old.round))return legacyMemory?clean:old;
+      return {...clean,phase:'playing',memoryV2:freshMemory(Number(old.round)||1)};
     });
   }finally{initBusy=false}
 }
 function ensureOverlay(){
   if(overlay)return overlay;
+  playerStatus=document.createElement('div');playerStatus.id='memory-player-status';playerStatus.className='memory-player-status';playerStatus.hidden=true;
+  playerStatus.setAttribute('aria-label','حالة اللاعبين');
+  playerStatus.innerHTML='<span class="memory-player" data-player="host">👨 بابا <i aria-hidden="true"></i></span><span class="memory-player" data-player="guest">👧 رقية <i aria-hidden="true"></i></span>';
   overlay=document.createElement('section');
-  overlay.id='memory-v2-overlay';
-  overlay.className='memory-v2-overlay';
+  overlay.id='memory-v1-overlay';
+  overlay.className='memory-v1-overlay';
   overlay.hidden=true;
-  overlay.innerHTML='<iframe class="memory-v2-frame" src="memory-game.html?v=1" title="لعبة الذاكرة" loading="eager"></iframe>';
-  screen.insertAdjacentElement('afterend',overlay);
+  overlay.innerHTML='<iframe class="memory-v1-frame" src="memory-game.html?v=2" title="لعبة الذاكرة" loading="eager"></iframe>';
+  const header=document.querySelector('.header');header?.insertBefore(playerStatus,header.firstChild);header?.insertAdjacentElement('afterend',overlay);
   frame=overlay.querySelector('iframe');
   frame.addEventListener('load',sendConfig);
   return overlay;
@@ -85,21 +91,24 @@ function sendConfig(){
     pairs:Number(g.pairs)||8,deck:Array.isArray(g.deck)?g.deck:[],
     revealed:Array.isArray(g.revealed)?g.revealed:[],
     matchedBy:g.matchedBy||{},turn:g.turn||'host',scores:g.scores||{host:0,guest:0},
+    worldScores:shared.scores||{host:0,guest:0},
     waiting:Boolean(g.waiting),finished:Boolean(g.finished),result:g.result||null
   }},location.origin);
 }
 function activate(){
   ensureOverlay();
-  document.body.classList.add('memory-v2-active');
+  document.body.classList.add('memory-v1-active');
   screen.setAttribute('aria-hidden','true');
   overlay.hidden=false;
+  playerStatus.hidden=false;renderPlayerStatus();
   sendConfig();
   scheduleHide();
 }
 function deactivate(){
-  document.body.classList.remove('memory-v2-active');
+  document.body.classList.remove('memory-v1-active');
   screen?.removeAttribute('aria-hidden');
   if(overlay)overlay.hidden=true;
+  if(playerStatus)playerStatus.hidden=true;
   clearTimeout(hideTimer);hideTimer=null;scheduledWaitId=0;
 }
 function scheduleHide(){
@@ -122,11 +131,22 @@ function cardUpgrade(){
   if(!card)return;
   const title=card.querySelector('strong'),desc=card.querySelector('small');
   if(title&&title.textContent!=='لعبة الذاكرة')title.textContent='لعبة الذاكرة';
-  if(desc&&desc.textContent!=='٤–١٠٠ كارت • دورين ونقط')desc.textContent='٤–١٠٠ كارت • دورين ونقط';
+  if(desc&&desc.textContent!=='٤–٣٢ كارت • لعب بالأدوار')desc.textContent='٤–٣٢ كارت • لعب بالأدوار';
+}
+function renderPlayerStatus(){
+  if(!playerStatus)return;
+  const active=shared?.game==='memory'&&Boolean(role);playerStatus.hidden=!active;if(!active)return;
+  for(const player of ['host','guest']){
+    const name=player==='host'?'بابا':childName(),playerUid=meta?.[player==='host'?'hostUid':'guestUid'],online=Boolean(playerUid&&presence[playerUid]);
+    const chip=playerStatus.querySelector(`[data-player="${player}"]`);if(!chip)continue;
+    chip.querySelector('i').classList.toggle('online',online);chip.querySelector('i').classList.toggle('offline',!online);
+    chip.setAttribute('aria-label',`${name}: ${online?'متصل':'غير متصل'}`);chip.firstChild.textContent=`${player==='host'?'👨':'👧'} ${name} `;
+  }
 }
 function syncUi(){
   cardUpgrade();
   if(shared?.game==='memory'){
+    ensureOverlay();renderPlayerStatus();
     if(role==='host'&&!shared?.memoryV2)ensureSync();
     if(shared?.memoryV2&&role)activate();
   }else deactivate();
@@ -142,6 +162,7 @@ function bindRoom(){
   unsubState=onValue(ref(db,`rooms/${roomCode}/state`),snap=>{
     shared=snap.val();updateRole();syncUi();scheduleHide();
   });
+  unsubPresence=onValue(ref(db,`rooms/${roomCode}/presence`),snap=>{presence=snap.val()||{};renderPlayerStatus()});
 }
 async function pick(index,roundId){
   await mutate(old=>{
@@ -158,18 +179,18 @@ async function pick(index,roundId){
       const matchedCount=Object.keys(matchedBy).length;
       const finished=matchedCount>=m.deck.length;
       const result=finished?(roundScores.host===roundScores.guest?'draw':roundScores.host>roundScores.guest?'host':'guest'):null;
-      return {...old,scores:globalScores,phase:finished?'finished':'playing',...(finished?{result}:{}),memoryV2:{
+      return {...old,scores:globalScores,feedback:addFeedback(old,finished?'win':'good'),phase:finished?'finished':'playing',...(finished?{result}:{}),memoryV2:{
         ...m,revealed:[],matchedBy,scores:roundScores,finished,result
       }};
     }
-    return {...old,memoryV2:{
+    return {...old,feedback:addFeedback(old,'bad'),memoryV2:{
       ...m,revealed,waiting:true,waitId:(Number(m.waitId)||0)+1,lastPicker:role
     }};
   });
 }
 async function newRound(pairs){
   if(role!=='host')return;
-  pairs=Math.max(2,Math.min(50,Number(pairs)||8));
+  pairs=[2,3,4,6,8,10,12,16].includes(Number(pairs))?Number(pairs):6;
   try{localStorage.setItem('roqaya-memory-pairs',String(pairs))}catch{}
   await mutate(old=>{
     if(old.game!=='memory')return;
@@ -179,7 +200,11 @@ async function newRound(pairs){
 }
 async function goCity(){
   if(role!=='host')return;
-  await mutate(old=>old.game==='memory'?{...old,game:'lobby',phase:'lobby'}:old);
+  await mutate(old=>{
+    if(old.game!=='memory')return;
+    const {memory:legacyMemory,memoryV2,...clean}=old;
+    return {...clean,game:'lobby',phase:'lobby'};
+  });
 }
 
 addEventListener('message',e=>{

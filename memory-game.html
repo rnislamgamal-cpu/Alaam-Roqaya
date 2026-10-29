@@ -1,195 +1,124 @@
-<!DOCTYPE html>
+<!doctype html>
 <html lang="ar" dir="rtl">
 <head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta name="theme-color" content="#f4f1ff">
 <title>لعبة الذاكرة</title>
 <style>
-:root{--bg:#eef2ff;--ink:#1e1b4b;--card:#fff;--accent:#7c3aed;--p1:#d62839;--p2:#1d4ed8}
-*{box-sizing:border-box}
-html,body{margin:0;min-height:0}
-body{min-height:100vh;display:flex;flex-direction:column;align-items:center;gap:10px;padding:10px 8px 24px;background:var(--bg);color:var(--ink);font-family:system-ui,"Segoe UI",Tahoma,sans-serif;-webkit-tap-highlight-color:transparent}
-h1{margin:0;font-size:1.45rem}
-.row{display:flex;gap:8px;flex-wrap:wrap;justify-content:center;align-items:center}
-.controls{width:min(96vw,760px);display:grid;grid-template-columns:minmax(0,1fr) auto auto;gap:6px;align-items:stretch}
-label{display:flex;align-items:center;justify-content:center;gap:6px;background:var(--card);padding:7px 9px;border-radius:12px;font-weight:800;min-width:0}
-input[type=range]{width:min(34vw,190px);accent-color:var(--accent)}
-button{font:inherit;border:0;border-radius:10px;padding:9px 12px;background:var(--accent);color:#fff;font-weight:850;cursor:pointer}
-button:disabled,input:disabled{opacity:.48;cursor:default}
-#city{background:#6046a4}
-#hud{position:sticky;top:0;z-index:5;width:100%;padding:4px 0 5px;background:rgba(238,242,255,.96);backdrop-filter:blur(8px);display:flex;flex-direction:column;align-items:center;gap:4px}
-#score{width:min(96vw,620px);display:grid;grid-template-columns:1fr 1fr;gap:7px}
-.pc{padding:5px 10px;border:3px solid var(--c);border-radius:14px;background:#fff;text-align:center;font-size:1.1rem;font-weight:900;line-height:1.15;transition:transform .2s,background .2s,color .2s}
-.pc small{display:block;font-size:.68rem;font-weight:800}
-.pc.on{background:var(--c);color:#fff;transform:scale(1.035)}
-#msg{margin:0;min-height:1.45em;font-weight:900;text-align:center;font-size:.8rem}
-#board{display:flex;flex-wrap:wrap;justify-content:center;gap:var(--g);direction:ltr;max-width:100%}
-.card{width:var(--s);height:var(--s);padding:0;border:0;background:none;perspective:600px;cursor:pointer;touch-action:manipulation;user-select:none}
-.in{position:relative;display:block;width:100%;height:100%;transform-style:preserve-3d;transition:transform .32s}
+:root{--bg:#f4f1ff;--ink:#29204a;--accent:#7358cf;--p1:#4563d7;--p2:#df5792;--card:56px}
+*{box-sizing:border-box}html,body{margin:0;min-height:0}
+body{height:100%;display:flex;flex-direction:column;align-items:center;gap:6px;padding:5px 6px max(7px,env(safe-area-inset-bottom));overflow:hidden;background:radial-gradient(circle at 10% 12%,#fff 0,transparent 35%),var(--bg);color:var(--ink);font-family:system-ui,"Segoe UI",Tahoma,sans-serif;-webkit-tap-highlight-color:transparent}
+#worldRow{width:min(100%,820px);min-height:38px;display:flex;align-items:center;justify-content:center;gap:clamp(4px,1.5vw,14px);flex-wrap:nowrap;padding:4px 7px;border-radius:12px;background:#fff;box-shadow:0 2px 8px #493b7b12;font-size:clamp(.59rem,2.1vw,.78rem);font-weight:850;white-space:nowrap}
+#worldRow strong{color:var(--accent)}#worldRow .world-score{color:#493b7b}
+#worldRow label{display:none;align-items:center;gap:4px;color:#514478}[data-host=yes] #worldRow label{display:flex}
+#pairs{max-width:84px;font:inherit;border:0;border-radius:8px;padding:4px;background:#eee9ff;color:var(--ink);font-weight:900}
+#scoreTitle{width:min(100%,820px);font-size:.66rem;font-weight:900;color:#756991;line-height:1}
+#score{width:min(100%,820px);display:grid;grid-template-columns:1fr 1fr;gap:7px}
+.pc{padding:5px 8px;border:2px solid var(--c);border-radius:12px;background:#fff;text-align:center;font-size:.92rem;font-weight:900;line-height:1.1;transition:background .18s,color .18s}
+.pc b{display:block;font-size:.69rem}.pc span{display:block;margin-top:2px}.pc.on{background:var(--c);color:#fff}
+#msg{width:min(100%,820px);margin:0;min-height:1.25em;text-align:center;font-size:.82rem;font-weight:900;color:#5b468f}
+#board{display:grid;place-content:center;align-content:center;justify-content:center;gap:var(--g,5px);direction:ltr;width:100%;max-width:820px;min-height:0;flex:1 1 auto;overflow:hidden}
+.card{width:var(--card);height:var(--card);min-width:0;min-height:0;padding:0;border:0;border-radius:15%;background:none;perspective:650px;cursor:pointer;touch-action:manipulation;user-select:none;-webkit-user-select:none}
+.in{position:relative;display:block;width:100%;height:100%;transform-style:preserve-3d;transition:transform .32s cubic-bezier(.2,.7,.25,1)}
 .card.up .in{transform:rotateY(180deg)}
-.f{position:absolute;inset:0;display:grid;place-items:center;border-radius:14%;backface-visibility:hidden;-webkit-backface-visibility:hidden}
-.back{background:var(--accent);color:#fff;font-size:calc(var(--s)*.5);font-weight:900;box-shadow:inset 0 0 0 3px rgba(255,255,255,.35)}
-.face{background:#fff;transform:rotateY(180deg);font-size:calc(var(--s)*.58);line-height:1;box-shadow:inset 0 0 0 3px #d4d4f5}
-.card.done{cursor:default}
-.card.done.owner-host .face{box-shadow:inset 0 0 0 4px var(--p1)}
-.card.done.owner-guest .face{box-shadow:inset 0 0 0 4px var(--p2)}
+.face-side{position:absolute;inset:0;display:grid;place-items:center;border-radius:15%;backface-visibility:hidden;-webkit-backface-visibility:hidden}
+.back{background:linear-gradient(145deg,#785fd4,#917de8);color:#fff;font-size:calc(var(--card)*.42);font-weight:900;box-shadow:inset 0 0 0 3px #ffffff45,0 3px 0 #5a43ad}
+.face{background:#fff;transform:rotateY(180deg);font-size:calc(var(--card)*.56);line-height:1;box-shadow:inset 0 0 0 3px #ded5f8,0 3px 0 #c9c0e4}
+.card.done{cursor:default}.card.done.owner-host .face{box-shadow:inset 0 0 0 4px var(--p1),0 3px 0 #c9c0e4}.card.done.owner-guest .face{box-shadow:inset 0 0 0 4px var(--p2),0 3px 0 #c9c0e4}
 .card:disabled{opacity:1}
-.tip{margin:0;max-width:620px;color:#4c4a7a;font-size:.76rem;text-align:center;line-height:1.55}
-.finish{width:min(96vw,620px);background:#fff8cc;border-radius:13px;padding:7px 10px;text-align:center;font-size:.78rem;font-weight:900}
-@media(max-width:430px){
-  body{gap:7px;padding-inline:5px}
-  h1{font-size:1.22rem}
-  .controls{grid-template-columns:minmax(0,1fr) auto auto;gap:4px}
-  label{padding:6px 5px;font-size:.65rem}
-  input[type=range]{width:min(30vw,130px)}
-  button{padding:7px 8px;font-size:.65rem}
-  .pc{font-size:.9rem;padding:4px 6px}.pc small{font-size:.59rem}
-  #msg{font-size:.7rem}.tip{font-size:.66rem}
-}
-@media(prefers-reduced-motion:reduce){.in,.pc{transition:none}}
+#finish{width:min(100%,600px);padding:7px 10px;border-radius:14px;background:#fff8d6;text-align:center;font-size:.8rem;font-weight:900;box-shadow:0 4px 14px #7457aa18}
+.game-actions{display:flex;justify-content:center;align-items:center;gap:8px;flex-wrap:wrap;width:min(100%,820px);padding:3px 2px}
+.game-actions button{min-height:42px;padding:8px 15px;border:0;border-radius:13px;font:inherit;font-size:.78rem;font-weight:900;cursor:pointer;touch-action:manipulation;box-shadow:0 3px 0 #5942a6}
+#new{background:var(--accent);color:white}#city{background:#e6ddff;color:#4c3a84;box-shadow:0 3px 0 #c9bce9!important}
+[data-host=no] .game-actions{display:none!important}[data-host=no] #worldRow label{display:none!important}
+.celebrate{display:none;position:fixed;inset:0;z-index:9;place-items:center;pointer-events:none;background:#fff8d547}
+.celebrate.show{display:grid;animation:partyFade 2.5s ease forwards}.celebrate span{font-size:clamp(5rem,26vw,10rem);filter:drop-shadow(0 8px 8px #33265c32);animation:monkeyDance .42s ease-in-out infinite alternate}
+.celebrate:before,.celebrate:after{content:'✨ 🎉 ⭐ 🎊 ✨';position:absolute;inset:8% 0 auto;text-align:center;font-size:clamp(1.5rem,7vw,3rem);letter-spacing:.3em;animation:confetti 1s ease-in-out infinite alternate}
+.celebrate:after{inset:auto 0 8%;animation-delay:.25s}
+@keyframes monkeyDance{to{transform:rotate(12deg) scale(1.1) translateY(-8px)}}@keyframes confetti{to{transform:translateY(12px) rotate(4deg)}}@keyframes partyFade{0%,75%{opacity:1}100%{opacity:0}}
+@media(max-width:430px){body{gap:5px;padding-inline:4px}#worldRow{gap:4px;padding-inline:4px;font-size:clamp(.54rem,1.95vw,.66rem)}#pairs{max-width:70px}.pc{padding:4px 5px;font-size:.82rem}.pc b{font-size:.62rem}#msg{font-size:.72rem}.game-actions{gap:7px}.game-actions button{min-height:40px;padding:7px 12px;font-size:.7rem}}
+@media(prefers-reduced-motion:reduce){.in,.pc,.celebrate span,.celebrate:before,.celebrate:after{animation:none!important;transition:none!important}}
 </style>
 <link rel="stylesheet" href="game-shell.css?v=1">
+<style>
+html,body{min-height:0!important;height:100%!important}body{min-height:0!important;max-height:100svh!important;overflow:hidden!important;padding-bottom:max(6px,env(safe-area-inset-bottom))!important}
+body>header .hd{position:static!important;inset:auto!important;transform:none!important}body:has(header .hd){padding-bottom:6px!important}
+body>#board{order:0!important;margin:0 auto!important;padding:0!important;position:static!important;box-shadow:none!important}
+body>.game-actions{order:20!important;position:static!important;bottom:auto!important;margin:0!important;background:transparent!important}
+body>.game-actions button{font-family:inherit!important}
+</style>
 </head>
-<body>
-<h1>🃏 لعبة الذاكرة</h1>
-
-<div class="controls">
-  <label>الكروت: <b id="cnt">١٦</b>
-    <input id="pairs" type="range" min="2" max="50" value="8" aria-label="عدد الأزواج">
-  </label>
-  <button id="new">لعبة جديدة</button>
-  <button id="city">🎡 المدينة</button>
+<body class="memory-game" data-host="no">
+<div id="worldRow" aria-label="مجموع نقاط عالم رقية وإعدادات اللعبة">
+  <strong>مجموع عالم رقية</strong>
+  <span class="world-score" id="worldHost">👨 بابا ⭐ ٠</span>
+  <span class="world-score" id="worldGuest">👧 رقية ⭐ ٠</span>
+  <label for="pairs">الأزواج<select id="pairs" aria-label="عدد أزواج الكروت"><option value="2">٢</option><option value="3">٣</option><option value="4">٤</option><option value="6" selected>٦</option><option value="8">٨</option><option value="10">١٠</option><option value="12">١٢</option><option value="16">١٦</option></select></label>
 </div>
-
-<div id="hud">
-  <div id="score">
-    <div id="hostPc" class="pc" style="--c:var(--p1)"><small>👨 بابا</small><span>٠</span></div>
-    <div id="guestPc" class="pc" style="--c:var(--p2)"><small>👧 رقية</small><span>٠</span></div>
-  </div>
-  <p id="msg" aria-live="polite">جاري تجهيز اللعبة…</p>
+<div id="scoreTitle">نقاط لعبة الذاكرة</div>
+<div id="score">
+  <div id="hostPc" class="pc" style="--c:var(--p1)"><b>👨 بابا</b><span>⭐ ٠</span></div>
+  <div id="guestPc" class="pc" style="--c:var(--p2)"><b>👧 رقية</b><span>⭐ ٠</span></div>
 </div>
-
-<div id="board"></div>
-<div id="finish" class="finish" hidden></div>
-<p class="tip">كل لاعب في دوره بيقلب كارتين. لو شبه بعض بياخد نقطة ويلعب تاني، ولو مختلفين الكروت بترجع تتقلب والدور ينتقل للتاني. بابا يقدر يختار من ٤ لحد ١٠٠ كارت.</p>
-
+<p id="msg" aria-live="polite">بنجهّز الكروت…</p>
+<div id="board" aria-label="كروت الذاكرة"></div>
+<div id="finish" hidden></div>
+<div class="game-actions"><button id="new">🔄 جولة جديدة</button><button id="city">🎡 المدينة</button></div>
+<div id="party" class="celebrate" aria-hidden="true"><span>🐵</span></div>
 <script>
-const $=s=>document.querySelector(s),board=$('#board');
-const EASTERN='٠١٢٣٤٥٦٧٨٩';
-const ar=v=>String(v).replace(/[0-9]/g,d=>EASTERN[d.charCodeAt(0)-48]);
-let cfg={
-  role:'guest',childName:'رقية',roundId:0,pairs:8,deck:[],
-  revealed:[],matchedBy:{},turn:'host',scores:{host:0,guest:0},
-  waiting:false,finished:false,result:null
-};
-let lastDeckKey='',resizeTimer=0;
-
-const nameOf=r=>r==='host'?'بابا':(cfg.childName||'رقية');
-const mine=()=>cfg.turn===cfg.role&&!cfg.waiting&&!cfg.finished;
-const matched=i=>Boolean(cfg.matchedBy?.[i]);
-const open=i=>matched(i)||(cfg.revealed||[]).includes(i);
-
+const $=s=>document.querySelector(s),board=$('#board'),DIGITS='٠١٢٣٤٥٦٧٨٩';
+const EMO=[...'🐶🐱🐭🐰🦊🐻🐼🐯🦁🐮🐷🐸🐵🐔🐧🦆🦉🐺🐴🦄🐝🦋🐢🐍🐙🦀🐠🐬🐘🦒🍎🍌🍇🍓🍉🍒🍍🥕🌽🍕⚽🚗🚁🚀🌈⭐🎈🎁🔔🎵'];
+const ar=v=>String(v).replace(/[0-9]/g,d=>DIGITS[d.charCodeAt(0)-48]);
+let cfg={role:'guest',childName:'رقية',roundId:0,pairs:8,deck:[],revealed:[],matchedBy:{},turn:'host',scores:{host:0,guest:0},worldScores:{host:0,guest:0},waiting:false,finished:false,result:null};
+let lastDeckKey='',resizeTimer=0,lastPartyKey='';
+const nameOf=r=>r==='host'?'بابا':(cfg.childName||'رقية'),mine=()=>cfg.turn===cfg.role&&!cfg.waiting&&!cfg.finished,matched=i=>Boolean(cfg.matchedBy?.[i]),open=i=>matched(i)||(cfg.revealed||[]).includes(i);
 function layout(){
-  const n=cfg.deck?.length||16,W=Math.min(innerWidth-16,760),g=n>=60?4:6,min=n>=60?34:40;
-  const cols=Math.max(2,Math.min(Math.ceil(Math.sqrt(n)),Math.floor((W+g)/(min+g))));
-  const s=Math.min(n<=12?96:n<=30?76:n<=60?56:44,Math.floor((W-(cols-1)*g)/cols));
-  board.style.cssText=`--s:${s}px;--g:${g}px;width:${cols*s+(cols-1)*g}px`;
+ const n=cfg.deck?.length||16,W=Math.min(innerWidth-12,820),H=Math.max(180,innerHeight-205),g=n>=24?5:7;
+ let best={size:0,cols:4};
+ for(let cols=2;cols<=Math.min(8,n);cols++){
+  const rows=Math.ceil(n/cols),size=Math.min(94,Math.floor((W-(cols-1)*g)/cols),Math.floor((H-(rows-1)*g)/rows));
+  if(size>best.size)best={size,cols};
+ }
+ board.style.setProperty('--card',`${Math.max(36,best.size)}px`);board.style.setProperty('--g',`${g}px`);board.style.gridTemplateColumns=`repeat(${best.cols},var(--card))`;
 }
 function cardHtml(e,i){
-  const owner=cfg.matchedBy?.[i]||'';
-  return `<button class="card ${open(i)?'up':''} ${owner?'done owner-'+owner:''}" data-i="${i}" aria-label="كارت" ${(!mine()||open(i))?'disabled':''}>
-    <span class="in"><span class="f back">؟</span><span class="f face">${e}</span></span>
-  </button>`;
+ const owner=cfg.matchedBy?.[i]||'';
+ return `<button class="card ${open(i)?'up':''} ${owner?'done owner-'+owner:''}" data-i="${i}" aria-label="كارت ${ar(i+1)}${open(i)?' '+e:''}" ${(!mine()||open(i))?'disabled':''}><span class="in"><span class="face-side back">؟</span><span class="face-side face">${e}</span></span></button>`;
 }
 function renderBoard(){
-  const key=`${cfg.roundId}:${(cfg.deck||[]).join('')}`;
-  if(key!==lastDeckKey){
-    lastDeckKey=key;
-    board.innerHTML=(cfg.deck||[]).map(cardHtml).join('');
-    layout();
-  }else{
-    [...board.querySelectorAll('.card')].forEach((b,i)=>{
-      const owner=cfg.matchedBy?.[i]||'';
-      b.classList.toggle('up',open(i));
-      b.classList.toggle('done',Boolean(owner));
-      b.classList.toggle('owner-host',owner==='host');
-      b.classList.toggle('owner-guest',owner==='guest');
-      b.disabled=!mine()||open(i);
-    });
-  }
+ const key=`${cfg.roundId}:${(cfg.deck||[]).join('')}`;
+ if(key!==lastDeckKey){lastDeckKey=key;board.innerHTML=(cfg.deck||[]).map(cardHtml).join('');layout();}
+ else [...board.querySelectorAll('.card')].forEach((b,i)=>{const owner=cfg.matchedBy?.[i]||'';b.classList.toggle('up',open(i));b.classList.toggle('done',Boolean(owner));b.classList.toggle('owner-host',owner==='host');b.classList.toggle('owner-guest',owner==='guest');b.disabled=!mine()||open(i);});
+}
+function celebrate(){
+ const key=`${cfg.roundId}:${cfg.result}`;if(!cfg.finished||key===lastPartyKey)return;lastPartyKey=key;
+ const party=$('#party');party.classList.remove('show');void party.offsetWidth;party.classList.add('show');setTimeout(()=>party.classList.remove('show'),2600);
 }
 function renderHud(){
-  const host=$('#hostPc'),guest=$('#guestPc');
-  host.classList.toggle('on',cfg.turn==='host'&&!cfg.finished);
-  guest.classList.toggle('on',cfg.turn==='guest'&&!cfg.finished);
-  host.querySelector('span').textContent=ar(cfg.scores?.host||0);
-  guest.querySelector('span').textContent=ar(cfg.scores?.guest||0);
-  guest.querySelector('small').textContent=`👧 ${cfg.childName||'رقية'}`;
-
-  const msg=$('#msg');
-  if(cfg.finished){
-    if(cfg.result==='draw')msg.textContent='🎉 تعادل جميل!';
-    else msg.textContent=`🎉 ${nameOf(cfg.result)} كسب الجولة!`;
-  }else if(cfg.waiting){
-    msg.textContent='👀 بنبص على الكارتين…';
-  }else if(mine()){
-    msg.textContent=`✨ دورك يا ${nameOf(cfg.role)} — اقلب كارتين`;
-  }else{
-    msg.textContent=`دور ${nameOf(cfg.turn)} ⏳`;
-  }
-
-  $('#pairs').value=String(cfg.pairs||8);
-  $('#cnt').textContent=`${ar((cfg.pairs||8)*2)} كارت`;
-  $('#pairs').disabled=cfg.role!=='host';
-  $('#new').disabled=cfg.role!=='host';
-  $('#city').disabled=cfg.role!=='host';
-
-  const finish=$('#finish');
-  finish.hidden=!cfg.finished;
-  if(cfg.finished){
-    const hs=cfg.scores?.host||0,gs=cfg.scores?.guest||0;
-    finish.textContent=cfg.result==='draw'
-      ? `🤝 تعادل! بابا ${ar(hs)} • ${nameOf('guest')} ${ar(gs)}`
-      : `🏆 ${nameOf(cfg.result)} كسب! بابا ${ar(hs)} • ${nameOf('guest')} ${ar(gs)}`;
-  }
+ document.body.dataset.host=cfg.role==='host'?'yes':'no';
+ $('#worldHost').textContent=`👨 بابا ⭐ ${ar(Number(cfg.worldScores?.host)||0)}`;
+ $('#worldGuest').textContent=`👧 ${cfg.childName||'رقية'} ⭐ ${ar(Number(cfg.worldScores?.guest)||0)}`;
+ const host=$('#hostPc'),guest=$('#guestPc');host.classList.toggle('on',cfg.turn==='host'&&!cfg.finished);guest.classList.toggle('on',cfg.turn==='guest'&&!cfg.finished);
+ host.querySelector('span').textContent=`⭐ ${ar(cfg.scores?.host||0)}`;guest.querySelector('span').textContent=`⭐ ${ar(cfg.scores?.guest||0)}`;guest.querySelector('b').textContent=`👧 ${cfg.childName||'رقية'}`;
+ if(cfg.finished)$('#msg').textContent=cfg.result==='draw'?'🤝 تعادل جميل!':`🏆 ${nameOf(cfg.result)} كسبت!`;
+ else if(cfg.waiting)$('#msg').textContent='👀 بصّوا على الكارتين…';
+ else if(mine())$('#msg').textContent=`✨ دورك يا ${nameOf(cfg.role)} — اختاري كارتين`;
+ else $('#msg').textContent=`دور ${nameOf(cfg.turn)} الآن`;
+ $('#pairs').value=String(cfg.pairs||8);$('#pairs').disabled=cfg.role!=='host';$('#new').disabled=cfg.role!=='host';$('#city').disabled=cfg.role!=='host';
+ const finish=$('#finish');finish.hidden=!cfg.finished;
+ if(cfg.finished){const hs=cfg.scores?.host||0,gs=cfg.scores?.guest||0;finish.textContent=cfg.result==='draw'?`🤝 تعادل! بابا ${ar(hs)} ⭐ • ${nameOf('guest')} ${ar(gs)} ⭐`:`🏆 ${nameOf(cfg.result)} كسب الجولة! بابا ${ar(hs)} ⭐ • ${nameOf('guest')} ${ar(gs)} ⭐`;}
+ celebrate();
 }
-function render(){
-  renderHud();renderBoard();
-}
-function sendPick(i){
-  if(!mine()||open(i))return;
-  parent.postMessage({type:'roqaya-memory-pick',index:i,roundId:cfg.roundId},location.origin);
-}
-board.addEventListener('click',e=>{
-  const b=e.target.closest('.card');
-  if(!b)return;
-  sendPick(Number(b.dataset.i));
-});
-$('#pairs').oninput=()=>{
-  const p=Number($('#pairs').value)||8;
-  $('#cnt').textContent=`${ar(p*2)} كارت`;
-};
-$('#pairs').onchange=()=>{
-  try{localStorage.setItem('roqaya-memory-pairs',$('#pairs').value)}catch{}
-};
-$('#new').onclick=()=>{
-  if(cfg.role!=='host')return;
-  const pairs=Math.max(2,Math.min(50,Number($('#pairs').value)||8));
-  parent.postMessage({type:'roqaya-memory-new',pairs},location.origin);
-};
-$('#city').onclick=()=>{
-  if(cfg.role==='host')parent.postMessage({type:'roqaya-memory-city'},location.origin);
-};
-addEventListener('resize',()=>{
-  clearTimeout(resizeTimer);resizeTimer=setTimeout(layout,80);
-});
-addEventListener('message',e=>{
-  if(e.origin!==location.origin||e.data?.type!=='roqaya-memory-config')return;
-  cfg={...cfg,...e.data.config};
-  render();
-});
-render();
-parent.postMessage({type:'roqaya-memory-ready'},location.origin);
+function render(){renderHud();renderBoard()}
+function sendPick(i){if(!mine()||open(i))return;parent.postMessage({type:'roqaya-memory-pick',index:i,roundId:cfg.roundId},location.origin)}
+board.addEventListener('click',e=>{const b=e.target.closest('.card');if(b)sendPick(Number(b.dataset.i));});
+$('#pairs').onchange=()=>{try{localStorage.setItem('roqaya-memory-pairs',$('#pairs').value)}catch{}};
+$('#new').onclick=()=>{if(cfg.role==='host')parent.postMessage({type:'roqaya-memory-new',pairs:Number($('#pairs').value)||8},location.origin)};
+$('#city').onclick=()=>{if(cfg.role==='host')parent.postMessage({type:'roqaya-memory-city'},location.origin)};
+addEventListener('resize',()=>{clearTimeout(resizeTimer);resizeTimer=setTimeout(layout,80)});
+addEventListener('message',e=>{if(e.origin!==location.origin||e.data?.type!=='roqaya-memory-config')return;cfg={...cfg,...e.data.config};render()});
+render();parent.postMessage({type:'roqaya-memory-ready'},location.origin);
 </script>
 </body>
 </html>

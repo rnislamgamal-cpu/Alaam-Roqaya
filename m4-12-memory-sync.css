@@ -1,23 +1,27 @@
-/* M4.12 — supplied Memory Game replacement */
-.memory-v2-overlay[hidden]{display:none!important}
-body.memory-v2-active #screen{display:none!important}
-body.memory-v2-active .shell{max-width:900px!important;padding:3px 5px 10px!important}
-body.memory-v2-active .header{
-  position:sticky!important;top:max(4px,env(safe-area-inset-top))!important;z-index:190!important;
-  margin:0 0 5px!important;padding:4px 6px!important;min-height:42px!important;border-radius:14px!important;
-  background:rgba(255,255,255,.94)!important;backdrop-filter:blur(14px)!important;-webkit-backdrop-filter:blur(14px)!important;
-  box-shadow:0 7px 22px rgba(59,48,102,.14)!important
-}
-body.memory-v2-active .brand{display:none!important}
-body.memory-v2-active .connection{font-size:.61rem!important;padding:4px 6px!important}
-body.memory-v2-active .sound-toggle{font-size:.6rem!important;min-height:34px!important;padding:4px 7px!important}
-body.memory-v2-active .call-controls{margin-top:0!important}
-.memory-v2-overlay{width:100%;margin:0 auto;padding:0 2px 14px}
-.memory-v2-frame{
-  display:block;width:100%;height:calc(100svh - 66px);min-height:700px;border:0;border-radius:14px;
-  background:#eef2ff;box-shadow:0 8px 24px rgba(73,64,130,.12)
-}
-@media(max-width:520px){
-  body.memory-v2-active .header{padding:4px!important}
-  .memory-v2-frame{height:calc(100svh - 62px);min-height:680px;border-radius:10px}
-}
+/* M4.30 — compact V1 memory shell and legacy renderer handoff */
+.memory-v1-overlay[hidden]{display:none!important}
+body.memory-v1-active{overflow:hidden!important}
+body.memory-v1-active #screen{display:none!important}
+body.memory-v1-active footer,body.memory-v1-active .message{display:none!important}
+body.memory-v1-active .shell{max-width:900px!important;min-height:0!important;height:100svh!important;padding:3px 5px max(3px,env(safe-area-inset-bottom))!important;overflow:hidden!important}
+body.memory-v1-active .header{position:relative!important;top:auto!important;z-index:190!important;display:flex!important;flex-wrap:nowrap!important;justify-content:center!important;align-items:center!important;gap:5px!important;margin:0 0 4px!important;padding:3px 5px!important;min-height:39px!important;border-radius:13px!important;background:rgba(255,255,255,.94)!important;box-shadow:0 5px 16px rgba(59,48,102,.12)!important}
+body.memory-v1-active .brand{display:none!important}
+body.memory-v1-active .connection{display:none!important}
+body.memory-v1-active #call-controls{flex:0 1 auto!important;width:auto!important;min-width:0!important;position:static!important;top:auto!important;margin:0!important;justify-content:center!important}
+body.memory-v1-active .call-main-btn{min-height:34px!important;padding:3px 9px!important;gap:5px!important;font-size:.68rem!important}
+body.memory-v1-active .call-main-icon{width:26px!important;height:26px!important}
+body.memory-v1-active .call-modern-pill{width:auto!important;min-width:0!important;max-width:100%!important;padding:3px 5px!important;gap:3px!important}
+body.memory-v1-active .call-icon-tools{gap:2px!important}
+body.memory-v1-active .call-icon-btn{width:29px!important;height:29px!important;min-width:29px!important}
+body.memory-v1-active #call-controls [data-call-action="mic"]{display:none!important}
+body.memory-v1-active .sound-toggle{display:inline-grid!important;place-items:center!important;flex:0 0 34px!important;width:34px!important;height:34px!important;min-height:34px!important;padding:0!important;font-size:1.1rem!important;line-height:1!important}
+.memory-player-status{display:flex;align-items:center;gap:5px;flex:0 0 auto;white-space:nowrap;font-size:.69rem;font-weight:850;color:#483875}
+.memory-player-status[hidden]{display:none!important}
+.memory-player{display:inline-flex;align-items:center;gap:4px;padding:4px 6px;border-radius:10px;background:#f5f0ff}
+.memory-player i{width:9px;height:9px;border-radius:50%;background:#d94150;box-shadow:0 0 0 2px #fff}
+.memory-player i.online{background:#22a866}.memory-player i.offline{background:#d94150}
+.memory-v1-overlay{width:100%;height:calc(100svh - 48px);min-height:0;margin:0 auto;padding:0 2px 2px}
+.memory-v1-frame{display:block;width:100%;height:100%;min-height:0;border:0;border-radius:13px;background:#f4f1ff;box-shadow:0 7px 20px rgba(73,64,130,.12)}
+.memory-v1-loading{min-height:90px;display:grid;place-items:center;margin:12px auto!important;color:#5a499a;font-weight:900}
+@media(max-width:520px){body.memory-v1-active .shell{padding-inline:3px!important}.memory-player-status{gap:3px;font-size:.63rem}.memory-player{padding:4px}.memory-v1-overlay{height:calc(100svh - 45px)}.memory-v1-frame{border-radius:9px}}
+@media(max-width:360px){body.memory-v1-active .header{gap:3px!important;padding-inline:2px!important}.memory-player-status{font-size:.57rem}.memory-player{gap:2px;padding:4px 3px}body.memory-v1-active .call-main-btn{padding-inline:5px!important}}

@@ -6,7 +6,7 @@
 
   const body = document.body;
   const ACTIVE_CLASSES = [
-    'memory-v2-active',
+    'memory-v1-active',
     'snakes-v2-active',
     'jigsaw-sync-active',
     'draw-v2-active',
@@ -71,11 +71,7 @@
       return;
     }
 
-    // Legacy renderers that have replacement versions.
-    if (screen.querySelector('.memory-grid')) {
-      guard('memory');
-      return;
-    }
+    // The memory legacy renderer has been removed; its dedicated V1 module owns it.
     if (screen.querySelector('.snakes-panel')) {
       guard('snakes');
       return;

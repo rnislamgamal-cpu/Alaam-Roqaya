@@ -1,11 +1,8 @@
 /* M4.14 — prevent legacy game UI from flashing before the replacement loads */
 
-/* Modern-browser path: these selectors hide the legacy renderer before paint. */
-#screen:has(.memory-grid),
+/* JS fallback / transition state for legacy games still being replaced. */
 #screen:has(.snakes-panel),
 #screen:has(.jigsaw-panel),
-
-/* JS fallback / transition state. */
 #screen.external-game-transition{
   visibility:hidden!important;
   pointer-events:none!important;
