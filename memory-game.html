@@ -84,12 +84,12 @@ function layout(){
 }
 function cardHtml(e,i){
  const owner=cfg.matchedBy?.[i]||'';
- return `<button class="card ${open(i)?'up':''} ${owner?'done owner-'+owner:''}" data-i="${i}" aria-label="كارت ${ar(i+1)}${open(i)?' '+e:''}" ${(!mine()||open(i))?'disabled':''}><span class="in"><span class="face-side back">؟</span><span class="face-side face">${e}</span></span></button>`;
+ return `<button class="card ${open(i)?'up':''} ${owner?'done owner-'+owner:''}" data-i="${i}" aria-label="كارت ${ar(i+1)}${open(i)?' '+e:''}" ${(!mine()||Boolean(owner))?'disabled':''}><span class="in"><span class="face-side back">؟</span><span class="face-side face">${e}</span></span></button>`;
 }
 function renderBoard(){
  const key=`${cfg.roundId}:${(cfg.deck||[]).join('')}`;
  if(key!==lastDeckKey){lastDeckKey=key;board.innerHTML=(cfg.deck||[]).map(cardHtml).join('');layout();}
- else [...board.querySelectorAll('.card')].forEach((b,i)=>{const owner=cfg.matchedBy?.[i]||'';b.classList.toggle('up',open(i));b.classList.toggle('done',Boolean(owner));b.classList.toggle('owner-host',owner==='host');b.classList.toggle('owner-guest',owner==='guest');b.disabled=!mine()||open(i);});
+ else [...board.querySelectorAll('.card')].forEach((b,i)=>{const owner=cfg.matchedBy?.[i]||'';b.classList.toggle('up',open(i));b.classList.toggle('done',Boolean(owner));b.classList.toggle('owner-host',owner==='host');b.classList.toggle('owner-guest',owner==='guest');b.disabled=!mine()||Boolean(owner);});
 }
 function celebrate(){
  const key=`${cfg.roundId}:${cfg.result}`;if(!cfg.finished||key===lastPartyKey)return;lastPartyKey=key;

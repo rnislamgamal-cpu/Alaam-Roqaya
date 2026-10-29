@@ -78,7 +78,7 @@ function ensureOverlay(){
   overlay.id='memory-v1-overlay';
   overlay.className='memory-v1-overlay';
   overlay.hidden=true;
-  overlay.innerHTML='<iframe class="memory-v1-frame" src="memory-game.html?v=3" title="لعبة الذاكرة" loading="eager"></iframe>';
+  overlay.innerHTML='<iframe class="memory-v1-frame" src="memory-game.html?v=4" title="لعبة الذاكرة" loading="eager"></iframe>';
   const header=document.querySelector('.header');header?.insertBefore(playerStatus,header.firstChild);header?.insertAdjacentElement('afterend',overlay);
   frame=overlay.querySelector('iframe');
   frame.addEventListener('load',sendConfig);
@@ -172,7 +172,7 @@ function bindRoom(){
 async function pick(index,roundId){
   await mutate(old=>{
     const m=old.memoryV2;
-    if(old.game!=='memory'||old.phase!=='playing'||!m||m.finished||m.waiting||m.turn!==role||Number(m.roundId)!==Number(roundId))return;
+    if(old.game!=='memory'||!m||m.finished||m.waiting||m.turn!==role||Number(m.roundId)!==Number(roundId))return;
     if(!Number.isInteger(index)||index<0||index>=m.deck.length||m.matchedBy?.[index]||(m.revealed||[]).includes(index))return;
     const revealed=[...(m.revealed||[]),index];
     if(revealed.length===1)return {...old,memoryV2:{...m,revealed}};
