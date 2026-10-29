@@ -22,8 +22,7 @@ main{max-width:640px;margin:auto;padding:6px 8px 90px}
 .sent p{margin:0 0 9px;font-family:"Noto Naskh Arabic","Amiri",serif;font-weight:800;font-size:clamp(1.5rem,6.6vw,2.3rem);line-height:1.9}
 .say{font:inherit;font-weight:800;border:2px solid var(--line);background:#fff;border-radius:999px;padding:6px 13px;cursor:pointer;color:var(--blue);display:inline-flex;align-items:center;gap:6px;font-size:.72rem}.say img{width:18px;height:18px}
 .opts{display:grid;grid-template-columns:repeat(auto-fit,minmax(115px,1fr));gap:8px}
-.opt{background:#fff;border:3px solid var(--line);border-radius:17px;padding:9px 5px 7px;cursor:pointer;display:flex;flex-direction:column;align-items:center;font:inherit;color:inherit;min-height:126px}
-.opt img{width:min(23vw,86px);height:min(23vw,86px)}.opt .cap{min-height:1.5em;font-family:"Noto Naskh Arabic",serif;font-weight:800;font-size:1rem;margin-top:3px}
+.opt{background:#fff;border:3px solid var(--line);border-radius:17px;padding:9px 5px 7px;cursor:pointer;display:flex;flex-direction:column;align-items:center;font:inherit;color:inherit;min-height:126px;transition:transform .12s}
 .opt:active:not(:disabled){transform:scale(.97)}.opt.ok{border-color:var(--ok);background:#e5f7ee}.opt.bad{border-color:var(--bad);background:#fdeaea}.opt:disabled{cursor:default}
 .msg{text-align:center;font-weight:900;font-size:.9rem;min-height:1.8em;margin-top:10px}.msg.ok{color:var(--ok)}.msg.bad{color:var(--bad)}
 .wait{background:#fff;border-radius:16px;padding:18px;text-align:center;font-weight:800;line-height:1.7}
@@ -34,6 +33,8 @@ main{max-width:640px;margin:auto;padding:6px 8px 90px}
 .footer-bar button.primary{background:var(--blue);color:#fff;border-color:#1f57d6}
 .footer-bar button:disabled{opacity:.45;cursor:default}
 .credit{position:fixed;bottom:54px;left:50%;transform:translateX(-50%);font-size:.5rem;opacity:.35;text-align:center}
+.shake{animation:shake .35s}
+@keyframes shake{0%,100%{transform:translateX(0)}25%{transform:translateX(-6px)}75%{transform:translateX(6px)}}
 @media(max-width:420px){main{padding:6px 6px 94px}.opts{gap:6px;grid-template-columns:repeat(2,1fr)}.opt{min-height:114px}.opt img{width:min(26vw,76px);height:min(26vw,76px)}.footer-bar button{font-size:.72rem;padding:6px 9px}}
 </style>
 </head>
@@ -90,7 +91,7 @@ const L3 = [
 ];
 
 const L1 = Object.keys(IM).map(k => [k, IM[k][1]]);
-const BANK = {1:L1, 2:L2, 3:L3};
+const BANK = {1:L1,2:L2,3:L3};
 
 function rng(a){return function(){a|=0;a=a+0x6D2B79F5|0;let t=Math.imul(a^a>>>15,1|a);t=t+Math.imul(t^t>>>7,61|t)^t;return((t^t>>>14)>>>0)/4294967296}}
 function hash(s,n){let h=Math.imul(2166136261^s,16777619);h=Math.imul(h^n,16777619);h^=h>>>13;h=Math.imul(h,0x5bd1e995);return(h^(h>>>15))>>>0}
@@ -99,40 +100,23 @@ function shuffle(a,R){const x=a.slice();for(let i=x.length-1;i>0;i--){const j=Ma
 function buildQuestions(seed,level,rounds){
   const R=rng(hash(seed,911));
   const take=(L,n)=>shuffle(L,R).slice(0,n).map(q=>({key:q[0],text:q[1],bad:q[2]||[]}));
-  if(level==='mix'){
-    const a=Math.round(rounds*.3),b=Math.round(rounds*.4);
-    return take(L1,a).concat(take(L2,b)).concat(take(L3,rounds-a-b));
-  }
+  if(level==='mix'){const a=Math.round(rounds*.3),b=Math.round(rounds*.4);return take(L1,a).concat(take(L2,b)).concat(take(L3,rounds-a-b));}
   return take(BANK[level]||L1,rounds);
 }
-
-function options(q,seed,index){
-  const R=rng(hash(seed,index+1203));
-  const pool=Object.keys(IM).filter(k=>k!==q.key && !(q.bad||[]).includes(k));
-  const bads=shuffle(pool,R).slice(0,3);
-  return shuffle([q.key].concat(bads),R);
-}
+function options(q,seed,index){const R=rng(hash(seed,index+1203));const pool=Object.keys(IM).filter(k=>k!==q.key && !(q.bad||[]).includes(k));return shuffle([q.key].concat(shuffle(pool,R).slice(0,3)),R);}
 
 let muted=false,ac=null;
 function getAudio(){try{ac=ac||new (window.AudioContext||window.webkitAudioContext)();if(ac.state==='suspended')ac.resume();return ac}catch(e){return null}}
 function tone(f,t0,d,type,gain){if(muted)return;const a=getAudio();if(!a)return;const o=a.createOscillator(),v=a.createGain(),t=a.currentTime+t0;o.type=type||'sine';o.frequency.setValueAtTime(f,t);v.gain.setValueAtTime(0.001,t);v.gain.linearRampToValueAtTime(gain||0.16,t+0.02);v.gain.exponentialRampToValueAtTime(0.001,t+d);o.connect(v).connect(a.destination);o.start(t);o.stop(t+d+0.05)}
-const SFX={ok:function(){[523,659,784,1047].forEach(function(f,i){tone(f,i*0.09,0.28,'triangle',0.16)})}, no:function(){tone(196,0,0.26,'sawtooth',0.12)}};
+const SFX={ok:function(){[523,659,784,1047].forEach(function(f,i){tone(f,i*0.09,0.28,'triangle',0.16)})},no:function(){tone(196,0,0.26,'sawtooth',0.14)}};
 function speak(t){if(muted||!('speechSynthesis' in window))return;try{window.speechSynthesis.cancel();const u=new SpeechSynthesisUtterance(t);u.lang='ar-SA';u.rate=0.8;window.speechSynthesis.speak(u)}catch(e){}}
 
 let cfg={role:'guest',childName:'رقية',roundId:0,seed:1,level:null,rounds:10,players:{host:{},guest:{}},winner:null};
-let Q=[],turnIndex=1,totalTurns=10,answered=false;
+let Q=[],turnIndex=1,totalTurns=10,answered=false,currentQKey=null;
 
 function nameOf(r){return r==='host'?'بابا':(cfg.childName||'رقية')}
-function paintPlayers(){
-  const h=cfg.players&&cfg.players.host?cfg.players.host:{},g=cfg.players&&cfg.players.guest?cfg.players.guest:{};
-  $('#hostBox').classList.toggle('me',cfg.role==='host');
-  $('#guestBox').classList.toggle('me',cfg.role==='guest');
-  $('#hostBox b').textContent='بابا';
-  $('#guestBox b').textContent=cfg.childName||'رقية';
-  $('#hostBox span').textContent='⭐ '+ar(h.stars||0);
-  $('#guestBox span').textContent='⭐ '+ar(g.stars||0);
-}
-function turnOwner(){return ((turnIndex||1)%2===1?'host':'guest')}
+function paintPlayers(){const h=cfg.players&&cfg.players.host?cfg.players.host:{},g=cfg.players&&cfg.players.guest?cfg.players.guest:{};$('#hostBox').classList.toggle('me',cfg.role==='host');$('#guestBox').classList.toggle('me',cfg.role==='guest');$('#hostBox b').textContent='بابا';$('#guestBox b').textContent=cfg.childName||'رقية';$('#hostBox span').textContent='⭐ '+ar(h.stars||0);$('#guestBox span').textContent='⭐ '+ar(g.stars||0);}
+function turnOwner(){return ((turnIndex||1)%2===1?'host':'guest');}
 
 function show(){
   const i=Math.min(totalTurns,turnIndex)-1;
@@ -145,12 +129,14 @@ function show(){
   }
   if(!cfg.level || Q.length===0 || i<0 || i>=Q.length){
     $('#turnbar').textContent='بانتظار بابا';
-    $('#game').innerHTML='<div class="wait">'+(cfg.role==='host'?'اختر المستوى من القائمة أو اضغط "السؤال التالي"':'بانتظار اختيار بابا وبدأ اللعب')+'</div>';
+    $('#game').innerHTML='<div class="wait">'+(cfg.role==='host'?'اضغط "السؤال التالي" لبدء أول سؤال أو لعرض السؤال الحالي':'بانتظار بابا')+'</div>';
     $('#next').disabled=cfg.role!=='host';
     $('#new').style.display='none';
     return;
   }
-  const q=Q[i],opts=options(q,cfg.seed,i);
+  const q=Q[i];
+  if(currentQKey!==q.key){answered=false;currentQKey=q.key;}
+  const opts=options(q,cfg.seed,i);
   const myTurn=turnOwner()===cfg.role;
   const lock=answered||!myTurn;
   $('#turnbar').textContent='السؤال '+ar(turnIndex)+' / '+ar(totalTurns)+' — دور '+nameOf(turnOwner())+(myTurn?' (أنت)':'');
@@ -173,21 +159,23 @@ function choose(b){
   if(answered||turnOwner()!==cfg.role)return;
   const i=Math.min(totalTurns,turnIndex)-1,q=Q[i];if(!q)return;
   const k=b.getAttribute('data-k');
-  Array.from(document.querySelectorAll('.opt')).forEach(function(o){o.disabled=true;});
   if(k===q.key){
+    Array.from(document.querySelectorAll('.opt')).forEach(function(o){o.disabled=true;});
     b.classList.add('ok');
+    var c=b.querySelector('.cap'); if(c)c.textContent=IM[q.key][1];
     var m1=$('#msg'); if(m1){m1.className='msg ok';m1.textContent='إجابة صحيحة ✓';}
-    SFX.ok(); setTimeout(function(){speak(q.text);},250);
+    SFX.ok(); setTimeout(function(){speak(q.text);},200);
+    answered=true;
+    try{parent.postMessage({type:'roqaya-reading-answer',key:k,question:i,roundId:cfg.roundId,correct:true},location.origin);}catch(e){}
+    $('#next').disabled=cfg.role!=='host';
   }else{
     b.classList.add('bad');
-    var m2=$('#msg'); if(m2){m2.className='msg bad';m2.textContent='إجابة خاطئة ✗';}
+    b.classList.add('shake');
     SFX.no();
-    var okb2=Array.from(document.querySelectorAll('.opt')).find(function(x){return x.getAttribute('data-k')===q.key});
-    if(okb2){okb2.classList.add('ok');var cap2=okb2.querySelector('.cap');if(cap2)cap2.textContent=IM[q.key][1];}
+    setTimeout(function(){b.classList.remove('shake');},350);
+    var m2=$('#msg'); if(m2){m2.className='msg bad';m2.textContent='إجابة خاطئة ✗';}
+    try{parent.postMessage({type:'roqaya-reading-answer',key:k,question:i,roundId:cfg.roundId,correct:false},location.origin);}catch(e){}
   }
-  answered=true;
-  try{parent.postMessage({type:'roqaya-reading-answer',key:k,question:i,roundId:cfg.roundId},location.origin);}catch(e){}
-  $('#next').disabled=cfg.role!=='host';
 }
 
 $('#game').onclick=function(e){
@@ -198,8 +186,8 @@ $('#game').onclick=function(e){
   if(act==='mute'){muted=!muted; if(muted&&'speechSynthesis' in window){try{window.speechSynthesis.cancel();}catch(ex){}} show();}
 };
 
-$('#next').onclick=function(){if(cfg.role!=='host')return; answered=false; try{parent.postMessage({type:'roqaya-reading-next',roundId:cfg.roundId,turnIndex:Number(turnIndex)||1},location.origin);}catch(e){}};
-$('#new').onclick=function(){if(cfg.role!=='host')return; try{parent.postMessage({type:'roqaya-reading-new',roundId:cfg.roundId},location.origin);}catch(e){}};
+$('#next').onclick=function(){if(cfg.role!=='host')return; answered=false; currentQKey=null; try{parent.postMessage({type:'roqaya-reading-next',roundId:cfg.roundId,turnIndex:Number(turnIndex)||1},location.origin);}catch(e){}};
+$('#new').onclick=function(){if(cfg.role!=='host')return; answered=false; currentQKey=null; try{parent.postMessage({type:'roqaya-reading-new',roundId:cfg.roundId},location.origin);}catch(e){}};
 $('#city').onclick=function(){if(cfg.role==='host'){try{parent.postMessage({type:'roqaya-reading-city'},location.origin);}catch(e){}}};
 
 function applyConfig(n){
@@ -208,8 +196,7 @@ function applyConfig(n){
   if(n.totalTurns!==undefined) totalTurns=Number(n.totalTurns)||10;
   if(n.level){ cfg.level=n.level; Q=buildQuestions(cfg.seed,cfg.level,cfg.rounds||10); }
   if(typeof n._answered==='boolean') answered=n._answered;
-  paintPlayers();
-  show();
+  paintPlayers(); show();
 }
 
 window.addEventListener('message',function(e){
@@ -218,8 +205,7 @@ window.addEventListener('message',function(e){
   applyConfig(e.data.config||{});
 });
 
-paintPlayers();
-show();
+paintPlayers(); show();
 try{parent.postMessage({type:'roqaya-reading-ready'},location.origin);}catch(e){}
 </script>
 </body>
