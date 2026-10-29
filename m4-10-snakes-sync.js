@@ -73,7 +73,7 @@ function ensureOverlay(){
   overlay.id='snakes-v2-overlay';
   overlay.className='snakes-v2-overlay';
   overlay.hidden=true;
-  overlay.innerHTML='<iframe class="snakes-v2-frame" src="snakes-game.html?v=5" title="السلم والثعبان" loading="eager"></iframe>';
+  overlay.innerHTML='<iframe class="snakes-v2-frame" src="snakes-game.html?v=6" title="السلم والثعبان" loading="eager"></iframe>';
   screen.insertAdjacentElement('afterend',overlay);
   frame=overlay.querySelector('iframe');
   frame.addEventListener('load',sendConfig);
