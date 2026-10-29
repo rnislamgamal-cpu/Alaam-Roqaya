@@ -1,0 +1,28 @@
+/* M4.27 — «افهم الأعداد» (overlay) — يُحمَّل داخل index.html
+ * اللعبة overlay فوق الشاشة مثل باقي الألعاب (§9: منع ظهور نسخة قديمة).
+ * كل القواعد مربوطة بـbody.numbers-v1-active فقط.
+ */
+.numbers-v1-overlay{
+  position:fixed;inset:0;z-index:200;
+  display:flex;align-items:stretch;justify-content:center;
+  background:linear-gradient(180deg,#eef2ff,#e6f0ff);
+  padding:max(2px,env(safe-area-inset-top)) 3px max(3px,env(safe-area-inset-bottom));
+}
+.numbers-v1-overlay[hidden]{display:none!important}
+.numbers-v1-frame{
+  width:100%;max-width:900px;height:100%;min-height:0;
+  border:0;border-radius:14px;background:#e6f0ff;
+  box-shadow:0 8px 28px rgba(30,27,75,.16);
+}
+body.numbers-v1-active{overflow:hidden!important}
+body.numbers-v1-active #screen{display:none!important}
+/* اللعبة جواها هيدرها الخاص (🔢 + 🔊 + 🎡 المدينة) → نخفي هيدر العالم والفوتر
+ * عشان مفيش تكرار ومفيش تداخل مع هيدر اللعبة. */
+body.numbers-v1-active .header,
+body.numbers-v1-active footer,
+body.numbers-v1-active .message{display:none!important}
+
+@media(max-width:520px){
+  .numbers-v1-overlay{padding:max(1px,env(safe-area-inset-top)) 2px max(2px,env(safe-area-inset-bottom))}
+  .numbers-v1-frame{border-radius:10px}
+}

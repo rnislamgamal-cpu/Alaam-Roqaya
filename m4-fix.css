@@ -1,0 +1,165 @@
+/* =========================================================
+   M4 — layout system, modern game cards, harder games,
+   puzzle/coloring upgrades, call-device modal fixes.
+   ========================================================= */
+
+/* Temporary messages always float without pushing the page. */
+#message:not([hidden]){
+  position:fixed;z-index:160;top:64px;left:50%;right:auto;
+  transform:translateX(-50%);width:max-content;max-width:calc(100vw - 22px);
+  margin:0;padding:7px 11px;border-radius:999px;font-size:.72rem;
+  box-shadow:0 8px 24px rgba(65,43,87,.16)
+}
+
+/* Hub artwork: use as much width as possible without crop/zoom. */
+body.hub-view .hub-stage,
+body.hub-view .corridor-stage{
+  width:min(100vw,1536px)!important;
+  max-width:1536px!important;
+  height:auto!important;min-height:0!important;
+  aspect-ratio:1536/1404!important;
+  overflow:hidden!important;margin:0 auto!important
+}
+body.hub-view .hub-stage-image{width:100%!important;height:100%!important;object-fit:contain!important;object-position:center!important}
+body.hub-view .hub-stage:not(.hub-school-gate):not(.corridor-stage){margin-bottom:66px!important}
+body.hub-view .hub-stage-caption{top:calc(100% + 5px)!important;padding:6px 8px!important;border-radius:14px!important}
+body.hub-view .hub-stage-caption>strong{font-size:.83rem!important}
+body.hub-view .hub-stage-caption>small{font-size:.56rem!important;margin:1px 0 4px!important}
+.hub-gate-actions{display:flex;gap:7px;justify-content:center;align-items:center}
+.hub-school-icon-btn{width:44px!important;min-width:44px!important;padding:6px!important;font-size:1.3rem!important;border-radius:14px!important}
+.hub-world-enter-btn{min-height:39px!important;padding:7px 14px!important;border-radius:15px!important;gap:6px!important}
+.hub-world-enter-btn span{font-size:1.1rem}.hub-world-enter-btn strong{font-size:.78rem}
+.hub-control-note:empty{display:none!important}
+
+/* Lobby: school/sound at top; room code at the very bottom. */
+body.lobby-view .lobby-top-actions{display:flex;justify-content:flex-start;margin:0 0 4px}
+body.lobby-view .lobby-school-top{min-height:34px;padding:5px 9px;border-radius:11px;font-size:.72rem}
+body.lobby-view .lobby-room-bottom{margin:10px 0 0!important;padding-top:9px!important;border-top:1px dashed #e2d9f5}
+body.lobby-view .lobby-hero-row{display:none!important}
+body.lobby-view .scoreboard{margin:4px 0!important}
+body.lobby-view .lobby-settings-grid{margin:4px 0 5px!important}
+
+/* Player cards: bigger identity, score next to name, status = dot only. */
+.scoreboard{gap:7px!important}
+.score{display:flex!important;align-items:center!important;justify-content:center!important;gap:10px!important;min-height:58px!important;padding:7px 10px!important}
+.score span{font-size:.86rem!important;font-weight:850;white-space:nowrap}
+.score strong{display:inline!important;font-size:1.35rem!important;line-height:1!important;margin:0!important;white-space:nowrap}
+body.playing-game .score{min-height:50px!important;padding:5px 7px!important}
+body.playing-game .score span{font-size:.78rem!important}body.playing-game .score strong{font-size:1.2rem!important}
+
+/* Modern game cards inspired by the supplied visual: large art area + title + caption. */
+body.lobby-view .lobby-game-grid{grid-template-columns:repeat(2,minmax(0,1fr));gap:9px!important;margin-top:5px!important}
+body.lobby-view .game-choice{
+  position:relative;overflow:hidden;display:flex;flex-direction:column;align-items:stretch;justify-content:flex-end;
+  min-height:154px!important;padding:0!important;border:2px solid rgba(218,197,248,.85)!important;
+  border-radius:20px!important;background:linear-gradient(160deg,#fff7fb,#eef8ff)!important;
+  box-shadow:0 6px 0 #e5daf8,0 11px 24px rgba(89,55,135,.09)!important
+}
+body.lobby-view .game-card-art{display:flex;align-items:center;justify-content:center;min-height:90px;background:radial-gradient(circle at 50% 38%,#fff 0 20%,transparent 21%),linear-gradient(145deg,#dff7ff,#ffe7f2 50%,#fff1c9);border-bottom:1px solid #eee3f8}
+body.lobby-view .game-choice .emoji{font-size:3.25rem!important;line-height:1!important;filter:drop-shadow(0 5px 4px rgba(74,49,104,.12));transform:scale(1.05)}
+body.lobby-view .game-choice>strong{font-size:.91rem;color:#4d2e81;line-height:1.25;padding:6px 7px 1px}
+body.lobby-view .game-choice small{font-size:.62rem!important;line-height:1.25!important;margin:0!important;padding:0 7px 8px;color:#705f89!important}
+body.lobby-view .game-choice:last-child:nth-child(odd){grid-column:auto!important}
+body.lobby-view .game-card-draw .game-card-art,body.lobby-view .game-card-coloring .game-card-art{background:linear-gradient(145deg,#fff2d6,#ffe8f5,#ddf6ff)}
+body.lobby-view .game-card-snakes .game-card-art,body.lobby-view .game-card-jigsaw .game-card-art{background:linear-gradient(145deg,#e5ffe9,#def5ff,#f7e3ff)}
+body.lobby-view .game-card-math .game-card-art,body.lobby-view .game-card-numberline .game-card-art,body.lobby-view .game-card-compare .game-card-art{background:linear-gradient(145deg,#e8f5ff,#fff7c8,#e8ffe0)}
+body.lobby-view .game-card-english .game-card-art,body.lobby-view .game-card-read .game-card-art,body.lobby-view .game-card-phonics .game-card-art{background:linear-gradient(145deg,#eee6ff,#dff7ff,#fff1f8)}
+
+/* Compact layout globally across all 19 games. */
+body.playing-game .shell{padding:3px 7px 10px!important}
+body.playing-game .header{margin:0 0 3px!important;min-height:42px!important}
+body.playing-game .panel{padding:7px 8px 9px!important;margin:2px 0!important;border-radius:18px!important}
+body.playing-game .compact-game-nav{display:grid;grid-template-columns:minmax(0,1fr) auto;gap:5px;margin:0 0 3px!important}
+body.playing-game .compact-game-nav .game-name-tag{justify-self:start;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:100%;font-size:.67rem!important}
+body.playing-game .topline-actions{gap:3px!important;flex-wrap:nowrap!important}
+body.playing-game .topline-actions .btn{min-height:31px!important;padding:4px 6px!important;border-radius:10px!important;font-size:.62rem!important;box-shadow:none!important}
+body.playing-game .game-title{font-size:1rem!important;line-height:1.25!important;margin:4px 0!important}
+body.playing-game .status{font-size:.78rem!important;line-height:1.25!important;margin:3px 0!important}
+body.playing-game .in-game-settings{margin:3px 0 5px!important;padding:6px 7px!important;border-radius:12px!important}
+body.playing-game .in-game-settings>label{font-size:.72rem!important;margin:0 0 3px!important}
+body.playing-game .in-game-settings .input{min-height:34px!important;padding:4px 7px!important;font-size:.72rem!important;border-radius:9px!important}
+body.playing-game .settings-apply{min-height:34px!important;padding:5px 7px!important;font-size:.68rem!important;border-radius:9px!important}
+body.playing-game .in-game-settings .hint{display:none!important}
+body.playing-game .quiz-display{margin:4px auto!important;padding:5px!important}
+body.playing-game .quiz-options{margin:5px auto!important;gap:6px!important}
+body.playing-game .quiz-choice{min-height:64px!important;border-radius:15px!important;padding:5px!important}
+body.playing-game .btn-row{margin-top:6px!important;gap:6px!important}
+body.playing-game .finish{margin:5px 0!important;padding:6px 8px!important;border-radius:13px!important}
+body.playing-game .finish p{margin:3px 0!important}.rule{font-size:.69rem!important;margin:5px 0 0!important}
+body.playing-game footer{display:none!important}
+
+/* Draw & guess: prompt occupies one compact line/two at most. */
+.draw-prompt-compact{display:flex;align-items:center;justify-content:center;gap:7px;flex-wrap:wrap;min-height:34px;padding:4px 7px;margin:3px 0 5px;border-radius:11px;background:linear-gradient(135deg,#f8f1ff,#eef8ff);color:#503c91}
+.draw-prompt-compact strong{font-size:.79rem}.draw-prompt-compact span{font-size:.84rem;font-weight:850}
+body.playing-game .drawing-wrap{margin:5px 0!important;border-radius:15px!important}
+body.playing-game .drawing-wrap canvas{aspect-ratio:4/3;max-height:52svh}
+
+/* Arabic math UI reads right-to-left. Keep each expression isolated. */
+.rtl-math-zone,.number-settings,.number-range-row.rtl-numbers{direction:rtl!important;text-align:right!important}
+.rtl-math-zone .quiz-display{direction:rtl!important;unicode-bidi:isolate!important}
+.number-range-row.rtl-numbers{grid-template-columns:1fr 1fr!important}
+.number-range-row.rtl-numbers label{text-align:right!important}
+.number-range-row.rtl-numbers input{direction:rtl!important;text-align:center!important}
+.number-order-preview{direction:rtl!important}.order-arrow{transform:scaleX(-1)}
+
+/* English word-range control. */
+.english-settings .settings-action-row{grid-template-columns:minmax(0,1fr) auto!important}
+
+/* Harder odd-one-out: four near-identical cards. */
+.odd-hard-options{grid-template-columns:repeat(2,minmax(0,1fr))!important;max-width:520px!important}
+.odd-hard-options .quiz-choice{min-height:145px!important;padding:6px!important;background:#fbfdff!important}
+.odd-detail-card{position:relative;display:block;width:100%;height:100%;min-height:128px;overflow:hidden;border-radius:12px}
+.odd-detail-card .art-image{width:100%!important;height:128px!important;object-fit:contain!important}
+.odd-detail-card.odd-dot i{position:absolute;width:7px;height:7px;border-radius:50%;background:#6c58bc;right:18%;bottom:18%;opacity:.72}
+.odd-detail-card.odd-micro i{position:absolute;width:4px;height:4px;border-radius:50%;background:#7662b9;right:23%;top:22%;opacity:.58}
+.odd-detail-card.odd-micro2 i{position:absolute;width:3px;height:3px;border-radius:50%;background:#7662b9;right:27%;top:25%;opacity:.45}
+
+/* Coloring from supplied line-art images, canvas flood fill. */
+.coloring-title-row{display:flex;align-items:center;justify-content:space-between;gap:7px;margin:2px 0}
+.coloring-title-row h2{margin:0!important}.coloring-title-row small{font-size:.62rem;color:#806e92}
+.coloring-title-row .btn{min-height:31px!important;padding:4px 7px!important;font-size:.64rem!important}
+.coloring-wrap.raster{max-width:min(100%,620px)!important;margin:4px auto!important;padding:5px!important;border-radius:16px!important}
+#coloring-canvas{display:block;width:100%;height:auto;max-height:67svh;object-fit:contain;background:#fff;border-radius:10px;touch-action:manipulation}
+body.playing-game .color-palette{gap:5px!important;margin:4px auto!important}
+body.playing-game .palette-color{width:34px!important;height:34px!important;border-width:3px!important}
+
+/* Independent real-looking jigsaw boards. */
+.puzzle-level-row{display:grid;grid-template-columns:repeat(4,1fr);gap:5px}.puzzle-level{min-height:34px;border:1px solid #d9cff3;background:#fff;border-radius:9px;color:#55408d;font-weight:900}.puzzle-level.selected{background:#6b54d8;color:#fff;border-color:#6b54d8}
+.puzzle-settings small{display:block;margin-top:3px;font-size:.61rem;color:#78688e}
+.jigsaw-head{margin:3px 0!important}.jigsaw-head .hint{margin:2px 0!important;font-size:.66rem!important}.puzzle-reference{width:82px!important;height:68px!important}
+.puzzle-progress-duo{display:flex;justify-content:center;gap:8px;margin:3px 0}.puzzle-progress-duo span{padding:3px 8px;border-radius:999px;background:#f2ecff;font-size:.67rem;font-weight:850;color:#57429b}
+.jigsaw-board{gap:1px!important;padding:4px!important;border-radius:13px!important;overflow:visible!important;max-width:620px!important}
+.jigsaw-board .puzzle-slot{aspect-ratio:var(--piece-aspect,1)!important;min-height:0!important;border:1px dashed #c2b5ea!important;border-radius:4px!important;overflow:visible!important;background:#faf8ff!important}
+.jigsaw-svg{width:100%;height:100%;display:block;overflow:visible}
+.puzzle-tray{min-height:64px!important;padding:6px!important;gap:5px!important;border-radius:13px!important;max-height:28svh;overflow:auto}
+.puzzle-piece{width:66px!important;height:auto!important;aspect-ratio:var(--piece-aspect,1)!important;border:0!important;border-radius:4px!important;overflow:visible!important;background:transparent!important;box-shadow:none!important;padding:0!important}
+.pieces-20~.puzzle-tray .puzzle-piece,.pieces-50~.puzzle-tray .puzzle-piece{width:52px!important;height:52px!important}
+.puzzle-piece.selected{outline:3px solid #765ce0!important;outline-offset:1px;transform:scale(1.04)}
+.mini-finish{font-size:.72rem!important}
+
+/* Call device selector: always closable, backdrop tap closes it. */
+.call-device-backdrop{position:fixed!important;z-index:1002!important;inset:0!important;border:0!important;background:rgba(35,22,52,.18)!important;padding:0!important}
+.call-device-panel{z-index:1003!important;top:64px!important;max-height:calc(100svh - 80px);overflow:auto}
+.call-device-head{display:flex;align-items:center;justify-content:space-between;gap:8px}
+.call-device-head>div{display:flex;gap:5px}.call-device-close,.call-device-refresh{width:38px;height:38px;border-radius:50%;border:0;background:#f1ebfb;color:#5b438f;font-weight:900;font-size:1rem}
+.call-device-select{width:100%;min-height:44px;border:2px solid #dfd5f4;border-radius:12px;background:#fff;padding:7px 9px;color:#3f315f;font-size:.82rem}
+.call-device-fallback{padding:9px!important;border-radius:12px!important}.call-device-note{display:block;margin-top:7px;line-height:1.4}
+
+@media(max-width:420px){
+  #message:not([hidden]){top:56px;font-size:.64rem}
+  body.playing-game .score{gap:5px!important;min-height:46px!important}
+  body.playing-game .score span{font-size:.71rem!important}body.playing-game .score strong{font-size:1.08rem!important}
+  body.playing-game .topline-actions .btn span{display:none}
+  body.playing-game .compact-game-nav .game-name-tag{font-size:.63rem!important}
+  body.lobby-view .game-choice{min-height:142px!important}
+  body.lobby-view .game-card-art{min-height:82px}
+  body.lobby-view .game-choice .emoji{font-size:2.9rem!important}
+  .odd-hard-options .quiz-choice{min-height:122px!important}.odd-detail-card,.odd-detail-card .art-image{min-height:108px!important;height:108px!important}
+  .puzzle-piece{width:56px!important;height:56px!important}.pieces-50~.puzzle-tray .puzzle-piece{width:46px!important;height:46px!important}
+}
+@media(min-width:700px) and (orientation:landscape){body.hub-view .hub-stage,body.hub-view .corridor-stage{width:min(100vw,calc((100svh - 62px) * 1.094017094))!important}}
+@media(min-width:700px){body.lobby-view .lobby-game-grid{grid-template-columns:repeat(3,minmax(0,1fr))}.score{min-height:62px!important}}
+
+.corridor-school-icon{width:38px!important;height:38px!important;padding:4px!important;border-radius:50%!important;font-size:1.1rem!important}
+
+.math-equation{display:inline-block;direction:rtl!important;unicode-bidi:isolate;font-size:inherit}

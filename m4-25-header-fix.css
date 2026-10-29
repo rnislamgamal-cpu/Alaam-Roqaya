@@ -1,0 +1,217 @@
+/* M4.25 — إصلاح: اللعبة تدخل تحت الهيدر الثابت + تصغير الهيدر أثناء اللعب
+ * المشكلة: الهيدر `position:sticky` بـ`z-index:190` بيغطي أعلى اللعبة،
+ *          فالـiframe بيبدأ من تحت الهيدر مباشرة → أعلى اللعبة مش باين.
+ * الحل:
+ *   1) أثناء اللعب الهيدر ما يبقاش لازق (relative) → ياخد مساحته فوق فقط.
+ *   2) الهيدر يبقى **صغير جداً** (شريط رقيق) → اللعبة تاخد أكبر مساحة.
+ *   3) الأوفيرلاي z-index أعلى + يحترم safe-area.
+ * يشمل كل الألعاب العاملة بـoverlay (9 ألعاب).
+ */
+
+/* ============ 1) الهيدر: مصغّر وبدون لزق أثناء اللعب ============ */
+body.draw-v2-active .header,
+body.memory-v1-active .header,
+body.connect4-v1-active .header,
+body.odd-v2-active .header,
+body.hide-seek-v1-active .header,
+body.pattern-v2-active .header,
+body.reading-v1-active .header,
+body.math-kids-v1-active .header,
+body.spot-v1-active .header{
+  position:relative!important;
+  top:auto!important;
+  z-index:1!important;
+  margin:0 0 3px!important;
+  padding:1px 6px!important;
+  min-height:0!important;
+  border-radius:10px!important;
+  box-shadow:0 2px 8px rgba(59,48,102,.10)!important;
+}
+
+/* ============ 2) اخفِ كل حاجة مش ضرورية في الهيدر ============ */
+/* اسم التطبيق + الشعار: مخفيين (مش مهمين أثناء اللعب) */
+body.draw-v2-active .brand,
+body.memory-v1-active .brand,
+body.connect4-v1-active .brand,
+body.odd-v2-active .brand,
+body.hide-seek-v1-active .brand,
+body.pattern-v2-active .brand,
+body.reading-v1-active .brand,
+body.math-kids-v1-active .brand,
+body.spot-v1-active .brand{
+  display:none!important;
+}
+
+/* الفوتر: مخفي أثناء اللعب (يوفّر مساحة أسفل) */
+body.draw-v2-active footer,
+body.memory-v1-active footer,
+body.connect4-v1-active footer,
+body.odd-v2-active footer,
+body.hide-seek-v1-active footer,
+body.pattern-v2-active footer,
+body.reading-v1-active footer,
+body.math-kids-v1-active footer,
+body.spot-v1-active footer{
+  display:none!important;
+}
+
+/* ============ 3) الشريط المصغّر: صف أفقي رقيق ============ */
+/* الاتصال + أزرار المكالمة + كتم الصوت جنب بعض في سطر واحد */
+body.draw-v2-active .header,
+body.memory-v1-active .header,
+body.connect4-v1-active .header,
+body.odd-v2-active .header,
+body.hide-seek-v1-active .header,
+body.pattern-v2-active .header,
+body.reading-v1-active .header,
+body.math-kids-v1-active .header,
+body.spot-v1-active .header{
+  display:flex!important;
+  flex-wrap:nowrap!important;
+  align-items:center!important;
+  gap:5px!important;
+  overflow-x:auto!important;
+  scrollbar-width:none!important;
+}
+body.draw-v2-active .header::-webkit-scrollbar,
+body.memory-v1-active .header::-webkit-scrollbar,
+body.connect4-v1-active .header::-webkit-scrollbar,
+body.odd-v2-active .header::-webkit-scrollbar,
+body.hide-seek-v1-active .header::-webkit-scrollbar,
+body.pattern-v2-active .header::-webkit-scrollbar,
+body.reading-v1-active .header::-webkit-scrollbar,
+body.math-kids-v1-active .header::-webkit-scrollbar,
+body.spot-v1-active .header::-webkit-scrollbar{
+  display:none!important;
+}
+
+body.draw-v2-active .connection,
+body.memory-v1-active .connection,
+body.connect4-v1-active .connection,
+body.odd-v2-active .connection,
+body.hide-seek-v1-active .connection,
+body.pattern-v2-active .connection,
+body.reading-v1-active .connection,
+body.math-kids-v1-active .connection,
+body.spot-v1-active .connection{
+  flex:0 0 auto!important;
+  font-size:.56rem!important;
+  line-height:1.1!important;
+  padding:2px 7px!important;
+  min-height:0!important;
+  white-space:nowrap!important;
+}
+
+body.draw-v2-active .call-controls,
+body.memory-v1-active .call-controls,
+body.connect4-v1-active .call-controls,
+body.odd-v2-active .call-controls,
+body.hide-seek-v1-active .call-controls,
+body.pattern-v2-active .call-controls,
+body.reading-v1-active .call-controls,
+body.math-kids-v1-active .call-controls,
+body.spot-v1-active .call-controls{
+  flex:0 0 auto!important;
+  margin:0!important;
+  gap:4px!important;
+}
+
+body.draw-v2-active .header button,
+body.memory-v1-active .header button,
+body.connect4-v1-active .header button,
+body.odd-v2-active .header button,
+body.hide-seek-v1-active .header button,
+body.pattern-v2-active .header button,
+body.reading-v1-active .header button,
+body.math-kids-v1-active .header button,
+body.spot-v1-active .header button{
+  min-height:30px!important;
+  padding:2px 7px!important;
+  font-size:.62rem!important;
+  border-radius:9px!important;
+}
+
+/* ============ 4) الأوفيرلاي: فوق أي حاجة + يحترم safe-area ============ */
+body.draw-v2-active .draw-v2-overlay,
+body.memory-v1-active .memory-v1-overlay,
+body.connect4-v1-active .connect4-v1-overlay,
+body.odd-v2-active .odd-v2-overlay,
+body.hide-seek-v1-active .hide-seek-v1-overlay,
+body.pattern-v2-active .pattern-v2-overlay,
+body.reading-v1-active .reading-v1-overlay,
+body.math-kids-v1-active .math-kids-v1-overlay,
+body.spot-v1-active .spot-v1-overlay{
+  position:relative!important;
+  z-index:50!important;
+  padding:0 2px 6px!important;
+}
+
+/* ============ 5) الـshell ياخد المساحة كلها ============ */
+body.draw-v2-active .shell,
+body.memory-v1-active .shell,
+body.connect4-v1-active .shell,
+body.odd-v2-active .shell,
+body.hide-seek-v1-active .shell,
+body.pattern-v2-active .shell,
+body.reading-v1-active .shell,
+body.math-kids-v1-active .shell,
+body.spot-v1-active .shell{
+  max-width:960px!important;
+  padding:max(3px,env(safe-area-inset-top)) 4px 4px!important;
+}
+
+/* ============ 6) الإطار: يستغل كل الارتفاع المتاح ============ */
+/* الهيدر المصغّر ≈ 34px + هامش 3px → نخصم ~40px بس */
+body.draw-v2-active .draw-v2-frame,
+body.memory-v1-active .memory-v1-frame,
+body.connect4-v1-active .connect4-v1-frame,
+body.odd-v2-active .odd-v2-frame,
+body.hide-seek-v1-active .hide-seek-v1-frame,
+body.pattern-v2-active .pattern-v2-frame,
+body.reading-v1-active .reading-v1-frame,
+body.math-kids-v1-active .math-kids-v1-frame,
+body.spot-v1-active .spot-v1-frame{
+  height:calc(100svh - 44px)!important;
+  min-height:0!important;
+  border-radius:10px!important;
+}
+
+/* ============ 7) [M11] الهاتف: مساحة أقصى ============ */
+@media(max-width:520px){
+  body.draw-v2-active .header,
+  body.memory-v1-active .header,
+  body.connect4-v1-active .header,
+  body.odd-v2-active .header,
+  body.hide-seek-v1-active .header,
+  body.pattern-v2-active .header,
+  body.reading-v1-active .header,
+  body.math-kids-v1-active .header,
+  body.spot-v1-active .header{
+    margin:0 0 2px!important;
+    padding:0 5px!important;
+  }
+  body.draw-v2-active .shell,
+  body.memory-v1-active .shell,
+  body.connect4-v1-active .shell,
+  body.odd-v2-active .shell,
+  body.hide-seek-v1-active .shell,
+  body.pattern-v2-active .shell,
+  body.reading-v1-active .shell,
+  body.math-kids-v1-active .shell,
+  body.spot-v1-active .shell{
+    padding:max(2px,env(safe-area-inset-top)) 3px 3px!important;
+  }
+  body.draw-v2-active .draw-v2-frame,
+  body.memory-v1-active .memory-v1-frame,
+  body.connect4-v1-active .connect4-v1-frame,
+  body.odd-v2-active .odd-v2-frame,
+  body.hide-seek-v1-active .hide-seek-v1-frame,
+  body.pattern-v2-active .pattern-v2-frame,
+  body.reading-v1-active .reading-v1-frame,
+  body.math-kids-v1-active .math-kids-v1-frame,
+  body.spot-v1-active .spot-v1-frame{
+    height:calc(100svh - 40px)!important;
+  }
+}
+
+

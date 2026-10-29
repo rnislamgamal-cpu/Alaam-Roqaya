@@ -1,0 +1,58 @@
+/* M4.8 — shared turn-based jigsaw */
+.jigsaw-sync-overlay[hidden]{display:none!important}
+body.jigsaw-sync-active #screen{display:none!important}
+body.jigsaw-sync-active .shell{max-width:900px!important;padding-top:4px!important}
+
+body.jigsaw-sync-active .header{
+  position:sticky!important;
+  top:max(4px,env(safe-area-inset-top))!important;
+  z-index:190!important;
+  margin:0 0 5px!important;
+  padding:5px 6px!important;
+  min-height:42px!important;
+  border-radius:14px!important;
+  background:rgba(255,255,255,.94)!important;
+  backdrop-filter:blur(14px)!important;
+  -webkit-backdrop-filter:blur(14px)!important;
+  box-shadow:0 7px 22px rgba(62,44,84,.15)!important;
+  gap:5px!important;
+}
+body.jigsaw-sync-active .brand{display:none!important}
+body.jigsaw-sync-active .connection{font-size:.61rem!important;padding:4px 6px!important}
+
+.jigsaw-header-cluster{
+  display:flex;align-items:center;gap:5px;min-width:0;
+  margin-inline-start:auto;
+}
+.jigsaw-header-cluster .sound-toggle{
+  margin:0!important;min-height:34px!important;padding:5px 7px!important;font-size:.62rem!important
+}
+.jigsaw-header-pill{
+  display:flex;align-items:center;gap:4px;min-height:34px;max-width:190px;
+  padding:4px 5px 4px 8px;border:1px solid #ded3ea;border-radius:999px;
+  background:#f7f2fb;color:#5f4385;font-size:.61rem;font-weight:900
+}
+.jigsaw-header-pill.my-turn{background:#e2f7eb;color:#176447;border-color:#bfe7ce}
+.jigsaw-turn-mini{overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.jigsaw-city-mini{
+  width:29px;height:29px;min-width:29px;padding:0;border:0;border-radius:50%;
+  background:#eee6f8;color:#61468a;font:inherit;cursor:pointer
+}
+.jigsaw-sync-overlay{width:100%;margin:0 auto;padding:0 2px 16px}
+.jigsaw-sync-frame{
+  display:block;width:100%;height:calc(100svh - 70px);min-height:650px;border:0;
+  border-radius:15px;background:#dfeae3;box-shadow:0 8px 24px rgba(45,76,62,.1)
+}
+
+body.jigsaw-sync-active .call-controls{
+  flex-basis:100%!important;width:100%!important;margin-top:0!important
+}
+
+@media(max-width:520px){
+  body.jigsaw-sync-active .header{padding:4px!important}
+  .jigsaw-header-cluster{gap:3px}
+  .jigsaw-header-cluster .sound-toggle{font-size:.56rem!important;padding:4px 5px!important}
+  .jigsaw-header-pill{max-width:145px;font-size:.54rem;padding:3px 4px 3px 6px}
+  .jigsaw-city-mini{width:27px;height:27px;min-width:27px}
+  .jigsaw-sync-frame{height:calc(100svh - 64px);min-height:620px;border-radius:11px}
+}

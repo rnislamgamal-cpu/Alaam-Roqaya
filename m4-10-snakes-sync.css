@@ -1,0 +1,24 @@
+/* M4.10 — supplied Snakes & Ladders replacement */
+.snakes-v2-overlay[hidden]{display:none!important}
+body.snakes-v2-active #screen{display:none!important}
+body.snakes-v2-active .shell{max-width:900px!important;padding:3px 5px 10px!important}
+body.snakes-v2-active .header{
+  position:sticky!important;top:max(4px,env(safe-area-inset-top))!important;z-index:190!important;
+  margin:0 0 5px!important;padding:4px 6px!important;min-height:42px!important;border-radius:14px!important;
+  background:rgba(255,255,255,.94)!important;backdrop-filter:blur(14px)!important;-webkit-backdrop-filter:blur(14px)!important;
+  box-shadow:0 7px 22px rgba(32,42,70,.16)!important
+}
+body.snakes-v2-active .brand{display:none!important}
+body.snakes-v2-active .connection{font-size:.61rem!important;padding:4px 6px!important}
+body.snakes-v2-active .sound-toggle{font-size:.6rem!important;min-height:34px!important;padding:4px 7px!important}
+body.snakes-v2-active .call-controls{margin-top:0!important}
+.snakes-v2-overlay{width:100%;margin:0 auto;padding:0 2px 14px}
+.snakes-v2-frame{
+  display:block;width:100%;height:calc(100svh - 66px);min-height:760px;border:0;border-radius:14px;
+  background:#0f2a4a;box-shadow:0 8px 24px rgba(15,42,74,.2)
+}
+body.lobby-view .game-card-snakes .game-card-art{background:linear-gradient(145deg,#d8efff,#fff0b8 48%,#e7d9ff)!important}
+@media(max-width:520px){
+  body.snakes-v2-active .header{padding:4px!important}
+  .snakes-v2-frame{height:calc(100svh - 62px);min-height:720px;border-radius:10px}
+}

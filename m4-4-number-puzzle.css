@@ -1,0 +1,97 @@
+/* M4.4 — Number Puzzle (game #20) */
+.game-card-number-puzzle .game-card-art{
+  background:
+    radial-gradient(circle at 28% 30%,rgba(255,255,255,.92) 0 12%,transparent 13%),
+    linear-gradient(145deg,#dff7f5,#dfe8ff 48%,#fff0c7)!important;
+}
+.game-card-number-puzzle .emoji{filter:drop-shadow(0 5px 4px rgba(31,112,119,.16))!important}
+
+.number-puzzle-panel{
+  max-width:760px!important;
+  margin:0 auto!important;
+  padding:9px!important;
+  text-align:center;
+}
+.number-puzzle-top{
+  display:flex;align-items:center;justify-content:space-between;gap:8px;
+  margin:0 0 6px;
+}
+.number-puzzle-top h2{margin:0;font-size:1.02rem;color:#50347e}
+.number-puzzle-top small{display:block;color:#756683;font-size:.62rem;margin-top:2px}
+.number-puzzle-duo{
+  display:grid;grid-template-columns:1fr 1fr;gap:7px;margin:5px 0 7px;
+}
+.number-puzzle-duo>div{
+  position:relative;display:grid;grid-template-columns:1fr auto;align-items:center;gap:2px 6px;
+  min-height:52px;padding:6px 8px;border-radius:14px;background:#fff8fc;border:1px solid #eadff5;
+}
+.number-puzzle-duo>div:nth-child(2){background:#f7f5ff}
+.number-puzzle-duo strong{font-size:.78rem;color:#5d3e87;text-align:start}
+.number-puzzle-duo span{font-size:.68rem;font-weight:900}
+.number-puzzle-duo small{grid-column:1/-1;font-size:.58rem;color:#7a6b86;text-align:start}
+.number-puzzle-duo b{position:absolute;top:4px;left:5px;font-size:.72rem}
+
+.number-puzzle-winner{
+  margin:5px 0;padding:6px 8px;border-radius:12px;background:#fff7cf;
+  color:#6e5500;font-size:.72rem;font-weight:800;
+}
+.number-puzzle-stats{
+  display:grid;grid-template-columns:repeat(3,1fr);gap:6px;margin:6px 0;
+}
+.number-puzzle-stats>div{
+  background:#fff;border:1px solid #e8e2ee;border-radius:12px;padding:5px 4px;
+}
+.number-puzzle-stats small{display:block;color:#7b7182;font-size:.56rem}
+.number-puzzle-stats strong{display:block;font-size:.88rem;color:#283847;margin-top:1px}
+
+.number-puzzle-board{
+  --np-size:min(86vw,420px);
+  direction:ltr;position:relative;width:var(--np-size);aspect-ratio:1;
+  margin:7px auto;background:#17324a;border-radius:16px;
+  box-shadow:inset 0 0 0 3px rgba(255,255,255,.08),0 8px 20px rgba(30,48,66,.14);
+  overflow:hidden;
+}
+.number-puzzle-tile{
+  position:absolute;
+  left:var(--left);top:var(--top);
+  width:calc(100% / var(--n));height:calc(100% / var(--n));
+  border:4px solid transparent;background:#0f7f86;background-clip:padding-box;
+  border-radius:14px;color:white;font:900 calc(var(--np-size) / var(--n) * .34)/1 system-ui,sans-serif;
+  padding:0;touch-action:manipulation;user-select:none;
+  transition:left .16s ease,top .16s ease,background-color .18s ease,transform .12s ease;
+}
+.number-puzzle-tile:active{transform:scale(.94)}
+.number-puzzle-tile.ok{background:#e6b422;color:#1b2a38}
+.number-puzzle-tile:focus-visible{outline:3px solid #ffe76a;outline-offset:-4px}
+
+.number-puzzle-status{min-height:1.4em;margin:5px 0;font-size:.72rem;font-weight:900;color:#5d4472}
+.number-puzzle-controls{
+  display:flex;align-items:end;justify-content:center;gap:6px;flex-wrap:wrap;margin:6px 0;
+}
+.number-puzzle-controls label{
+  display:grid;gap:2px;text-align:start;font-size:.58rem;font-weight:850;color:#6a5577;
+}
+.number-puzzle-controls select{
+  min-height:36px;padding:6px 9px;border:1px solid #ded3eb;border-radius:10px;background:#fff;color:#443357;font:inherit;
+}
+.number-puzzle-controls .btn{min-height:36px!important;padding:6px 10px!important;font-size:.69rem!important}
+.number-puzzle-controls.guest{
+  align-items:center;padding:6px;border-radius:11px;background:#f5effa;font-size:.66rem;font-weight:800;
+}
+.number-puzzle-hint{margin:6px auto 0;max-width:560px;color:#7b7182;font-size:.59rem;line-height:1.5}
+
+@media(max-width:520px){
+  .number-puzzle-panel{padding:6px!important}
+  .number-puzzle-top h2{font-size:.92rem}
+  .number-puzzle-duo{gap:5px}
+  .number-puzzle-duo>div{min-height:47px;padding:5px 6px}
+  .number-puzzle-stats{gap:4px}
+  .number-puzzle-board{--np-size:min(92vw,390px);margin:5px auto}
+  .number-puzzle-tile{border-width:3px;border-radius:11px}
+}
+@media(min-width:700px){
+  .number-puzzle-board{--np-size:min(58vw,470px)}
+}
+@media(prefers-reduced-motion:reduce){
+  .number-puzzle-tile{transition:none}
+}

@@ -1,0 +1,17 @@
+/* M4.15 — Connect Four */
+.connect4-v1-overlay[hidden]{display:none!important}
+body.connect4-v1-active #screen{display:none!important}
+body.connect4-v1-active .shell{max-width:900px!important;padding:3px 5px 10px!important}
+body.connect4-v1-active .header{
+  position:sticky!important;top:max(4px,env(safe-area-inset-top))!important;z-index:190!important;
+  margin:0 0 5px!important;padding:4px 6px!important;min-height:42px!important;border-radius:14px!important;
+  background:rgba(255,255,255,.94)!important;backdrop-filter:blur(14px)!important;-webkit-backdrop-filter:blur(14px)!important;
+  box-shadow:0 7px 22px rgba(59,48,102,.14)!important
+}
+body.connect4-v1-active .brand{display:none!important}
+body.connect4-v1-active .connection{font-size:.61rem!important;padding:4px 6px!important}
+body.connect4-v1-active .sound-toggle{font-size:.6rem!important;min-height:34px!important;padding:4px 7px!important}
+body.connect4-v1-active .call-controls{margin-top:0!important}
+.connect4-v1-overlay{width:100%;margin:0 auto;padding:0 2px 14px}
+.connect4-v1-frame{display:block;width:100%;height:calc(100svh - 66px);min-height:690px;border:0;border-radius:14px;background:#e6f0ff;box-shadow:0 8px 24px rgba(73,64,130,.12)}
+@media(max-width:520px){body.connect4-v1-active .header{padding:4px!important}.connect4-v1-frame{height:calc(100svh - 62px);min-height:650px;border-radius:10px}}
