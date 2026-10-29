@@ -4,7 +4,7 @@ import { getDatabase, ref, onValue, runTransaction } from 'https://www.gstatic.c
 
 const screen=document.getElementById('screen');
 let db=null,auth=null,uid='',roomCode='',meta=null,shared=null,role='';
-let unsubMeta=null,unsubState=null,overlay=null,frame=null,observerBusy=false,startBusy=false;
+let unsubMeta=null,unsubState=null,overlay=null,frame=null,observerBusy=false,startBusy=false,repairBusy=false;
 const ROUNDS=10;
 const IM_KEYS=new Set(["cat","dog","lion","elephant","horse","cow","chicken","duck","rabbit","monkey","fish","bird","apple","banana","grapes","orange","carrot","bread","milk","egg","car","bus","plane","house","book","ball","clock","phone","key","bag","sun","moon","star","tree","rose","cloud"]);
 
@@ -43,8 +43,8 @@ function buildKeys(s,l,rounds){
   if(l==='mix'){const a=Math.round(rounds*.3),b=Math.round(rounds*.4);return[...take(L1,a),...take(L2,b),...take(L3,rounds-a-b)]}
   return take(BANK[Number(l)],rounds);
 }
-function freshPlayer(){return{index:0,stars:0,firstTry:0,tries:0,wrongs:[],done:false}}
-function freshMatch(roundId){return{v:2,roundId,seed:seed(),level:null,rounds:ROUNDS,phase:'playing',turnIndex:1,totalTurns:ROUNDS,players:{host:freshPlayer(),guest:freshPlayer()},winner:null,awarded:false,answered:{host:false,guest:false}}}
+function freshPlayer(){return{stars:0,correct:0}}
+function freshMatch(roundId){return{v:3,roundId,seed:seed(),level:null,rounds:ROUNDS,phase:'choose',turnIndex:1,totalTurns:ROUNDS,players:{host:freshPlayer(),guest:freshPlayer()},answered:false,answerBy:null,answerKey:null,correct:null,winner:null}}
 function cleanup(){try{unsubMeta?.()}catch{};try{unsubState?.()}catch{};unsubMeta=unsubState=null;meta=null;shared=null;role=''}
 function updateRole(){role=meta?.hostUid===uid?'host':meta?.guestUid===uid?'guest':''}
 async function mutate(transform){
@@ -62,55 +62,41 @@ async function startGame(){
 async function chooseLevel(level,roundId){
  if(role!=='host'||![1,2,3,'mix'].includes(level))return;
  await mutate(old=>{
-  const g=old.readingV1;if(old.game!=='reading-v1'||!g||g.level||Number(g.roundId)!==Number(roundId))return;
-  return{...old,readingV1:{...g,level,phase:'playing',players:{host:freshPlayer(),guest:freshPlayer()},winner:null,awarded:false}};
+ const g=old.readingV1;if(old.game!=='reading-v1'||!g||g.level||Number(g.roundId)!==Number(roundId))return;
+ return{...old,phase:'playing',readingV1:{...g,level,phase:'playing',turnIndex:1,players:{host:freshPlayer(),guest:freshPlayer()},answered:false,answerBy:null,answerKey:null,correct:null,winner:null}};
  });
 }
 async function answer(key,question,roundId){
  if(!IM_KEYS.has(key))return;
  await mutate(old=>{
-  const g=old.readingV1;if(old.game!=='reading-v1'||!g||!g.level||Number(g.roundId)!==Number(roundId))return;
-  const p={...(g.players?.[role]||freshPlayer())};if(p.done||Number(p.index)!==Number(question))return;
-  const keys=buildKeys(Number(g.seed)||1,g.level,Number(g.rounds)||ROUNDS),correct=keys[question];
-  if(!correct)return;
-  const wrongs=Array.isArray(p.wrongs)?[...p.wrongs]:[],tries=(Number(p.tries)||0)+1;
-  if(key!==correct){
-    if(!wrongs.includes(key))wrongs.push(key);
-    p.tries=tries;p.wrongs=wrongs;
-  }else{
-    const got=tries===1?3:tries===2?2:1;
-    p.stars=(Number(p.stars)||0)+got;if(tries===1)p.firstTry=(Number(p.firstTry)||0)+1;
-    p.index=Number(p.index)+1;p.tries=0;p.wrongs=[];p.done=p.index>=keys.length;
-  }
-  const players={...(g.players||{}),[role]:p};let awarded=Boolean(g.awarded),winner=g.winner||null,phase=old.phase,result=old.result||null;
-  const scores={...(old.scores||{host:0,guest:0})};
-  if(players.host?.done&&players.guest?.done&&!awarded){
-    const hs=Number(players.host.stars)||0,gs=Number(players.guest.stars)||0;
-    winner=hs===gs?'draw':hs>gs?'host':'guest';awarded=true;phase='finished';result=winner;
-    if(winner==='draw'){scores.host=(Number(scores.host)||0)+1;scores.guest=(Number(scores.guest)||0)+1}
-    else scores[winner]=(Number(scores[winner])||0)+3;
-  }
-  return{...old,scores,phase,result,readingV1:{...g,players,awarded,winner}};
+ const g=old.readingV1;if(old.game!=='reading-v1'||!g||!g.level||g.answered||Number(g.roundId)!==Number(roundId)||Number(g.turnIndex)!==Number(question)+1)return;
+ if(role!==(Number(g.turnIndex)%2===1?'host':'guest'))return;
+ const keys=buildKeys(Number(g.seed)||1,g.level,Number(g.rounds)||ROUNDS),correctKey=keys[Number(g.turnIndex)-1];if(!correctKey)return;
+ const correct=key===correctKey,players={...(g.players||{host:freshPlayer(),guest:freshPlayer()})},player={...(players[role]||freshPlayer())};
+ if(correct){player.stars=(Number(player.stars)||0)+3;player.correct=(Number(player.correct)||0)+1}
+ players[role]=player;
+ const scores={...(old.scores||{host:0,guest:0})};if(correct)scores[role]=(Number(scores[role])||0)+3;
+ return{...old,scores,readingV1:{...g,players,answered:true,answerBy:role,answerKey:key,correct}};
  });
 }
 async function newGame(roundId){
  if(role!=='host')return;
  await mutate(old=>{
-  const g=old.readingV1;if(old.game!=='reading-v1'||!g||Number(g.roundId)!==Number(roundId)||!g.players?.host?.done||!g.players?.guest?.done)return;
+  const g=old.readingV1;if(old.game!=='reading-v1'||!g||Number(g.roundId)!==Number(roundId)||old.phase!=='finished')return;
   const rr=(Number(old.round)||0)+1;return{...old,phase:'playing',round:rr,result:null,readingV1:freshMatch(rr)};
  });
 }
 async function nextQ(msg){
   if(role!=='host')return;
   await mutate(old=>{
-   const g=old.readingV1;if(old.game!=='reading-v1'||!g||!g.level)return;
+   const g=old.readingV1;if(old.game!=='reading-v1'||!g||!g.level||!g.answered||Number(g.roundId)!==Number(msg?.roundId)||Number(g.turnIndex)!==Number(msg?.turnIndex))return;
    const ti=(Number(msg?.turnIndex)||Number(g.turnIndex)||1);
-   if(ti!==Number(g.turnIndex))return;
    const nxt=ti+1;
    if(nxt>Number(g.totalTurns||ROUNDS)){
-     return{...old,phase:'finished',result:null,readingV1:{...g,turnIndex:nxt,winner:null,answered:{host:false,guest:false}}};
+     const hs=Number(g.players?.host?.stars)||0,gs=Number(g.players?.guest?.stars)||0,winner=hs===gs?'draw':hs>gs?'host':'guest';
+     return{...old,phase:'finished',result:winner,readingV1:{...g,phase:'finished',winner}};
    }
-   return{...old,phase:'playing',readingV1:{...g,turnIndex:nxt,answered:{host:false,guest:false}}};
+   return{...old,phase:'playing',readingV1:{...g,phase:'playing',turnIndex:nxt,answered:false,answerBy:null,answerKey:null,correct:null}};
   });
 }
 async function goCity(){if(role!=='host')return;await mutate(old=>old.game==='reading-v1'?{...old,game:'lobby',phase:'lobby'}:old)}
@@ -130,16 +116,17 @@ function ensureLobbyCard(){
 function ensureOverlay(){
  if(overlay)return overlay;
  overlay=document.createElement('section');overlay.id='reading-v1-overlay';overlay.className='reading-v1-overlay';overlay.hidden=true;
- overlay.innerHTML='<iframe class="reading-v1-frame" src="arabic-reading-game.html?v=1" title="اقرأ" loading="eager"></iframe>';
+  overlay.innerHTML='<iframe class="reading-v1-frame" src="arabic-reading-game.html?v=3" title="اقرأ" loading="eager"></iframe>';
  screen.insertAdjacentElement('afterend',overlay);frame=overlay.querySelector('iframe');frame.addEventListener('load',sendConfig);return overlay;
 }
 function sendConfig(){
  const g=shared?.readingV1;if(!frame?.contentWindow||shared?.game!=='reading-v1'||!g||!role)return;
- frame.contentWindow.postMessage({type:'roqaya-reading-config',config:{role,childName:childName(),roundId:Number(g.roundId)||Number(shared.round)||0,seed:Number(g.seed)||1,level:g.level??null,rounds:Number(g.rounds)||ROUNDS,phase:g.phase||'choose',players:g.players||{host:freshPlayer(),guest:freshPlayer()},winner:g.winner||null}},location.origin);
+ frame.contentWindow.postMessage({type:'roqaya-reading-config',config:{role,childName:childName(),roundId:Number(g.roundId)||Number(shared.round)||0,seed:Number(g.seed)||1,level:g.level??null,rounds:Number(g.rounds)||ROUNDS,turnIndex:Number(g.turnIndex)||1,totalTurns:Number(g.totalTurns)||ROUNDS,answered:Boolean(g.answered),answerBy:g.answerBy||null,answerKey:g.answerKey||null,correct:g.correct,phase:g.phase||'choose',players:g.players||{host:freshPlayer(),guest:freshPlayer()},winner:g.winner||null}},location.origin);
 }
 function activate(){ensureOverlay();document.body.classList.add('reading-v1-active');screen.setAttribute('aria-hidden','true');overlay.hidden=false;sendConfig()}
 function deactivate(){document.body.classList.remove('reading-v1-active');screen?.removeAttribute('aria-hidden');if(overlay)overlay.hidden=true}
-function syncUi(){if(shared?.game==='lobby'){deactivate();ensureLobbyCard();return}if(shared?.game==='reading-v1'&&shared?.readingV1&&role){activate();return}deactivate()}
+async function syncSchema(){if(repairBusy||role!=='host'||shared?.game!=='reading-v1'||shared?.readingV1?.v===3)return;repairBusy=true;try{await mutate(old=>old.game==='reading-v1'&&old.readingV1?.v!==3?{...old,phase:'playing',result:null,readingV1:freshMatch(Number(old.round)||1)}:old)}finally{repairBusy=false}}
+function syncUi(){if(shared?.game==='lobby'){deactivate();ensureLobbyCard();return}if(shared?.game==='reading-v1'&&shared?.readingV1&&role){if(shared.readingV1.v!==3){deactivate();syncSchema();return}activate();return}deactivate()}
 function bindRoom(){
  const next=currentRoom();if(next===roomCode&&unsubMeta&&unsubState)return;
  cleanup();roomCode=next;if(!db||!uid||!roomCode){syncUi();return}
@@ -152,6 +139,7 @@ addEventListener('message',e=>{
  if(d.type==='roqaya-reading-ready'){sendConfig();return}
  if(d.type==='roqaya-reading-level'){const lv=d.level==='mix'?'mix':Number(d.level);chooseLevel(lv,Number(d.roundId));return}
  if(d.type==='roqaya-reading-answer'){answer(String(d.key||''),Number(d.question),Number(d.roundId));return}
+ if(d.type==='roqaya-reading-next'){nextQ(d);return}
  if(d.type==='roqaya-reading-new'){newGame(Number(d.roundId));return}
  if(d.type==='roqaya-reading-city'){goCity();return}
 });

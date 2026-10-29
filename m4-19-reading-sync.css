@@ -15,4 +15,6 @@ body.reading-v1-active .sound-toggle{font-size:.6rem!important;min-height:34px!i
 body.reading-v1-active .call-controls{margin-top:0!important}
 .reading-v1-overlay{width:100%;margin:0 auto;padding:0 2px 12px}
 .reading-v1-frame{display:block;width:100%;height:calc(100svh - 64px);min-height:720px;border:0;border-radius:14px;background:#eaf4ff;box-shadow:0 8px 24px rgba(73,64,130,.12)}
+.reading-v1-active .reading-v1-frame{min-height:0}
 @media(max-width:520px){body.reading-v1-active .header{padding:4px!important}.reading-v1-frame{height:calc(100svh - 60px);min-height:690px;border-radius:10px}}
+body.reading-v1-active .reading-v1-frame{height:calc(100svh - 64px)!important;min-height:0!important}

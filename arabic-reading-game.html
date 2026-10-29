@@ -22,10 +22,12 @@ main{max-width:640px;margin:auto;padding:6px 8px 90px}
 .sent p{margin:0 0 9px;font-family:"Noto Naskh Arabic","Amiri",serif;font-weight:800;font-size:clamp(1.5rem,6.6vw,2.3rem);line-height:1.9}
 .say{font:inherit;font-weight:800;border:2px solid var(--line);background:#fff;border-radius:999px;padding:6px 13px;cursor:pointer;color:var(--blue);display:inline-flex;align-items:center;gap:6px;font-size:.72rem}.say img{width:18px;height:18px}
 .opts{display:grid;grid-template-columns:repeat(auto-fit,minmax(115px,1fr));gap:8px}
-.opt{background:#fff;border:3px solid var(--line);border-radius:17px;padding:9px 5px 7px;cursor:pointer;display:flex;flex-direction:column;align-items:center;font:inherit;color:inherit;min-height:126px;transition:transform .12s}
+.opt{position:relative;background:#fff;border:3px solid var(--line);border-radius:17px;padding:9px 5px 7px;cursor:pointer;display:flex;flex-direction:column;align-items:center;font:inherit;color:inherit;min-height:126px;transition:transform .12s}
 .opt:active:not(:disabled){transform:scale(.97)}.opt.ok{border-color:var(--ok);background:#e5f7ee}.opt.bad{border-color:var(--bad);background:#fdeaea}.opt:disabled{cursor:default}
+.opt.ok:after,.opt.bad:after{position:absolute;top:4px;inset-inline-end:5px;width:25px;height:25px;display:grid;place-items:center;border-radius:50%;background:#fff;font-weight:1000}.opt.ok:after{content:'✓';color:var(--ok)}.opt.bad:after{content:'✕';color:var(--bad)}
 .msg{text-align:center;font-weight:900;font-size:.9rem;min-height:1.8em;margin-top:10px}.msg.ok{color:var(--ok)}.msg.bad{color:var(--bad)}
 .wait{background:#fff;border-radius:16px;padding:18px;text-align:center;font-weight:800;line-height:1.7}
+.level-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px;margin-top:12px}.level-btn{min-height:82px;border:2px solid #cad9f2;border-radius:16px;background:#fff;color:#263c70;font:inherit;font-size:.95rem;font-weight:900;box-shadow:0 3px 0 #d5e1f3}.level-btn:active{transform:scale(.97)}
 .end{text-align:center;padding-top:14px}
 .end img.big{width:86px;height:86px}.end h2{font-size:1.3rem;margin:8px 0 4px}
 .footer-bar{position:fixed;bottom:0;left:50%;transform:translateX(-50%);z-index:60;width:100%;max-width:640px;display:flex;flex-wrap:nowrap;justify-content:center;align-items:center;gap:6px;padding:6px 8px max(8px,env(safe-area-inset-bottom));background:rgba(234,244,255,.98);border-top:1px solid rgba(47,107,255,.18)}
@@ -112,7 +114,7 @@ const SFX={ok:function(){[523,659,784,1047].forEach(function(f,i){tone(f,i*0.09,
 function speak(t){if(muted||!('speechSynthesis' in window))return;try{window.speechSynthesis.cancel();const u=new SpeechSynthesisUtterance(t);u.lang='ar-SA';u.rate=0.8;window.speechSynthesis.speak(u)}catch(e){}}
 
 let cfg={role:'guest',childName:'رقية',roundId:0,seed:1,level:null,rounds:10,players:{host:{},guest:{}},winner:null};
-let Q=[],turnIndex=1,totalTurns=10,answered=false,currentQKey=null;
+let Q=[],turnIndex=1,totalTurns=10,answered=false,currentQKey=null,pending=false,pendingTimer=0;
 
 function nameOf(r){return r==='host'?'بابا':(cfg.childName||'رقية')}
 function paintPlayers(){const h=cfg.players&&cfg.players.host?cfg.players.host:{},g=cfg.players&&cfg.players.guest?cfg.players.guest:{};$('#hostBox').classList.toggle('me',cfg.role==='host');$('#guestBox').classList.toggle('me',cfg.role==='guest');$('#hostBox b').textContent='بابا';$('#guestBox b').textContent=cfg.childName||'رقية';$('#hostBox span').textContent='⭐ '+ar(h.stars||0);$('#guestBox span').textContent='⭐ '+ar(g.stars||0);}
@@ -120,16 +122,18 @@ function turnOwner(){return ((turnIndex||1)%2===1?'host':'guest');}
 
 function show(){
   const i=Math.min(totalTurns,turnIndex)-1;
+  $('#city').disabled=cfg.role!=='host';
   if(cfg.winner){
     $('#turnbar').textContent='انتهت الجولة';
-    $('#game').innerHTML='<div class="end"><img class="big" src="'+IMG('1f3c6')+'" alt=""><h2>انتهت اللعبة</h2></div>';
+    const winner=cfg.winner==='draw'?'تعادل جميل!':`الفائز ${nameOf(cfg.winner)}!`;
+    $('#game').innerHTML='<div class="end"><img class="big" src="'+IMG('1f3c6')+'" alt=""><h2>'+winner+'</h2><p>بابا ⭐ '+ar(cfg.players?.host?.stars||0)+' — '+nameOf('guest')+' ⭐ '+ar(cfg.players?.guest?.stars||0)+'</p></div>';
     $('#next').disabled=true;
     $('#new').style.display=cfg.role==='host'?'inline-block':'none';
     return;
   }
   if(!cfg.level){
-    $('#turnbar').textContent='بانتظار اختيار المستوى';
-    $('#game').innerHTML='<div class="wait">يجب اختيار المستوى من شاشة المدينة أولاً</div>';
+    $('#turnbar').textContent=cfg.role==='host'?'اختاروا مستوى القراءة':'في انتظار بابا يختار المستوى';
+    $('#game').innerHTML=cfg.role==='host'?'<div class="wait">اختار مستوى الجولة</div><div class="level-grid"><button class="level-btn" data-level="1">١ • كلمات وصور</button><button class="level-btn" data-level="2">٢ • جمل قصيرة</button><button class="level-btn" data-level="3">٣ • أوصاف</button><button class="level-btn" data-level="mix">🎲 متنوع</button></div>':'<div class="wait">بابا هيختار مستوى القراءة، وبعدها هنشوف السؤال نفسه سوا 💜</div>';
     $('#next').disabled=true;
     $('#new').style.display='none';
     return;
@@ -142,50 +146,35 @@ function show(){
     return;
   }
   const q=Q[i];
-  if(currentQKey!==q.key){answered=false;currentQKey=q.key;}
+  if(currentQKey!==q.key){currentQKey=q.key;pending=false;}
   const opts=options(q,cfg.seed,i);
   const myTurn=turnOwner()===cfg.role;
-  const lock=answered||!myTurn;
+  const lock=cfg.answered||pending||!myTurn;
   $('#turnbar').textContent='السؤال '+ar(turnIndex)+' / '+ar(totalTurns)+' — دور '+nameOf(turnOwner())+(myTurn?' (أنت)':'');
   let optsHtml='';
   for(let j=0;j<opts.length;j++){
     const k=opts[j];
-    optsHtml+='<button class="opt" data-k="'+k+'" '+(lock?'disabled':'')+'><img src="'+IMG(IM[k][0])+'" alt=""><span class="cap">'+(answered?IM[k][1]:'')+'</span></button>';
+    const chosen=cfg.answered&&k===cfg.answerKey,good=cfg.answered&&k===q.key,bad=chosen&&cfg.correct===false;
+    optsHtml+='<button class="opt '+(good?'ok':'')+' '+(bad?'bad':'')+'" data-k="'+k+'" '+(lock?'disabled':'')+'><img src="'+IMG(IM[k][0])+'" alt=""><span class="cap">'+(cfg.answered?IM[k][1]:'')+'</span></button>';
   }
-  $('#game').innerHTML='<div class="top"><div class="dots">'+Q.map(function(_,j){return '<i class="'+(j<i?'done':j===i?'cur':'')+'"></i>'}).join('')+'</div><button class="ibtn" data-act="mute"><img src="'+IMG(muted?'1f507':'1f50a')+'" alt=""></button></div><div class="sent"><p>'+q.text+'</p>'+(('speechSynthesis' in window)?'<button class="say" data-act="say"><img src="'+IMG('1f50a')+'" alt="">اِسْتَمِعْ</button>':'')+'</div><div class="opts">'+optsHtml+'</div><div class="msg" id="msg">'+(answered?(myTurn?'تمت الإجابة':'تمت الإجابة'):lock?'انتظر دورك':'اختر الإجابة الصحيحة')+'</div>';
-  if(answered){
-    const okb=Array.from(document.querySelectorAll('.opt')).find(function(x){return x.getAttribute('data-k')===q.key});
-    if(okb){okb.classList.add('ok');var cap=okb.querySelector('.cap');if(cap)cap.textContent=IM[q.key][1];}
-    Array.from(document.querySelectorAll('.opt')).forEach(function(o){o.disabled=true;});
-  }
-  $('#next').disabled=cfg.role!=='host'||!answered;
+  const status=cfg.answered?(cfg.correct?'إجابة صحيحة! ⭐':'إجابة غير صحيحة، نتعلم معًا 💜'):pending?'جارٍ تسجيل الإجابة…':myTurn?'اختار الإجابة الصحيحة':'انتظر دور '+nameOf(turnOwner());
+  const statusClass=cfg.answered?(cfg.correct?'ok':'bad'):'';
+  $('#game').innerHTML='<div class="top"><div class="dots">'+Q.map(function(_,j){return '<i class="'+(j<i?'done':j===i?'cur':'')+'"></i>'}).join('')+'</div><button class="ibtn" data-act="mute"><img src="'+IMG(muted?'1f507':'1f50a')+'" alt=""></button></div><div class="sent"><p>'+q.text+'</p>'+(('speechSynthesis' in window)?'<button class="say" data-act="say"><img src="'+IMG('1f50a')+'" alt="">اِسْتَمِعْ</button>':'')+'</div><div class="opts">'+optsHtml+'</div><div class="msg '+statusClass+'" id="msg">'+status+'</div>';
+  $('#next').disabled=cfg.role!=='host'||!cfg.answered;
+  $('#city').disabled=cfg.role!=='host';
   $('#new').style.display='none';
 }
 
 function choose(b){
-  if(answered||turnOwner()!==cfg.role)return;
+  if(cfg.answered||pending||turnOwner()!==cfg.role)return;
   const i=Math.min(totalTurns,turnIndex)-1,q=Q[i];if(!q)return;
   const k=b.getAttribute('data-k');
-  if(k===q.key){
-    Array.from(document.querySelectorAll('.opt')).forEach(function(o){o.disabled=true;});
-    b.classList.add('ok');
-    var c=b.querySelector('.cap'); if(c)c.textContent=IM[q.key][1];
-    var m1=$('#msg'); if(m1){m1.className='msg ok';m1.textContent='إجابة صحيحة ✓';}
-    SFX.ok(); setTimeout(function(){speak(q.text);},200);
-    answered=true;
-    try{parent.postMessage({type:'roqaya-reading-answer',key:k,question:i,roundId:cfg.roundId,correct:true},location.origin);}catch(e){}
-    $('#next').disabled=cfg.role!=='host';
-  }else{
-    b.classList.add('bad');
-    b.classList.add('shake');
-    SFX.no();
-    setTimeout(function(){b.classList.remove('shake');},350);
-    var m2=$('#msg'); if(m2){m2.className='msg bad';m2.textContent='إجابة خاطئة ✗';}
-    try{parent.postMessage({type:'roqaya-reading-answer',key:k,question:i,roundId:cfg.roundId,correct:false},location.origin);}catch(e){}
-  }
+  pending=true;show();clearTimeout(pendingTimer);pendingTimer=setTimeout(function(){pending=false;show();},5000);
+  try{parent.postMessage({type:'roqaya-reading-answer',key:k,question:i,roundId:cfg.roundId},location.origin)}catch(e){pending=false;show()}
 }
 
 $('#game').onclick=function(e){
+  var lv=e.target.closest('.level-btn');if(lv&&cfg.role==='host'){parent.postMessage({type:'roqaya-reading-level',level:lv.dataset.level,roundId:cfg.roundId},location.origin);return;}
   var o=e.target.closest('.opt'); if(o){choose(o);return;}
   var actEl=e.target.closest('[data-act]'); if(!actEl)return;
   var act=actEl.getAttribute('data-act');
@@ -193,16 +182,18 @@ $('#game').onclick=function(e){
   if(act==='mute'){muted=!muted; if(muted&&'speechSynthesis' in window){try{window.speechSynthesis.cancel();}catch(ex){}} show();}
 };
 
-$('#next').onclick=function(){if(cfg.role!=='host')return; answered=false; currentQKey=null; try{parent.postMessage({type:'roqaya-reading-next',roundId:cfg.roundId,turnIndex:Number(turnIndex)||1},location.origin);}catch(e){}};
-$('#new').onclick=function(){if(cfg.role!=='host')return; answered=false; currentQKey=null; try{parent.postMessage({type:'roqaya-reading-new',roundId:cfg.roundId},location.origin);}catch(e){}};
+$('#next').onclick=function(){if(cfg.role!=='host'||!cfg.answered)return;pending=false;clearTimeout(pendingTimer);currentQKey=null;try{parent.postMessage({type:'roqaya-reading-next',roundId:cfg.roundId,turnIndex:Number(turnIndex)||1},location.origin)}catch(e){}};
+$('#new').onclick=function(){if(cfg.role!=='host'||cfg.phase!=='finished')return;pending=false;clearTimeout(pendingTimer);currentQKey=null;try{parent.postMessage({type:'roqaya-reading-new',roundId:cfg.roundId},location.origin)}catch(e){}};
 $('#city').onclick=function(){if(cfg.role==='host'){try{parent.postMessage({type:'roqaya-reading-city'},location.origin);}catch(e){}}};
 
 function applyConfig(n){
+  const newlyAnswered=Boolean(n.answered)&&!Boolean(cfg.answered);
   cfg=Object.assign({},cfg,n);
   if(n.turnIndex!==undefined) turnIndex=Number(n.turnIndex)||1;
   if(n.totalTurns!==undefined) totalTurns=Number(n.totalTurns)||10;
   if(n.level){ cfg.level=n.level; Q=buildQuestions(cfg.seed,cfg.level,cfg.rounds||10); }
-  if(typeof n._answered==='boolean') answered=n._answered;
+  if(typeof n.answered==='boolean'){answered=n.answered;pending=false;clearTimeout(pendingTimer);}
+  if(newlyAnswered){if(n.correct){SFX.ok();const q=Q[Math.min(totalTurns,turnIndex)-1];if(q)setTimeout(()=>speak(q.text),200)}else SFX.no();}
   paintPlayers(); show();
 }
 

@@ -79,7 +79,7 @@ function ensureOverlay(){
   overlay.id='memory-v1-overlay';
   overlay.className='memory-v1-overlay';
   overlay.hidden=true;
-  overlay.innerHTML='<iframe class="memory-v1-frame" src="memory-game.html?v=4" title="لعبة الذاكرة" loading="eager"></iframe>';
+  overlay.innerHTML='<iframe class="memory-v1-frame" src="memory-game.html?v=5" title="لعبة الذاكرة" loading="eager"></iframe>';
   const header=document.querySelector('.header');header?.insertBefore(playerStatus,header.firstChild);header?.insertAdjacentElement('afterend',overlay);
   frame=overlay.querySelector('iframe');
   frame.addEventListener('load',sendConfig);
