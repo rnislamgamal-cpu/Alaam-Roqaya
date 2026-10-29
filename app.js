@@ -578,6 +578,31 @@ function sound(type='tap') {
     }
   } catch (_) { /* Sound is optional on browsers that block audio. */ }
 }
+const APP_AUDIO_FILES={worldWelcome:'assets/world-welcome.ogg',gameStart:'assets/game-start.ogg',gameExit:'assets/game-exit.ogg'};
+const appAudioBuffers=new Map(),lastAppAudioKeys=new Map();
+function playAppAudio(kind,key,delayMs=0){
+  if(!soundEnabled||!APP_AUDIO_FILES[kind]||(key&&lastAppAudioKeys.get(kind)===key))return false;
+  if(key)lastAppAudioKeys.set(kind,key);
+  try{
+    const Audio=window.AudioContext||window.webkitAudioContext;if(!Audio)return false;
+    audioContext||=new Audio();const context=audioContext;
+    if(context.state==='suspended')context.resume().catch(()=>{});
+    let bufferPromise=appAudioBuffers.get(kind);
+    if(!bufferPromise){
+      bufferPromise=fetch(new URL(APP_AUDIO_FILES[kind],document.baseURI),{cache:'force-cache'})
+        .then(response=>{if(!response.ok)throw new Error(`Audio ${response.status}`);return response.arrayBuffer();})
+        .then(bytes=>context.decodeAudioData(bytes));
+      appAudioBuffers.set(kind,bufferPromise);
+      bufferPromise.catch(()=>{if(appAudioBuffers.get(kind)===bufferPromise)appAudioBuffers.delete(kind);});
+    }
+    bufferPromise.then(buffer=>{
+      if(!soundEnabled||audioContext!==context)return;
+      const source=context.createBufferSource();source.buffer=buffer;source.connect(context.destination);
+      source.start(context.currentTime+Math.max(0,delayMs)/1000);
+    }).catch(()=>{});
+    return true;
+  }catch(_){return false;}
+}
 // Native Arabic speech runs on-device when supported; never sends a child name to analytics.
 const VOICE_GAME_NAMES={draw:'الرَّسْمَ وَالتَّخْمِينَ',memory:'كُرُوتَ الذَّاكِرَةِ',ttt:'إِكْس أَوْ',odd:'اخْتِيَارَ الصُّورَةِ الْمُخْتَلِفَةِ',count:'عَدَّ الصُّوَرِ',pattern:'إِكْمَالَ النَّمَطِ',animals:'بُيُوتَ الْحَيَوَانَاتِ',colors:'الأَلْوَانَ وَالأَشْكَالَ',math:'الْحِسَابَ',treasure:'رِحْلَةَ الْكَنْزِ',read:'الْقِرَاءَةَ',english:'الْعَرَبِيَّةَ وَالْإِنْجِلِيزِيَّةَ',compare:'تَرْتِيبَ وَمُقَارَنَةَ الأَرْقَامِ',numberline:'الرَّقْمَ النَّاقِصَ',snakes:'السُّلَّمَ وَالثُّعْبَانَ',coloring:'التَّلْوِينَ',jigsaw:'تَرْكِيبَ الصُّوَرِ',sorting:'فَرْزَ الأَلْوَانِ وَالأَشْكَالِ',phonics:'مُطَابَقَةَ الْحُرُوفِ وَالصُّوَرِ'};
 let lastWelcomeKey='';
@@ -647,8 +672,17 @@ function chooseArabicVoice(){
       ||ar.find(v=>v.localService)||ar[0]||null;
 }
 function maybeWelcomeOnSync(before,after){
-  if(!before || !after || after.game==='lobby' || after.phase!=='playing')return;
-  // A new question in the same game must not repeat the introduction.
+  if(!before||!after)return;
+  if(before.game!=='world-gate'&&after.game==='world-gate')
+    playAppAudio('worldWelcome',`${roomCode}:world:${Date.now()}`);
+  if(after.game==='lobby'&&before.game!=='lobby'&&!HUB_GAMES.has(before.game))
+    playAppAudio('gameExit',`${roomCode}:exit:${before.game}:${before.round}:${Date.now()}`,120);
+  if(after.game==='lobby'||after.phase!=='playing')return;
+  const newRound=before.game!==after.game||Number(before.round)!==Number(after.round);
+  if(newRound){
+    playAppAudio('gameStart',`${roomCode}:start:${after.game}:${after.round}`,before.game!==after.game?420:0);
+  }
+  // A new question in the same game must not repeat the game melody.
   if(before.game!==after.game)
     playGameJingle(after.game,`${roomCode}:${after.round}`);
 }
