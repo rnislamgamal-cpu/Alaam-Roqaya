@@ -5,7 +5,7 @@ import { getDatabase, ref, onValue, onChildAdded, onChildRemoved, push, remove, 
 const screen=document.getElementById('screen');
 let db=null,auth=null,uid='',roomCode='',meta=null,shared=null,role='';
 let unsubMeta=null,unsubState=null,unsubPresence=null,unsubStrokeAdd=null,unsubStrokeRemove=null,overlay=null,frame=null,initBusy=false,observerBusy=false;
-let presence={},strokeLines=new Map(),strokeKeysByLocalId=new Map(),gameHeader=null,globalScoreRow=null;
+let presence={},strokeLines=new Map(),strokeKeysByLocalId=new Map(),gameHeader=null;
 
 const WORDS=[
  ['شجرة','🌳'],['بيت','🏠'],['شمس','☀️'],['قمر','🌙'],['سمكة','🐟'],['قطة','🐱'],['كلب','🐶'],['عربية','🚗'],['طيارة','✈️'],['مركب','⛵'],
@@ -66,12 +66,9 @@ function ensureOverlay(){
  gameHeader=document.createElement('div');gameHeader.id='draw-player-status';gameHeader.className='draw-player-status';gameHeader.hidden=true;
  gameHeader.setAttribute('aria-label','حالة اللاعبين');
  gameHeader.innerHTML='<span class="draw-player" data-player="host">👨 بابا <i aria-hidden="true"></i></span><span class="draw-player" data-player="guest">👧 رقية <i aria-hidden="true"></i></span>';
- globalScoreRow=document.createElement('div');globalScoreRow.id='draw-global-score';globalScoreRow.className='draw-global-score';globalScoreRow.hidden=true;
- globalScoreRow.setAttribute('aria-label','مجموع النقاط العامة');
- globalScoreRow.innerHTML='<strong>مجموع عالم رقية</strong><span data-score="host">👨 بابا ⭐ ٠</span><span data-score="guest">👧 رقية ⭐ ٠</span>';
  overlay=document.createElement('section');overlay.id='draw-v2-overlay';overlay.className='draw-v2-overlay';overlay.hidden=true;
- overlay.innerHTML='<iframe class="draw-v2-frame" src="draw-game.html?v=2" title="ارسم وخمّن" loading="eager"></iframe>';
- const header=document.querySelector('.header');header?.insertBefore(gameHeader,header.firstChild);header?.insertAdjacentElement('afterend',globalScoreRow);globalScoreRow.insertAdjacentElement('afterend',overlay);frame=overlay.querySelector('iframe');
+ overlay.innerHTML='<iframe class="draw-v2-frame" src="draw-game.html?v=3" title="ارسم وخمّن" loading="eager"></iframe>';
+ const header=document.querySelector('.header');header?.insertBefore(gameHeader,header.firstChild);header?.insertAdjacentElement('afterend',overlay);frame=overlay.querySelector('iframe');
  frame.addEventListener('load',()=>{sendConfig();sendAllLines()});return overlay;
 }
 function wordObj(i){const w=WORDS[Number(i)];return w?{name:w[0],emoji:w[1]}:null}
@@ -80,7 +77,7 @@ function sendConfig(){
  const answer=g.drawer===role||['result','end'].includes(g.phase)?wordObj(g.answer):null;
  frame.contentWindow.postMessage({type:'roqaya-draw-config',config:{
   role,childName:childName(),phase:g.phase||'draw',roundNo:Number(g.roundNo)||1,total:Number(g.total)||6,drawer:g.drawer||'host',
-  scores:g.scores||{host:0,guest:0},answer,options:(g.options||[]).map(wordObj).filter(Boolean),guesses:g.guesses||[],
+  scores:g.scores||{host:0,guest:0},worldScores:shared.scores||{host:0,guest:0},answer,options:(g.options||[]).map(wordObj).filter(Boolean),guesses:g.guesses||[],
   lastPoints:Number(g.lastPoints)||0,result:g.result||null,winner:g.winner||null,roundId:Number(g.roundId)||Number(shared.round)||0,
   correctOption:(g.options||[]).indexOf(Number(g.answer))
  }},location.origin);
@@ -88,16 +85,15 @@ function sendConfig(){
 function sendAllLines(){if(frame?.contentWindow)frame.contentWindow.postMessage({type:'roqaya-draw-lines',lines:[...strokeLines.entries()].map(([key,line])=>({key,...line}))},location.origin)}
 function arabic(n){return String(n).replace(/[0-9]/g,d=>'٠١٢٣٤٥٦٧٨٩'[Number(d)])}
 function renderGameHeader(){
- if(!gameHeader||!globalScoreRow)return;
- const active=shared?.game==='draw'&&Boolean(role);gameHeader.hidden=!active;globalScoreRow.hidden=!active;if(!active)return;
+ if(!gameHeader)return;
+ const active=shared?.game==='draw'&&Boolean(role);gameHeader.hidden=!active;if(!active)return;
  for(const player of ['host','guest']){
   const name=player==='host'?'بابا':childName(),uidForPlayer=meta?.[player==='host'?'hostUid':'guestUid'],online=Boolean(uidForPlayer&&presence[uidForPlayer]);
   const status=gameHeader.querySelector(`[data-player="${player}"]`);if(status){status.querySelector('i').classList.toggle('online',online);status.querySelector('i').classList.toggle('offline',!online);status.setAttribute('aria-label',`${name}: ${online?'متصل':'غير متصل'}`);status.firstChild.textContent=`${player==='host'?'👨':'👧'} ${name} `;}
-  const score=globalScoreRow.querySelector(`[data-score="${player}"]`);if(score)score.textContent=`${player==='host'?'👨':'👧'} ${name} ⭐ ${arabic(Number(shared?.scores?.[player])||0)}`;
  }
 }
-function activate(){ensureOverlay();document.body.classList.add('draw-v2-active');screen.setAttribute('aria-hidden','true');overlay.hidden=false;gameHeader.hidden=false;globalScoreRow.hidden=false;renderGameHeader();sendConfig()}
-function deactivate(){document.body.classList.remove('draw-v2-active');screen?.removeAttribute('aria-hidden');if(overlay)overlay.hidden=true;if(gameHeader)gameHeader.hidden=true;if(globalScoreRow)globalScoreRow.hidden=true}
+function activate(){ensureOverlay();document.body.classList.add('draw-v2-active');screen.setAttribute('aria-hidden','true');overlay.hidden=false;gameHeader.hidden=false;renderGameHeader();sendConfig()}
+function deactivate(){document.body.classList.remove('draw-v2-active');screen?.removeAttribute('aria-hidden');if(overlay)overlay.hidden=true;if(gameHeader)gameHeader.hidden=true}
 function syncUi(){cardUpgrade();if(shared?.game==='draw'){ensureOverlay();renderGameHeader();if(role==='host'&&!shared?.drawV2)ensureSync();if(shared?.drawV2&&role)activate()}else deactivate()}
 
 function encodeStyle(x,c,s){

@@ -11,10 +11,12 @@ body{min-height:100%;display:flex;flex-direction:column;align-items:center;gap:6
 header{width:min(100%,760px);display:flex;align-items:center;justify-content:flex-start;gap:8px}
 .hd{display:flex;align-items:center;gap:5px;font-weight:800}
 .ib{width:38px;height:38px;padding:0;border:0;border-radius:50%;background:#fff;font-size:1rem;cursor:pointer;box-shadow:0 3px 0 #c9d6ef}
-#roundControls{display:none;width:min(100%,760px);grid-template-columns:1fr auto;gap:6px}
-#roundControls label{display:flex;align-items:center;justify-content:center;gap:7px;background:#fff;border-radius:11px;padding:6px 8px;font-size:.7rem;font-weight:800}
-#roundControls select{font:inherit;border:0;border-radius:8px;padding:4px 7px;background:#e0e7ff;color:var(--ink)}
-#newGame{display:block;background:#2f6fb1}
+#worldRow{width:min(100%,760px);min-height:38px;display:flex;align-items:center;justify-content:center;gap:clamp(4px,1.5vw,14px);flex-wrap:nowrap;padding:4px 7px;border-radius:12px;background:#fff;box-shadow:0 2px 8px #493b7b12;font-size:clamp(.59rem,2.1vw,.78rem);font-weight:850;white-space:nowrap}
+#worldRow strong{color:#735ec1}#worldRow .world-score{color:#493b7b}
+#worldRow label{display:none;align-items:center;gap:4px;color:#514478}
+[data-host=yes] #worldRow label{display:flex}
+#rounds{font:inherit;border:0;border-radius:8px;padding:4px 5px;background:#e0e7ff;color:var(--ink);font-weight:900}
+#newGame{display:block;background:#e5f0ff;color:#294f82}
 #score{width:min(100%,760px);display:grid;grid-template-columns:1fr 1fr;gap:7px}
 .pc{display:flex;flex-direction:column;align-items:center;padding:5px 7px;border:3px solid var(--c);border-radius:14px;background:#fff;line-height:1.2}
 .pc b{color:var(--c);font-size:.76rem}.pc span{font-size:1rem;font-weight:900}.pc small{font-weight:800;font-size:.66rem;min-height:1.2em}
@@ -22,8 +24,8 @@ header{width:min(100%,760px);display:flex;align-items:center;justify-content:fle
 #status{margin:0;min-height:1.45em;font-weight:900;text-align:center;font-size:.85rem}
 #word{display:none;width:min(100%,560px);padding:7px 10px;border-radius:13px;background:#fff8cf;text-align:center;font-weight:900}
 #word.show{display:block}
-#paper{width:min(100%,760px);padding:5px;border-radius:16px;background:#fff;border:3px solid var(--acc);box-shadow:0 4px 0 #c4b5f5;flex:0 1 auto;min-height:0}
-canvas{display:block;border-radius:12px;touch-action:none;cursor:crosshair;background:#fffef7}
+#paper{width:min(100%,760px);padding:5px;border-radius:16px;background:#fff;border:3px solid var(--acc);box-shadow:0 4px 0 #c4b5f5;flex:0 1 auto;min-height:0;overflow:hidden}
+canvas{display:block;width:100%!important;height:auto!important;aspect-ratio:1.47;border-radius:10px;touch-action:none;cursor:crosshair;background:#fffef7}
 #tools{display:none;flex-wrap:wrap;gap:6px;justify-content:center;width:min(100%,760px)}
 .sw{width:34px;height:34px;padding:0;border:3px solid #fff;border-radius:50%;background:var(--c);box-shadow:0 0 0 2px #cbd5e1;font-size:.9rem;cursor:pointer}
 .sw.on,.sz.on{box-shadow:0 0 0 4px var(--acc)}
@@ -42,10 +44,11 @@ canvas{display:block;border-radius:12px;touch-action:none;cursor:crosshair;backg
 .celebrate.show{display:grid;animation:fadeAway 2.4s ease forwards}.celebrate span{font-size:clamp(5rem,27vw,10rem);filter:drop-shadow(0 8px 8px #392d6040);animation:dance .55s ease-in-out infinite alternate}
 @keyframes dance{to{transform:rotate(12deg) scale(1.12) translateY(-8px)}}@keyframes fadeAway{0%,75%{opacity:1}100%{opacity:0}}
 .tip{margin:0;color:#5b5a86;font-size:.69rem;text-align:center;max-width:560px;line-height:1.5}
-[data-host=yes] #roundControls{display:grid}[data-ph=draw] #tools{display:flex}[data-ph=draw] #done{display:block}
+[data-ph=draw] #tools{display:flex}[data-ph=draw] #done{display:block}
+[data-host=no] #newGame{display:none!important}
 [data-ph=guess] #opts,[data-ph=result] #opts{display:grid}[data-ph=guess] #fb,[data-ph=result] #fb{display:block}[data-ph=end] #final{display:block}
-@media(max-height:720px){body{gap:4px;padding-top:3px}#paper{width:min(100%,calc((100svh - 300px)*1.28));padding:3px}.pc{padding:3px 5px}.pc small{min-height:1em}#status{min-height:1.2em}}
-@media(max-width:430px){body{gap:5px;padding-inline:4px}.ib{width:34px;height:34px}.pc{padding:4px 5px}.pc b{font-size:.66rem}.pc span{font-size:.86rem}.pc small{font-size:.57rem}#status{font-size:.74rem}.sw{width:30px;height:30px}.sz{width:34px;height:34px}.tb{height:34px;padding:0 8px;font-size:.64rem}.big{padding:9px 14px;font-size:.8rem}.opt{font-size:.78rem}.opt span{font-size:1.75rem}}
+@media(max-height:720px){body{gap:4px;padding-top:3px}#paper{width:min(100%,calc((100svh - 300px)*1.38));padding:3px}.pc{padding:3px 5px}.pc small{min-height:1em}#status{min-height:1.2em}}
+@media(max-width:430px){body{gap:5px;padding-inline:4px}#worldRow{gap:4px;padding-inline:4px;font-size:clamp(.55rem,2vw,.68rem)}.ib{width:34px;height:34px}.pc{padding:4px 5px}.pc b{font-size:.66rem}.pc span{font-size:.86rem}.pc small{font-size:.57rem}#status{font-size:.74rem}.sw{width:30px;height:30px}.sz{width:34px;height:34px}.tb{height:34px;padding:0 8px;font-size:.64rem}.big{padding:9px 14px;font-size:.8rem}.opt{font-size:.78rem}.opt span{font-size:1.75rem}}
 </style>
 <link rel="stylesheet" href="game-shell.css?v=1">
 <style>
@@ -59,11 +62,11 @@ body.draw-game .tip{display:none!important}
 </style>
 </head>
 <body class="draw-game">
-<header><div class="hd"><span id="rnd"></span><button id="snd" class="ib" aria-label="الصوت">🔊</button></div></header>
+<header><div class="hd"><button id="snd" class="ib" aria-label="الصوت">🔊</button></div></header>
+<div id="worldRow"><strong>مجموع عالم رقية</strong><span class="world-score" id="worldHost">👨 بابا ⭐ ٠</span><span class="world-score" id="worldGuest">👧 رقية ⭐ ٠</span><span id="rnd">الجولة ١/٦</span><label>الجولات<select id="rounds"><option value="4">٤</option><option value="6" selected>٦</option><option value="8">٨</option><option value="10">١٠</option></select></label></div>
 <div id="score"><div id="hostPc" class="pc" style="--c:var(--p1)"><b>بابا</b><span>⭐ ٠</span><small></small></div><div id="guestPc" class="pc" style="--c:var(--p2)"><b>رقية</b><span>⭐ ٠</span><small></small></div></div>
-<div id="roundControls"><label>عدد الجولات <select id="rounds"><option value="4">٤</option><option value="6" selected>٦</option><option value="8">٨</option><option value="10">١٠</option></select></label><button id="newGame" class="tb">🔄 لعبة جديدة</button></div>
 <p id="status" aria-live="polite">جاري تجهيز اللعبة…</p><div id="word"></div>
-<div id="paper"><canvas id="cv"></canvas></div><div id="tools"></div><div id="opts"></div><p id="fb" aria-live="polite"></p><div class="game-actions"><button id="done" class="big">خلصت الرسم ✓</button><button id="next" class="big">الجولة اللي بعدها ◀</button><button id="city" class="tb">🎡 المدينة</button></div><div id="final"></div><div id="celebrate" class="celebrate" aria-hidden="true"><span>🐵</span></div>
+<div id="paper"><canvas id="cv"></canvas></div><div id="tools"></div><div id="opts"></div><p id="fb" aria-live="polite"></p><div class="game-actions"><button id="done" class="big">خلصت الرسم ✓</button><button id="next" class="big">الجولة اللي بعدها ◀</button><button id="newGame" class="tb">🔄 لعبة جديدة</button><button id="city" class="tb">🎡 المدينة</button></div><div id="final"></div><div id="celebrate" class="celebrate" aria-hidden="true"><span>🐵</span></div>
 <p class="tip">الإجابة من أول محاولة = ٢ ⭐ • من المحاولة الثانية أو الثالثة = ١ ⭐</p>
 <script>
 const $=s=>document.querySelector(s),cv=$('#cv'),ctx=cv.getContext('2d');
@@ -77,7 +80,7 @@ $('#snd').onclick=()=>{sound=!sound;$('#snd').textContent=sound?'🔊':'🔇'};
 const sig=l=>[l.x1,l.y1,l.x2,l.y2,l.c,l.s].map(v=>Number(v).toFixed(4)).join('|');
 function seg(l){ctx.strokeStyle=PAL[l.c]||PAL[0];ctx.lineWidth=(SIZES[l.s]||SIZES[1])*W/520;ctx.lineCap=ctx.lineJoin='round';ctx.beginPath();ctx.moveTo(l.x1*W,l.y1*H);ctx.lineTo(l.x2*W,l.y2*H);ctx.stroke()}
 function redraw(){ctx.fillStyle='#fffef7';ctx.fillRect(0,0,W,H);for(const l of lines.values())seg(l)}
-function fit(){W=Math.max(220,Math.min(innerWidth-20,760));H=Math.round(W*.68);cv.style.width=W+'px';cv.style.height=H+'px';cv.width=Math.round(W*dpr);cv.height=Math.round(H*dpr);ctx.setTransform(dpr,0,0,dpr,0,0);redraw()}
+function fit(){const paper=$('#paper'),cs=getComputedStyle(paper),pad=parseFloat(cs.paddingLeft)+parseFloat(cs.paddingRight);W=Math.max(220,Math.min(paper.clientWidth-pad,760));H=Math.round(W/1.47);cv.width=Math.round(W*dpr);cv.height=Math.round(H*dpr);ctx.setTransform(dpr,0,0,dpr,0,0);redraw()}
 const pt=e=>{const r=cv.getBoundingClientRect();return{x:Math.max(0,Math.min(1,(e.clientX-r.left)/r.width)),y:Math.max(0,Math.min(1,(e.clientY-r.top)/r.height))}};
 function sendLine(q){pending.set(sig(q),(pending.get(sig(q))||0)+1);seg(q);parent.postMessage({type:'roqaya-draw-segment',line:q,roundId:cfg.roundId},location.origin)}
 cv.onpointerdown=e=>{if(!canDraw())return;e.preventDefault();cv.setPointerCapture?.(e.pointerId);const p=pt(e),id=`${Date.now().toString(36)}-${++seq}`;cur={id,last:p};stack.push(id);sendLine({x1:p.x,y1:p.y,x2:Math.min(1,p.x+.001),y2:p.y,c:ci,s:si,strokeId:id})};
@@ -86,7 +89,8 @@ const stop=e=>{if(!cur)return;if(e?.type==='pointerup'&&canDraw()){const p=pt(e)
 $('#tools').innerHTML=PAL.map((c,i)=>`<button class="sw${i?'':' on'}" style="--c:${c}" data-c="${i}">${i===PAL.length-1?'🧽':''}</button>`).join('')+SIZES.map((s,i)=>`<button class="sz${i===1?' on':''}" data-s="${i}"><i style="width:${s+4}px;height:${s+4}px"></i></button>`).join('')+'<button class="tb" id="undo">↩️ تراجع</button><button class="tb" id="clr">🗑️ امسح</button>';
 $('#tools').onclick=e=>{const b=e.target.closest('button');if(!b||!canDraw())return;if(b.dataset.c!==undefined){ci=+b.dataset.c;document.querySelectorAll('.sw').forEach(x=>x.classList.toggle('on',x===b))}else if(b.dataset.s!==undefined){si=+b.dataset.s;document.querySelectorAll('.sz').forEach(x=>x.classList.toggle('on',x===b))}else if(b.id==='undo'){const id=stack.pop();if(id)parent.postMessage({type:'roqaya-draw-undo',strokeId:id,roundId:cfg.roundId},location.origin)}else if(b.id==='clr'){stack=[];parent.postMessage({type:'roqaya-draw-clear',roundId:cfg.roundId},location.origin)}};
 function render(){
- document.body.dataset.ph=cfg.phase||'';document.body.dataset.host=cfg.role==='host'?'yes':'no';$('#rnd').textContent=cfg.roundNo?`الجولة ${ar(cfg.roundNo)}/${ar(cfg.total)}`:'';$('#rounds').value=String(cfg.total||6);$('#city').disabled=cfg.role!=='host';
+ document.body.dataset.ph=cfg.phase||'';document.body.dataset.host=cfg.role==='host'?'yes':'no';$('#rnd').textContent=`الجولة ${ar(cfg.roundNo||1)}/${ar(cfg.total||6)}`;$('#rounds').value=String(cfg.total||6);$('#rounds').disabled=cfg.role!=='host';$('#city').disabled=cfg.role!=='host';
+ $('#worldHost').textContent=`👨 بابا ⭐ ${ar(Number(cfg.worldScores?.host)||0)}`;$('#worldGuest').textContent=`👧 ${cfg.childName||'رقية'} ⭐ ${ar(Number(cfg.worldScores?.guest)||0)}`;
  const hp=$('#hostPc'),gp=$('#guestPc');hp.classList.toggle('on',cfg.drawer==='host'&&cfg.phase!=='end');gp.classList.toggle('on',cfg.drawer==='guest'&&cfg.phase!=='end');hp.querySelector('span').textContent=`⭐ ${ar(cfg.scores?.host||0)}`;gp.querySelector('span').textContent=`⭐ ${ar(cfg.scores?.guest||0)}`;gp.querySelector('b').textContent=cfg.childName||'رقية';hp.querySelector('small').textContent=cfg.phase==='end'?'':cfg.drawer==='host'?'✏️ يرسم':'🤔 يخمّن';gp.querySelector('small').textContent=cfg.phase==='end'?'':cfg.drawer==='guest'?'✏️ ترسم':'🤔 تخمّن';
  const word=$('#word'),status=$('#status');word.classList.toggle('show',Boolean(cfg.answer&&drawer()&&['draw','guess'].includes(cfg.phase)));word.textContent=cfg.answer?`ارسم: ${cfg.answer.emoji} ${cfg.answer.name}`:'';
  if(cfg.phase==='draw')status.textContent=drawer()?`دورك ترسم يا ${nameOf(cfg.role)} ✏️`:`👀 ${nameOf(cfg.drawer)} بيرسم…`;else if(cfg.phase==='guess')status.textContent=guesser()?`دورك تخمّن يا ${nameOf(cfg.role)} 🤔`:`👀 ${nameOf(otherRole())} بيخمّن رسمتك…`;else if(cfg.phase==='result')status.textContent=cfg.result==='correct'?`✅ إجابة صحيحة +${ar(cfg.lastPoints||0)} ⭐`:'😅 خلصت المحاولات';else if(cfg.phase==='end')status.textContent=cfg.winner==='draw'?'🤝 تعادل!':`🏆 ${nameOf(cfg.winner)} كسب!`;else status.textContent='جاري تجهيز الجولة…';

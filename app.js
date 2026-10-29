@@ -1174,7 +1174,7 @@ function renderVoiceCallControls(){
   const available=Boolean(roomCode&&state&&meta&&canPlay());
   if(!available){box.hidden=true;box.innerHTML='';return;}
   box.hidden=false;
-  if(!voiceCallSupported()){box.innerHTML='<div class="call-unsupported">📞</div>';return;}
+  if(!voiceCallSupported()){box.className='call-controls';box.innerHTML='<button class="call-main-btn" data-call-action="start" title="المتصفح الحالي لا يدعم الصوت؛ جرّبي Chrome" aria-label="محاولة الاتصال الصوتي"><span class="call-main-icon">📞</span><span>اتصال</span></button>';return;}
   const call=state?.call||null;
   if(!call){box.className='call-controls';box.innerHTML='<button class="call-main-btn" data-call-action="start" aria-label="بدء مكالمة صوتية"><span class="call-main-icon">📞</span><span>اتصال</span></button>';return;}
   const callerName=call.caller==='host'?'بابا':childName(),otherName=nameOf(other(role));
