@@ -5,8 +5,16 @@ import { getDatabase, ref, onValue, runTransaction } from 'https://www.gstatic.c
 const screen=document.getElementById('screen');
 let db=null,auth=null,uid='',roomCode='',meta=null,shared=null,role='';
 let unsubMeta=null,unsubState=null,overlay=null,frame=null,initBusy=false,observerBusy=false;
-const LAD={1:38,4:14,9:31,21:42,28:84,36:44,51:67,71:91,80:100};
-const SNK={16:6,47:26,49:11,56:53,62:19,64:60,87:24,93:73,95:75,98:78};
+const BOARD_LAYOUTS=[
+  {ladders:{1:38,4:14,9:31,21:42,28:84,36:44,51:67,71:91,80:100},snakes:{16:6,47:26,49:11,56:53,62:19,64:60,87:24,93:73,95:75,98:78}},
+  {ladders:{3:22,8:30,20:41,27:56,40:59,51:72,63:81,70:90,79:99},snakes:{17:5,34:12,46:25,54:31,62:18,75:42,83:57,89:68,95:73,97:78}},
+  {ladders:{2:23,6:45,14:29,21:39,33:52,42:65,55:74,67:86,80:99},snakes:{16:7,28:10,37:19,49:26,59:36,72:50,84:61,91:71,96:77}},
+  {ladders:{1:25,4:18,11:33,23:44,32:53,41:62,50:69,66:82,78:97},snakes:{15:5,27:9,39:21,48:30,57:34,64:46,76:55,88:67,94:72,99:79}},
+  {ladders:{5:24,13:31,25:47,38:59,43:65,52:74,68:85,79:92,90:98},snakes:{18:4,29:11,36:16,48:27,61:42,73:54,82:63,87:69,96:78}}
+];
+const boardIndex=seed=>Math.abs(Number(seed)||0)%BOARD_LAYOUTS.length;
+const boardLayout=seed=>BOARD_LAYOUTS[boardIndex(seed)];
+function nextBoardSeed(previous){let seed;do{seed=Math.floor(Math.random()*0x7fffffff)}while(previous!=null&&boardIndex(seed)===boardIndex(previous));return seed}
 
 const currentRoom=()=>location.hash.match(/^#room=([A-Z2-9]{8})$/)?.[1]||'';
 const other=p=>p==='host'?'guest':'host';
@@ -28,9 +36,9 @@ async function mutate(transform){
     },{applyLocally:false});
   }catch(e){console.warn('snakes sync',e)}
 }
-function freshSnake(roundId){
+function freshSnake(roundId,previousSeed=null){
   return {
-    v:2,roundId,positions:{host:0,guest:0},
+    v:2,roundId,boardSeed:nextBoardSeed(previousSeed),positions:{host:0,guest:0},
     turn:roundId%2===0?'guest':'host',
     phase:'ready',dice:null,spinId:0,moveId:0,move:null,winner:null,
     lastEvent:{id:0,type:'',player:'',dice:null,at:0}
@@ -43,8 +51,11 @@ async function ensureSync(){
   try{
     await mutate(old=>{
       if(old.game!=='snakes')return;
-      if(old.snakeV2?.v===2&&Number(old.snakeV2.roundId)===Number(old.round))return old;
-      return {...old,phase:'playing',snakeV2:freshSnake(Number(old.round)||1)};
+      if(old.snakeV2?.v===2&&Number(old.snakeV2.roundId)===Number(old.round)){
+        if(old.snakeV2.boardSeed!=null)return old;
+        return {...old,snakeV2:{...old.snakeV2,boardSeed:nextBoardSeed()}};
+      }
+      return {...old,phase:'playing',snakeV2:freshSnake(Number(old.round)||1,old.snakeV2?.boardSeed)};
     });
   }finally{initBusy=false}
 }
@@ -61,7 +72,7 @@ function ensureOverlay(){
   overlay.id='snakes-v2-overlay';
   overlay.className='snakes-v2-overlay';
   overlay.hidden=true;
-  overlay.innerHTML='<iframe class="snakes-v2-frame" src="snakes-game.html?v=3" title="السلم والثعبان" loading="eager"></iframe>';
+  overlay.innerHTML='<iframe class="snakes-v2-frame" src="snakes-game.html?v=4" title="السلم والثعبان" loading="eager"></iframe>';
   screen.insertAdjacentElement('afterend',overlay);
   frame=overlay.querySelector('iframe');
   frame.addEventListener('load',sendConfig);
@@ -84,6 +95,7 @@ function sendConfig(){
     dice:Number.isInteger(g.dice)?g.dice:null,
     spinId:Number(g.spinId)||0,
     roundId:Number(g.roundId)||Number(shared.round)||0,
+    boardSeed:Number(g.boardSeed)||0,
     winner:g.winner||null,
     lastEvent:g.lastEvent||null,
     move:g.move||null,
@@ -106,8 +118,9 @@ function deactivate(){
 function syncUi(){
   cardUpgrade();
   if(shared?.game==='snakes'){
-    if(role==='host'&&!shared?.snakeV2)ensureSync();
-    if(shared?.snakeV2&&role)activate();
+    if(role==='host'&&(!shared?.snakeV2||shared.snakeV2.boardSeed==null))ensureSync();
+    if(shared?.snakeV2&&shared.snakeV2.boardSeed!=null&&role)activate();
+    else deactivate();
   }else deactivate();
 }
 function bindRoom(){
@@ -151,8 +164,9 @@ async function chooseSquare(square,roundId){
     if(old.game!=='snakes'||old.phase!=='playing'||!g||g.turn!==role||g.phase!=='choose'||Number(g.roundId)!==Number(roundId))return;
     const from=Number(g.positions?.[role])||0,dice=Number(g.dice)||0,target=from+dice;
     if(square!==target||target>100)return;
-    const jumpType=LAD[target]?'ladder':SNK[target]?'snake':'';
-    const destination=jumpType==='ladder'?LAD[target]:jumpType==='snake'?SNK[target]:target;
+    const layout=boardLayout(g.boardSeed);
+    const jumpType=layout.ladders[target]?'ladder':layout.snakes[target]?'snake':'';
+    const destination=jumpType==='ladder'?layout.ladders[target]:jumpType==='snake'?layout.snakes[target]:target;
     const moveId=(Number(g.moveId)||0)+1;
     const positions={...(g.positions||{}),[role]:destination};
     const winner=destination===100?role:null;
@@ -188,12 +202,16 @@ async function newRound(){
   await mutate(old=>{
     if(old.game!=='snakes')return;
     const nextRound=(Number(old.round)||0)+1;
-    return {...old,round:nextRound,phase:'playing',snakeV2:freshSnake(nextRound)};
+    return {...old,round:nextRound,phase:'playing',snakeV2:freshSnake(nextRound,old.snakeV2?.boardSeed)};
   });
 }
 async function goCity(){
   if(role!=='host')return;
-  await mutate(old=>old.game==='snakes'?{...old,game:'lobby',phase:'lobby'}:old);
+  await mutate(old=>{
+    if(old.game!=='snakes')return;
+    const nextRound=(Number(old.round)||0)+1;
+    return {...old,round:nextRound,game:'lobby',phase:'lobby',snakeV2:freshSnake(nextRound,old.snakeV2?.boardSeed)};
+  });
 }
 
 addEventListener('message',e=>{
