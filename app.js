@@ -46,7 +46,7 @@ const MODULE_MANAGED_GAMES = new Set([
 const GAMES = ['draw','memory','ttt',...QUIZ_GAMES,'spot','numbers','space','treasure','snakes','coloring','jigsaw','phonics'];
 const GAME_LABELS = {
   draw:['🎨','ارسم وخمّن','واحد يرسم والتاني يخمّن'],
-  memory:['🃏','كروت الذاكرة','٤–٣٢ كارت • لعب بالأدوار'],
+  memory:['🃏','كروت الذاكرة','٤–١٠٠ كارت • لعب بالأدوار'],
   ttt:['❌⭕','إكس أو','3 نقاط للفائز'],
   odd:['🔍','مين المختلف؟','رسوم كرتونية ممتعة للمقارنة'],
   count:['🔢','عدّ الصور','احسب عدد الرموز'],

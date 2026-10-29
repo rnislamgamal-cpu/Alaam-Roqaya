@@ -4,7 +4,7 @@ import { getDatabase, ref, onValue, runTransaction } from 'https://www.gstatic.c
 
 const screen=document.getElementById('screen');
 let db=null,auth=null,uid='',roomCode='',meta=null,shared=null,role='',presence={};
-let unsubMeta=null,unsubState=null,unsubPresence=null,overlay=null,frame=null,playerStatus=null,initBusy=false,hideTimer=null,scheduledWaitId=0,observerBusy=false;
+let unsubMeta=null,unsubState=null,unsubPresence=null,overlay=null,frame=null,playerStatus=null,initBusy=false,hideTimer=null,scheduledWaitKey='',observerBusy=false;
 
 const EMO=[...'🐶🐱🐭🐰🦊🐻🐼🐯🦁🐮🐷🐸🐵🐔🐧🦆🦉🐺🐴🦄🐝🦋🐢🐍🐙🦀🐠🐬🐘🦒🍎🍌🍇🍓🍉🍒🍍🥕🌽🍕⚽🚗🚁🚀🌈⭐🎈🎁🔔🎵'];
 const currentRoom=()=>location.hash.match(/^#room=([A-Z2-9]{8})$/)?.[1]||'';
@@ -22,7 +22,7 @@ function shuffle(a){
 function savedPairs(){
   try{
     const n=Number(localStorage.getItem('roqaya-memory-pairs'));
-    return [2,3,4,6,8,10,12,16].includes(n)?n:6;
+    return [2,3,4,6,8,10,12,16,20,24,30,40,50].includes(n)?n:6;
   }catch{return 6}
 }
 function deckFor(pairs){
@@ -30,7 +30,7 @@ function deckFor(pairs){
   return shuffle(picks.flatMap(e=>[e,e]));
 }
 function freshMemory(roundId,pairs=savedPairs()){
-  pairs=[2,3,4,6,8,10,12,16].includes(Number(pairs))?Number(pairs):6;
+  pairs=[2,3,4,6,8,10,12,16,20,24,30,40,50].includes(Number(pairs))?Number(pairs):6;
   return {
     v:2,roundId,pairs,deck:deckFor(pairs),revealed:[],matchedBy:{},
     turn:roundId%2===0?'guest':'host',scores:{host:0,guest:0},
@@ -42,7 +42,7 @@ function cleanup(){
   try{unsubState?.()}catch{}
   try{unsubPresence?.()}catch{}
   unsubMeta=unsubState=unsubPresence=null;meta=null;shared=null;role='';presence={};
-  clearTimeout(hideTimer);hideTimer=null;scheduledWaitId=0;
+  clearTimeout(hideTimer);hideTimer=null;scheduledWaitKey='';
 }
 function updateRole(){role=meta?.hostUid===uid?'host':meta?.guestUid===uid?'guest':''}
 async function mutate(transform){
@@ -56,14 +56,15 @@ async function mutate(transform){
 }
 async function ensureSync(){
   if(initBusy||role!=='host'||shared?.game!=='memory')return;
-  const current=shared.memoryV2?.v===2&&Number(shared.memoryV2.roundId)===Number(shared.round);
+  const current=shared.memoryV2?.v===2&&Number(shared.memoryV2.roundId)===Number(shared.round)&&Array.isArray(shared.memoryV2.deck)&&shared.memoryV2.deck.length===Number(shared.memoryV2.pairs)*2;
   if(current&&!Object.hasOwn(shared,'memory'))return;
   initBusy=true;
   try{
     await mutate(old=>{
       if(old.game!=='memory')return;
       const {memory:legacyMemory,...clean}=old;
-      if(old.memoryV2?.v===2&&Number(old.memoryV2.roundId)===Number(old.round))return legacyMemory?clean:old;
+      const oldGame=old.memoryV2;
+      if(oldGame?.v===2&&Number(oldGame.roundId)===Number(old.round)&&Array.isArray(oldGame.deck)&&oldGame.deck.length===Number(oldGame.pairs)*2)return legacyMemory?clean:old;
       return {...clean,phase:'playing',memoryV2:freshMemory(Number(old.round)||1)};
     });
   }finally{initBusy=false}
@@ -77,7 +78,7 @@ function ensureOverlay(){
   overlay.id='memory-v1-overlay';
   overlay.className='memory-v1-overlay';
   overlay.hidden=true;
-  overlay.innerHTML='<iframe class="memory-v1-frame" src="memory-game.html?v=2" title="لعبة الذاكرة" loading="eager"></iframe>';
+  overlay.innerHTML='<iframe class="memory-v1-frame" src="memory-game.html?v=3" title="لعبة الذاكرة" loading="eager"></iframe>';
   const header=document.querySelector('.header');header?.insertBefore(playerStatus,header.firstChild);header?.insertAdjacentElement('afterend',overlay);
   frame=overlay.querySelector('iframe');
   frame.addEventListener('load',sendConfig);
@@ -109,19 +110,21 @@ function deactivate(){
   screen?.removeAttribute('aria-hidden');
   if(overlay)overlay.hidden=true;
   if(playerStatus)playerStatus.hidden=true;
-  clearTimeout(hideTimer);hideTimer=null;scheduledWaitId=0;
+  clearTimeout(hideTimer);hideTimer=null;scheduledWaitKey='';
 }
 function scheduleHide(){
   const g=shared?.memoryV2;
   if(shared?.game!=='memory'||!g?.waiting)return;
   const waitId=Number(g.waitId)||0;
-  if(!waitId||scheduledWaitId===waitId)return;
-  scheduledWaitId=waitId;
+  const roundId=Number(g.roundId)||Number(shared.round)||0;
+  const waitKey=`${roundId}:${waitId}`;
+  if(!waitId||scheduledWaitKey===waitKey)return;
+  scheduledWaitKey=waitKey;
   clearTimeout(hideTimer);
   hideTimer=setTimeout(async()=>{
     await mutate(old=>{
       const m=old.memoryV2;
-      if(old.game!=='memory'||!m||!m.waiting||Number(m.waitId)!==waitId)return;
+      if(old.game!=='memory'||!m||!m.waiting||Number(m.roundId)!==roundId||Number(m.waitId)!==waitId)return;
       return {...old,memoryV2:{...m,revealed:[],waiting:false,turn:other(m.lastPicker||m.turn)}};
     });
   },930);
@@ -131,7 +134,7 @@ function cardUpgrade(){
   if(!card)return;
   const title=card.querySelector('strong'),desc=card.querySelector('small');
   if(title&&title.textContent!=='لعبة الذاكرة')title.textContent='لعبة الذاكرة';
-  if(desc&&desc.textContent!=='٤–٣٢ كارت • لعب بالأدوار')desc.textContent='٤–٣٢ كارت • لعب بالأدوار';
+  if(desc&&desc.textContent!=='٤–١٠٠ كارت • لعب بالأدوار')desc.textContent='٤–١٠٠ كارت • لعب بالأدوار';
 }
 function renderPlayerStatus(){
   if(!playerStatus)return;
@@ -147,8 +150,10 @@ function syncUi(){
   cardUpgrade();
   if(shared?.game==='memory'){
     ensureOverlay();renderPlayerStatus();
-    if(role==='host'&&!shared?.memoryV2)ensureSync();
-    if(shared?.memoryV2&&role)activate();
+    const g=shared?.memoryV2;
+    const valid=g?.v===2&&Number(g.roundId)===Number(shared.round)&&Array.isArray(g.deck)&&g.deck.length===Number(g.pairs)*2;
+    if(role==='host'&&!valid)ensureSync();
+    if(valid&&role)activate();
   }else deactivate();
 }
 function bindRoom(){
@@ -190,7 +195,7 @@ async function pick(index,roundId){
 }
 async function newRound(pairs){
   if(role!=='host')return;
-  pairs=[2,3,4,6,8,10,12,16].includes(Number(pairs))?Number(pairs):6;
+  pairs=[2,3,4,6,8,10,12,16,20,24,30,40,50].includes(Number(pairs))?Number(pairs):6;
   try{localStorage.setItem('roqaya-memory-pairs',String(pairs))}catch{}
   await mutate(old=>{
     if(old.game!=='memory')return;

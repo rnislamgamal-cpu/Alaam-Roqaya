@@ -26,7 +26,7 @@ body{height:100%;display:flex;flex-direction:column;align-items:center;gap:6px;p
 .back{background:linear-gradient(145deg,#785fd4,#917de8);color:#fff;font-size:calc(var(--card)*.42);font-weight:900;box-shadow:inset 0 0 0 3px #ffffff45,0 3px 0 #5a43ad}
 .face{background:#fff;transform:rotateY(180deg);font-size:calc(var(--card)*.56);line-height:1;box-shadow:inset 0 0 0 3px #ded5f8,0 3px 0 #c9c0e4}
 .card.done{cursor:default}.card.done.owner-host .face{box-shadow:inset 0 0 0 4px var(--p1),0 3px 0 #c9c0e4}.card.done.owner-guest .face{box-shadow:inset 0 0 0 4px var(--p2),0 3px 0 #c9c0e4}
-.card:disabled{opacity:1}
+button.card:disabled{opacity:1!important;filter:none!important;-webkit-appearance:none;appearance:none}
 #finish{width:min(100%,600px);padding:7px 10px;border-radius:14px;background:#fff8d6;text-align:center;font-size:.8rem;font-weight:900;box-shadow:0 4px 14px #7457aa18}
 .game-actions{display:flex;justify-content:center;align-items:center;gap:8px;flex-wrap:wrap;width:min(100%,820px);padding:3px 2px}
 .game-actions button{min-height:42px;padding:8px 15px;border:0;border-radius:13px;font:inherit;font-size:.78rem;font-weight:900;cursor:pointer;touch-action:manipulation;box-shadow:0 3px 0 #5942a6}
@@ -54,7 +54,7 @@ body>.game-actions button{font-family:inherit!important}
   <strong>مجموع عالم رقية</strong>
   <span class="world-score" id="worldHost">👨 بابا ⭐ ٠</span>
   <span class="world-score" id="worldGuest">👧 رقية ⭐ ٠</span>
-  <label for="pairs">الأزواج<select id="pairs" aria-label="عدد أزواج الكروت"><option value="2">٢</option><option value="3">٣</option><option value="4">٤</option><option value="6" selected>٦</option><option value="8">٨</option><option value="10">١٠</option><option value="12">١٢</option><option value="16">١٦</option></select></label>
+  <label for="pairs">الأزواج<select id="pairs" aria-label="عدد أزواج الكروت"><option value="2">٢</option><option value="3">٣</option><option value="4">٤</option><option value="6" selected>٦</option><option value="8">٨</option><option value="10">١٠</option><option value="12">١٢</option><option value="16">١٦</option><option value="20">٢٠</option><option value="24">٢٤</option><option value="30">٣٠</option><option value="40">٤٠</option><option value="50">٥٠</option></select></label>
 </div>
 <div id="scoreTitle">نقاط لعبة الذاكرة</div>
 <div id="score">
@@ -70,7 +70,7 @@ body>.game-actions button{font-family:inherit!important}
 const $=s=>document.querySelector(s),board=$('#board'),DIGITS='٠١٢٣٤٥٦٧٨٩';
 const EMO=[...'🐶🐱🐭🐰🦊🐻🐼🐯🦁🐮🐷🐸🐵🐔🐧🦆🦉🐺🐴🦄🐝🦋🐢🐍🐙🦀🐠🐬🐘🦒🍎🍌🍇🍓🍉🍒🍍🥕🌽🍕⚽🚗🚁🚀🌈⭐🎈🎁🔔🎵'];
 const ar=v=>String(v).replace(/[0-9]/g,d=>DIGITS[d.charCodeAt(0)-48]);
-let cfg={role:'guest',childName:'رقية',roundId:0,pairs:8,deck:[],revealed:[],matchedBy:{},turn:'host',scores:{host:0,guest:0},worldScores:{host:0,guest:0},waiting:false,finished:false,result:null};
+let cfg={role:'guest',childName:'رقية',roundId:0,pairs:6,deck:[],revealed:[],matchedBy:{},turn:'host',scores:{host:0,guest:0},worldScores:{host:0,guest:0},waiting:false,finished:false,result:null};
 let lastDeckKey='',resizeTimer=0,lastPartyKey='';
 const nameOf=r=>r==='host'?'بابا':(cfg.childName||'رقية'),mine=()=>cfg.turn===cfg.role&&!cfg.waiting&&!cfg.finished,matched=i=>Boolean(cfg.matchedBy?.[i]),open=i=>matched(i)||(cfg.revealed||[]).includes(i);
 function layout(){
@@ -105,7 +105,7 @@ function renderHud(){
  else if(cfg.waiting)$('#msg').textContent='👀 بصّوا على الكارتين…';
  else if(mine())$('#msg').textContent=`✨ دورك يا ${nameOf(cfg.role)} — اختاري كارتين`;
  else $('#msg').textContent=`دور ${nameOf(cfg.turn)} الآن`;
- $('#pairs').value=String(cfg.pairs||8);$('#pairs').disabled=cfg.role!=='host';$('#new').disabled=cfg.role!=='host';$('#city').disabled=cfg.role!=='host';
+ $('#pairs').value=String(cfg.pairs||6);$('#pairs').disabled=cfg.role!=='host';$('#new').disabled=cfg.role!=='host';$('#city').disabled=cfg.role!=='host';
  const finish=$('#finish');finish.hidden=!cfg.finished;
  if(cfg.finished){const hs=cfg.scores?.host||0,gs=cfg.scores?.guest||0;finish.textContent=cfg.result==='draw'?`🤝 تعادل! بابا ${ar(hs)} ⭐ • ${nameOf('guest')} ${ar(gs)} ⭐`:`🏆 ${nameOf(cfg.result)} كسب الجولة! بابا ${ar(hs)} ⭐ • ${nameOf('guest')} ${ar(gs)} ⭐`;}
  celebrate();
@@ -114,7 +114,7 @@ function render(){renderHud();renderBoard()}
 function sendPick(i){if(!mine()||open(i))return;parent.postMessage({type:'roqaya-memory-pick',index:i,roundId:cfg.roundId},location.origin)}
 board.addEventListener('click',e=>{const b=e.target.closest('.card');if(b)sendPick(Number(b.dataset.i));});
 $('#pairs').onchange=()=>{try{localStorage.setItem('roqaya-memory-pairs',$('#pairs').value)}catch{}};
-$('#new').onclick=()=>{if(cfg.role==='host')parent.postMessage({type:'roqaya-memory-new',pairs:Number($('#pairs').value)||8},location.origin)};
+$('#new').onclick=()=>{if(cfg.role==='host')parent.postMessage({type:'roqaya-memory-new',pairs:Number($('#pairs').value)||6},location.origin)};
 $('#city').onclick=()=>{if(cfg.role==='host')parent.postMessage({type:'roqaya-memory-city'},location.origin)};
 addEventListener('resize',()=>{clearTimeout(resizeTimer);resizeTimer=setTimeout(layout,80)});
 addEventListener('message',e=>{if(e.origin!==location.origin||e.data?.type!=='roqaya-memory-config')return;cfg={...cfg,...e.data.config};render()});
