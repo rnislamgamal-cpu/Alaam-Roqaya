@@ -18,6 +18,7 @@ const WORDS=[
 const currentRoom=()=>location.hash.match(/^#room=([A-Z2-9]{8})$/)?.[1]||'';
 const other=p=>p==='host'?'guest':'host';
 const childName=()=>String(shared?.childName||'رقية');
+const soundEnabled=()=>{const control=document.getElementById('sound-toggle');return !control||!control.textContent.includes('🔇')};
 
 function shuffle(a){const x=[...a];for(let i=x.length-1;i>0;i--){const j=Math.floor(Math.random()*(i+1));[x[i],x[j]]=[x[j],x[i]]}return x}
 function savedRounds(){try{const n=Number(localStorage.getItem('roqaya-draw-rounds'));return[4,6,8,10].includes(n)?n:6}catch{return 6}}
@@ -67,7 +68,7 @@ function ensureOverlay(){
  gameHeader.setAttribute('aria-label','حالة اللاعبين');
  gameHeader.innerHTML='<span class="draw-player" data-player="host">👨 بابا <i aria-hidden="true"></i></span><span class="draw-player" data-player="guest">👧 رقية <i aria-hidden="true"></i></span>';
  overlay=document.createElement('section');overlay.id='draw-v2-overlay';overlay.className='draw-v2-overlay';overlay.hidden=true;
- overlay.innerHTML='<iframe class="draw-v2-frame" src="draw-game.html?v=3" title="ارسم وخمّن" loading="eager"></iframe>';
+ overlay.innerHTML='<iframe class="draw-v2-frame" src="draw-game.html?v=4" title="ارسم وخمّن" loading="eager"></iframe>';
  const header=document.querySelector('.header');header?.insertBefore(gameHeader,header.firstChild);header?.insertAdjacentElement('afterend',overlay);frame=overlay.querySelector('iframe');
  frame.addEventListener('load',()=>{sendConfig();sendAllLines()});return overlay;
 }
@@ -76,7 +77,7 @@ function sendConfig(){
  const g=shared?.drawV2;if(!frame?.contentWindow||shared?.game!=='draw'||!g||!role)return;
  const answer=g.drawer===role||['result','end'].includes(g.phase)?wordObj(g.answer):null;
  frame.contentWindow.postMessage({type:'roqaya-draw-config',config:{
-  role,childName:childName(),phase:g.phase||'draw',roundNo:Number(g.roundNo)||1,total:Number(g.total)||6,drawer:g.drawer||'host',
+  role,childName:childName(),phase:g.phase||'draw',roundNo:Number(g.roundNo)||1,total:Number(g.total)||6,drawer:g.drawer||'host',soundEnabled:soundEnabled(),
   scores:g.scores||{host:0,guest:0},worldScores:shared.scores||{host:0,guest:0},answer,options:(g.options||[]).map(wordObj).filter(Boolean),guesses:g.guesses||[],
   lastPoints:Number(g.lastPoints)||0,result:g.result||null,winner:g.winner||null,roundId:Number(g.roundId)||Number(shared.round)||0,
   correctOption:(g.options||[]).indexOf(Number(g.answer))
@@ -182,6 +183,7 @@ addEventListener('message',e=>{
 
 const observer=new MutationObserver(()=>{if(observerBusy)return;observerBusy=true;queueMicrotask(()=>{observerBusy=false;cardUpgrade();if(shared?.game==='draw'&&shared?.drawV2)sendConfig()})});
 if(screen)observer.observe(screen,{childList:true,subtree:true});
+document.addEventListener('click',e=>{if(e.target.closest?.('#sound-toggle'))setTimeout(sendConfig,0)},true);
 addEventListener('hashchange',bindRoom);addEventListener('pageshow',()=>{bindRoom();syncUi()});
 async function boot(){for(let i=0;i<120&&getApps().length===0;i++)await new Promise(r=>setTimeout(r,50));const app=getApps()[0];if(!app)return;auth=getAuth(app);db=getDatabase(app);onAuthStateChanged(auth,user=>{uid=user?.uid||'';bindRoom()});bindRoom()}
 boot();
