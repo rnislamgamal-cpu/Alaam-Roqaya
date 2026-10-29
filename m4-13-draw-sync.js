@@ -4,8 +4,8 @@ import { getDatabase, ref, onValue, onChildAdded, onChildRemoved, push, remove, 
 
 const screen=document.getElementById('screen');
 let db=null,auth=null,uid='',roomCode='',meta=null,shared=null,role='';
-let unsubMeta=null,unsubState=null,unsubStrokeAdd=null,unsubStrokeRemove=null,overlay=null,frame=null,initBusy=false,observerBusy=false;
-let strokeLines=new Map(),strokeKeysByLocalId=new Map();
+let unsubMeta=null,unsubState=null,unsubPresence=null,unsubStrokeAdd=null,unsubStrokeRemove=null,overlay=null,frame=null,initBusy=false,observerBusy=false;
+let presence={},strokeLines=new Map(),strokeKeysByLocalId=new Map(),gameHeader=null,globalScoreRow=null;
 
 const WORDS=[
  ['شجرة','🌳'],['بيت','🏠'],['شمس','☀️'],['قمر','🌙'],['سمكة','🐟'],['قطة','🐱'],['كلب','🐶'],['عربية','🚗'],['طيارة','✈️'],['مركب','⛵'],
@@ -37,8 +37,8 @@ function nextRoundData(old,rootRound){
  return {...old,roundId:rootRound,roundNo:Number(old.roundNo||1)+1,drawer:other(old.drawer||'host'),phase:'draw',answer:q.answer,options:q.options,guesses:[],lastPoints:0,result:null,winner:null};
 }
 function cleanup(){
- for(const fn of [unsubMeta,unsubState,unsubStrokeAdd,unsubStrokeRemove])try{fn?.()}catch{}
- unsubMeta=unsubState=unsubStrokeAdd=unsubStrokeRemove=null;meta=null;shared=null;role='';strokeLines.clear();strokeKeysByLocalId.clear();
+ for(const fn of [unsubMeta,unsubState,unsubPresence,unsubStrokeAdd,unsubStrokeRemove])try{fn?.()}catch{}
+ unsubMeta=unsubState=unsubPresence=unsubStrokeAdd=unsubStrokeRemove=null;meta=null;shared=null;presence={};role='';strokeLines.clear();strokeKeysByLocalId.clear();
 }
 function updateRole(){role=meta?.hostUid===uid?'host':meta?.guestUid===uid?'guest':''}
 async function mutate(transform){
@@ -63,9 +63,15 @@ function cardUpgrade(){
 }
 function ensureOverlay(){
  if(overlay)return overlay;
+ gameHeader=document.createElement('div');gameHeader.id='draw-player-status';gameHeader.className='draw-player-status';gameHeader.hidden=true;
+ gameHeader.setAttribute('aria-label','حالة اللاعبين');
+ gameHeader.innerHTML='<span class="draw-player" data-player="host">👨 بابا <i aria-hidden="true"></i></span><span class="draw-player" data-player="guest">👧 رقية <i aria-hidden="true"></i></span>';
+ globalScoreRow=document.createElement('div');globalScoreRow.id='draw-global-score';globalScoreRow.className='draw-global-score';globalScoreRow.hidden=true;
+ globalScoreRow.setAttribute('aria-label','مجموع النقاط العامة');
+ globalScoreRow.innerHTML='<strong>مجموع عالم رقية</strong><span data-score="host">👨 بابا ⭐ ٠</span><span data-score="guest">👧 رقية ⭐ ٠</span>';
  overlay=document.createElement('section');overlay.id='draw-v2-overlay';overlay.className='draw-v2-overlay';overlay.hidden=true;
- overlay.innerHTML='<iframe class="draw-v2-frame" src="draw-game.html?v=1" title="ارسم وخمّن" loading="eager"></iframe>';
- screen.insertAdjacentElement('afterend',overlay);frame=overlay.querySelector('iframe');
+ overlay.innerHTML='<iframe class="draw-v2-frame" src="draw-game.html?v=2" title="ارسم وخمّن" loading="eager"></iframe>';
+ const header=document.querySelector('.header');header?.insertBefore(gameHeader,header.firstChild);header?.insertAdjacentElement('afterend',globalScoreRow);globalScoreRow.insertAdjacentElement('afterend',overlay);frame=overlay.querySelector('iframe');
  frame.addEventListener('load',()=>{sendConfig();sendAllLines()});return overlay;
 }
 function wordObj(i){const w=WORDS[Number(i)];return w?{name:w[0],emoji:w[1]}:null}
@@ -80,9 +86,19 @@ function sendConfig(){
  }},location.origin);
 }
 function sendAllLines(){if(frame?.contentWindow)frame.contentWindow.postMessage({type:'roqaya-draw-lines',lines:[...strokeLines.entries()].map(([key,line])=>({key,...line}))},location.origin)}
-function activate(){ensureOverlay();document.body.classList.add('draw-v2-active');screen.setAttribute('aria-hidden','true');overlay.hidden=false;sendConfig()}
-function deactivate(){document.body.classList.remove('draw-v2-active');screen?.removeAttribute('aria-hidden');if(overlay)overlay.hidden=true}
-function syncUi(){cardUpgrade();if(shared?.game==='draw'){if(role==='host'&&!shared?.drawV2)ensureSync();if(shared?.drawV2&&role)activate()}else deactivate()}
+function arabic(n){return String(n).replace(/[0-9]/g,d=>'٠١٢٣٤٥٦٧٨٩'[Number(d)])}
+function renderGameHeader(){
+ if(!gameHeader||!globalScoreRow)return;
+ const active=shared?.game==='draw'&&Boolean(role);gameHeader.hidden=!active;globalScoreRow.hidden=!active;if(!active)return;
+ for(const player of ['host','guest']){
+  const name=player==='host'?'بابا':childName(),uidForPlayer=meta?.[player==='host'?'hostUid':'guestUid'],online=Boolean(uidForPlayer&&presence[uidForPlayer]);
+  const status=gameHeader.querySelector(`[data-player="${player}"]`);if(status){status.querySelector('i').classList.toggle('online',online);status.querySelector('i').classList.toggle('offline',!online);status.setAttribute('aria-label',`${name}: ${online?'متصل':'غير متصل'}`);status.firstChild.textContent=`${player==='host'?'👨':'👧'} ${name} `;}
+  const score=globalScoreRow.querySelector(`[data-score="${player}"]`);if(score)score.textContent=`${player==='host'?'👨':'👧'} ${name} ⭐ ${arabic(Number(shared?.scores?.[player])||0)}`;
+ }
+}
+function activate(){ensureOverlay();document.body.classList.add('draw-v2-active');screen.setAttribute('aria-hidden','true');overlay.hidden=false;gameHeader.hidden=false;globalScoreRow.hidden=false;renderGameHeader();sendConfig()}
+function deactivate(){document.body.classList.remove('draw-v2-active');screen?.removeAttribute('aria-hidden');if(overlay)overlay.hidden=true;if(gameHeader)gameHeader.hidden=true;if(globalScoreRow)globalScoreRow.hidden=true}
+function syncUi(){cardUpgrade();if(shared?.game==='draw'){ensureOverlay();renderGameHeader();if(role==='host'&&!shared?.drawV2)ensureSync();if(shared?.drawV2&&role)activate()}else deactivate()}
 
 function encodeStyle(x,c,s){
  const base=Math.max(0,Math.min(.999,Math.floor(Math.max(0,Math.min(1,Number(x)||0))*1000)/1000));
@@ -108,6 +124,7 @@ function bindRoom(){
  cleanup();roomCode=next;if(!db||!uid||!roomCode){syncUi();return}
  unsubMeta=onValue(ref(db,`rooms/${roomCode}/meta`),snap=>{meta=snap.val();updateRole();syncUi()});
  unsubState=onValue(ref(db,`rooms/${roomCode}/state`),snap=>{shared=snap.val();updateRole();syncUi()});
+ unsubPresence=onValue(ref(db,`rooms/${roomCode}/presence`),snap=>{presence=snap.val()||{};renderGameHeader()});
  bindStrokes();
 }
 async function addSegment(line,roundId){

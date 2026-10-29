@@ -4,10 +4,6 @@
 #screen:has(.memory-grid),
 #screen:has(.snakes-panel),
 #screen:has(.jigsaw-panel),
-#screen:has(.drawing-wrap){
-  visibility:hidden!important;
-  pointer-events:none!important;
-}
 
 /* JS fallback / transition state. */
 #screen.external-game-transition{

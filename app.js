@@ -19,43 +19,6 @@ const HUB_ASSETS = {
   english:'assets/english.jpg',
   quran:'assets/quran.jpg'
 };
-const DRAW_ITEMS = [
-  { name:'قطة', emoji:'🐱', choices:['🐱','🐶','🐰'] },
-  { name:'شمس', emoji:'☀️', choices:['☀️','🌙','⭐'] },
-  { name:'تفاحة', emoji:'🍎', choices:['🍎','🍌','🍇'] },
-  { name:'سمكة', emoji:'🐟', choices:['🐟','🐢','🦋'] },
-  { name:'بيت', emoji:'🏠', choices:['🏠','🚗','🚀'] },
-  { name:'وردة', emoji:'🌹', choices:['🌹','🌳','🍄'] },
-  { name:'قلب', emoji:'❤️', choices:['❤️','⭐','☁️'] },
-  { name:'سيارة', emoji:'🚗', choices:['🚗','🚲','🚂'] },
-  { name:'بالونة', emoji:'🎈', choices:['🎈','🎁','🎀'] },
-  { name:'فراشة', emoji:'🦋', choices:['🦋','🐝','🐞'] },
-  { name:'موزة', emoji:'🍌', choices:['🍌','🍎','🍐'] },
-  { name:'نجمة', emoji:'⭐', choices:['⭐','☀️','🌙'] },
-  { name:'شجرة', emoji:'🌳', choices:['🌳','🌴','🌵'] },
-  { name:'أسد', emoji:'🦁', choices:['🦁','🐯','🐻'] },
-  { name:'قمر', emoji:'🌙', choices:['🌙','⭐','☀️'] },
-  { name:'فيل', emoji:'🐘', choices:['🐘','🦒','🦓'] },
-  { name:'دراجة', emoji:'🚲', choices:['🚲','🚗','🛵'] },
-  { name:'صاروخ', emoji:'🚀', choices:['🚀','✈️','🚂'] },
-  { name:'مظلة', emoji:'☂️', choices:['☂️','🎈','🌂'] },
-  { name:'مفتاح', emoji:'🔑', choices:['🔑','🔒','🗝️'] },
-  { name:'ساعة', emoji:'⏰', choices:['⏰','⌚','🕰️'] },
-  { name:'قارب', emoji:'⛵', choices:['⛵','🚗','🚀'] },
-  { name:'طائرة', emoji:'✈️', choices:['✈️','🚁','🚀'] },
-  { name:'سلحفاة', emoji:'🐢', choices:['🐢','🐸','🐠'] },
-  { name:'جمل', emoji:'🐪', choices:['🐪','🦒','🐘'] },
-  { name:'دب', emoji:'🐻', choices:['🐻','🐼','🦁'] },
-  { name:'نحلة', emoji:'🐝', choices:['🐝','🦋','🐞'] },
-  { name:'بطة', emoji:'🦆', choices:['🦆','🐥','🐧'] },
-  { name:'حذاء', emoji:'👟', choices:['👟','🧦','🧢'] },
-  { name:'كتاب', emoji:'📖', choices:['📖','📓','✏️'] },
-  { name:'كرسي', emoji:'🪑', choices:['🪑','🛋️','🛏️'] },
-  { name:'كعكة', emoji:'🎂', choices:['🎂','🍩','🍪'] },
-  { name:'موز', emoji:'🍌', choices:['🍌','🍐','🌽'] },
-  { name:'نظارة', emoji:'👓', choices:['👓','🕶️','🎩'] },
-  { name:'بالون', emoji:'🎈', choices:['🎈','🎁','🎀'] }
-];
 const MEMORY_EMOJI = [
   '🐱','🐶','🐸','🦊','🐼','🐻','🐰','🦁','🐯','🐨','🐵','🐮','🐷','🐧','🐢',
   '🦋','🐝','🐞','🐬','🐳','🐙','🦀','🦄','🦖','🐘','🦒','🦓','🐿️','🦉','🐥',
@@ -725,10 +688,10 @@ function feedbackSignal(old,next) {
 }
 function addFeedback(old,type) { return {seq:(old.feedback?.seq||0)+1,type}; }
 const WIN_LINES = [[0,1,2],[3,4,5],[6,7,8],[0,3,6],[1,4,7],[2,5,8],[0,4,8],[2,4,6]];
-let auth, db, uid, roomCode = '', role = '', meta = null, state = null, presence = {}, strokes = {};
+let auth, db, uid, roomCode = '', role = '', meta = null, state = null, presence = {};
 let retiredSequenceCleanupBusy = false;
-let connected = false, unsubs = [], presenceBound = false, hideKey = '', pointerIsDown = false;
-let lastPoint = null, lastDrawAt = 0, lastRenderingKey = '';
+let connected = false, unsubs = [], presenceBound = false, hideKey = '';
+let lastRenderingKey = '';
 let coloringSelectedColor=COLOR_PALETTE[0], puzzleSelectedPiece=null, sortingDragSelected=false;
 let alphabetMusicTimer=null, alphabetMusicEnabled=false;
 let snakeRollVisualKey='', snakeMoveVisualKey='';
@@ -1469,34 +1432,7 @@ function renderTtt() {
   </div>`;
 }
 function renderDraw() {
-  const game = state.draw;
-  if (!game) return;
-  const item = DRAW_ITEMS[game.promptIndex];
-  if (!item) { info('فيه مشكلة في السؤال. بابا يقدر يرجع للمدينة.'); return; }
-  const drawer = game.drawer === role;
-  const options = (game.options || []).map((emoji,i) => {
-    const chosen = (game.guesses || []).includes(emoji);
-    const correct=chosen && emoji===item.emoji;
-    return `<button class="choice ${chosen?(correct?'is-correct':'is-wrong'):''}" data-guess="${i}" ${drawer || chosen || state.phase !== 'playing' ? 'disabled':''} aria-label="${emoji}${chosen?(correct?'، إجابة صحيحة':'، إجابة غلط'):''}">${emoji}${chosen?`<span class="choice-result-tag">${correct?'✅ صح':'❌ غلط'}</span>`:''}</button>`;
-  }).join('');
-  let caption;
-  if (state.phase === 'finished') caption = `الإجابة: ${item.emoji} ${item.name} — ${state.result === 'correct' ? 'برافو! 👏' : 'حاولوا تاني الجولة الجاية 💕'}`;
-  else caption = drawer ? `ارسم ${item.name} ${item.emoji} من غير ما تقول الإجابة!` : `شوف الرسمة واختار الصورة الصح! ${game.guesses?.length ? 'جرب اختيار تاني 💪' : ''}`;
-  const wrongGuesses=(game.guesses||[]).filter(emoji=>emoji!==item.emoji);
-  const wrongAnswer=wrongGuesses.length?`<div class="answer-feedback is-wrong" role="status"><strong>❌ ${wrongGuesses.length>1?'الاختيارات دي غلط':'الإجابة دي غلط'}:</strong><div class="feedback-answer">${wrongGuesses.join('، ')}</div>${state.phase==='playing'?'<p>جرّب اختيار تاني 💪</p>':''}</div>`:'';
-  screen.innerHTML = `<div class="panel">${gameHeading('🎨','ارسم وخمّن')}
-    <div class="draw-prompt-compact"><strong>${drawer?'✏️ دورك ترسم':'👀 دورك تخمّن'}</strong><span>${drawer?`${item.name} ${item.emoji}`:caption}</span></div>
-    <div class="drawing-wrap ${drawer && state.phase==='playing'?'':'readonly'}"><canvas id="drawing" width="800" height="600" aria-label="لوحة الرسم المشتركة"></canvas></div>
-    ${drawer && state.phase==='playing' ? '<p class="hint center">استخدم صباعك للرسم على اللوحة ✏️</p>' : ''}
-    ${!drawer && state.phase==='playing' ? `<div class="choices">${options}</div>` : ''}
-    ${wrongAnswer}
-    ${state.phase==='finished'?`<div class="finish"><strong>${state.result==='correct'?'🎉 إجابة صحيحة!':'💜 خلصت المحاولات'}</strong><p>✅ الإجابة الصحيحة: ${item.emoji} ${item.name}</p><p>رسّام الجولة الجاية: ${nameOf(other(game.drawer))}</p></div>`:''}
-    ${role==='host' && state.phase==='finished' ? '<div class="btn-row"><button class="btn primary" data-action="next-draw">🎨 الرسمة اللي بعدها</button></div>' : ''}
-    ${drawer && state.phase==='playing' ? '<div class="btn-row"><button class="btn soft" data-action="clear-draw">🧽 امسح الرسمة وابدأ تاني</button></div>' : ''}
-    <p class="rule center">الصح من أول اختيار = 2 ⭐ • من المحاولة التانية أو التالتة = 1 ⭐</p>
-  </div>`;
-  redrawCanvas();
-  bindCanvas(drawer && state.phase === 'playing');
+  screen.innerHTML = '<div class="panel center draw-v1-loading" role="status">🎨 بنجهّز لوحة الرسم…</div>';
 }
 function renderNumberOrder(){
   const q=state.quiz.question,order=state.quiz.order||[],done=state.phase==='finished';
@@ -1874,7 +1810,7 @@ async function cleanupRemovedSequenceState() {
     });
   } finally { retiredSequenceCleanupBusy = false; }
 }
-function newGame(which, old, previousDraw) {
+function newGame(which, old) {
   const childAge=normalizeAge(old?.childAge);
   const common={childAge,childName:normalizeChildName(old?.childName)||'رقية',...(old?.call?{call:old.call}:{})};
   const scores = {...(old?.scores || { host:0,guest:0 })};
@@ -1915,23 +1851,18 @@ function newGame(which, old, previousDraw) {
   if (which === 'ttt') return {...common,game:which,phase:'playing',scores,round,ttt:{board:'.........',turn:round%2===0?'guest':'host'}};
   if (QUIZ_GAMES.includes(which)) return {...common,game:which,phase:'playing',scores,round,quiz:{turn:round%2===0?'guest':'host',question:newQuestion(which,old?.game===which?old?.quiz?.question?.index:-1,childAge,currentNumberTraining())}};
   if (which === 'treasure') return {...common,game:which,phase:'playing',scores,round,treasure:{stage:0,goal:childAge>=8?6:4,turn:round%2===0?'guest':'host',wrong:[],roundScores:{host:0,guest:0},question:newQuestion('treasure',-1,childAge)}};
-  const lastIndex = previousDraw?.promptIndex ?? -1;
-  const drawLimit=childAge<=5?12:childAge<=7?25:DRAW_ITEMS.length;
-  let promptIndex = Math.floor(Math.random()*drawLimit);
-  if (drawLimit>1 && promptIndex===lastIndex) promptIndex=(promptIndex+1)%drawLimit;
-  const item = DRAW_ITEMS[promptIndex];
-  return {...common,game:'draw',phase:'playing',scores,round,draw:{drawer:previousDraw?other(previousDraw.drawer):'host',promptIndex,options:shuffle(item.choices),guesses:[]}};
+  if (which === 'draw') return {...common,game:'draw',phase:'playing',scores,round};
 }
 async function startGame(which) {
   if (role !== 'host' || !canPlay() || !gamesForAge(state?.childAge).includes(which)) return;
   if (which === 'draw') await remove(ref(db,`rooms/${roomCode}/strokes`)).catch(e=>info(humanError(e)));
-  const base = newGame(which,state,which==='draw' && state?.game==='draw'?state.draw:null);
+  const base = newGame(which,state);
   welcomeToGame(which,base.childName,`${roomCode}:${base.round}`);
   await mutateState(old=>({...base,scores:{...old.scores}}));
 }
 async function restart() {
   if (role !== 'host' || state?.phase !== 'finished') return;
-  if (state.game === 'draw') return nextDraw();
+  if (state.game === 'draw') return;
   const which = state.game;
   const next = newGame(which,state);
   await mutateState(old=>old.phase==='finished' && old.game===which ? {...next,scores:{...old.scores}} : undefined);
@@ -1981,19 +1912,6 @@ async function chooseCell(i) {
     if (result==='draw') { scores.host++;scores.guest++; }
     else if (result) scores[result]+=3;
     return {...old,ttt:{board,turn:other(role)},scores,feedback:addFeedback(old,result?'win':'tap'),phase:result?'finished':'playing',...(result?{result}:{})};
-  });
-}
-async function chooseGuess(index) {
-  await mutateState(old=>{
-    if (old.game!=='draw'||old.phase!=='playing'||!old.draw||old.draw.drawer===role) return;
-    const d=old.draw, emoji=d.options?.[index];
-    if (!emoji || (d.guesses||[]).includes(emoji)) return;
-    const guesses=[...(d.guesses||[]),emoji];
-    const correct=emoji===DRAW_ITEMS[d.promptIndex].emoji;
-    const ended=correct||guesses.length>=3;
-    const scores={...old.scores};
-    if (correct) scores[role]+=guesses.length===1?2:1;
-    return {...old,scores,feedback:addFeedback(old,correct?'good':'bad'),draw:{...d,guesses},phase:ended?'finished':'playing',...(ended?{result:correct?'correct':'incorrect'}:{})};
   });
 }
 async function chooseQuiz(index) {
@@ -2107,60 +2025,10 @@ async function chooseTreasure(index) {
         question:correct&&!finished?newQuestion('treasure',q.index,old.childAge):q}};
   });
 }
-async function nextDraw() {
-  if (role!=='host'||state?.game!=='draw'||state.phase!=='finished') return;
-  try { await remove(ref(db,`rooms/${roomCode}/strokes`)); }
-  catch(e) { info(humanError(e)); return; }
-  const next=newGame('draw',state,state.draw);
-  await mutateState(old=>old.game==='draw'&&old.phase==='finished'?{...next,scores:{...old.scores}}:undefined);
-}
-function round3(x) { return Math.max(0,Math.min(1,Math.round(x*1000)/1000)); }
-function redrawCanvas() {
-  const canvas=$('#drawing');
-  if (!canvas) return;
-  const ctx=canvas.getContext('2d');
-  ctx.clearRect(0,0,canvas.width,canvas.height);
-  ctx.fillStyle='#ffffff'; ctx.fillRect(0,0,canvas.width,canvas.height);
-  ctx.strokeStyle='#6953d7'; ctx.lineWidth=8; ctx.lineCap='round';ctx.lineJoin='round';
-  const all=Object.values(strokes||{});
-  for (const line of all) {
-    if (![line.x1,line.y1,line.x2,line.y2].every(Number.isFinite)) continue;
-    ctx.beginPath();ctx.moveTo(line.x1*canvas.width,line.y1*canvas.height);
-    ctx.lineTo(line.x2*canvas.width,line.y2*canvas.height);ctx.stroke();
-  }
-}
-function bindCanvas(enabled) {
-  const canvas=$('#drawing');
-  if (!canvas || !enabled) return;
-  const coords=e=>{const box=canvas.getBoundingClientRect();return {x:round3((e.clientX-box.left)/box.width),y:round3((e.clientY-box.top)/box.height)};};
-  const send=(a,b)=>{
-    if (!connected || Object.keys(strokes||{}).length>=1400) return;
-    push(ref(db,`rooms/${roomCode}/strokes`),{x1:a.x,y1:a.y,x2:b.x,y2:b.y}).catch(e=>info(humanError(e)));
-  };
-  canvas.addEventListener('pointerdown',e=>{
-    e.preventDefault(); pointerIsDown=true;lastPoint=coords(e);lastDrawAt=0;
-    canvas.setPointerCapture(e.pointerId);
-    send(lastPoint,{x:Math.min(1,lastPoint.x+.001),y:lastPoint.y});
-  });
-  canvas.addEventListener('pointermove',e=>{
-    if (!pointerIsDown||!lastPoint)return;
-    e.preventDefault();
-    if (performance.now()-lastDrawAt<32)return;
-    const p=coords(e); send(lastPoint,p); lastPoint=p;lastDrawAt=performance.now();
-  });
-  const stop=e=>{
-    if (!pointerIsDown)return;
-    if (lastPoint && e.type==='pointerup') send(lastPoint,coords(e));
-    pointerIsDown=false;lastPoint=null;
-  };
-  canvas.addEventListener('pointerup',stop);
-  canvas.addEventListener('pointercancel',stop);
-  canvas.addEventListener('lostpointercapture',()=>{pointerIsDown=false;lastPoint=null;});
-}
 function detachRoom() {
   cleanupVoicePeer();
   for (const unsub of unsubs) try { unsub(); } catch(e) { console.warn(e); }
-  unsubs=[];presenceBound=false;meta=null;state=null;presence={};strokes={};role='';lastAudioFeedback=null;snakeRollVisualKey='';snakeMoveVisualKey='';if(snakeRollVisualTimer){clearInterval(snakeRollVisualTimer);snakeRollVisualTimer=null;}
+  unsubs=[];presenceBound=false;meta=null;state=null;presence={};role='';lastAudioFeedback=null;snakeRollVisualKey='';snakeMoveVisualKey='';if(snakeRollVisualTimer){clearInterval(snakeRollVisualTimer);snakeRollVisualTimer=null;}
   renderVoiceCallControls();
 }
 function trackPresence() {
@@ -2186,7 +2054,6 @@ function subscribeRoom(code) {
     trackPresence();render();
   },e=>{info(humanError(e));detachRoom();roomCode='';location.hash='';render();}));
   unsubs.push(onValue(ref(db,`${base}/state`),snap=>{const oldState=state;state=snap.val();if(role==='host'&&state?.sequenceV1)queueMicrotask(cleanupRemovedSequenceState);feedbackSignal(oldState,state);maybeWelcomeOnSync(oldState,state);syncVoiceCall(oldState,state);render();},e=>info(humanError(e))));
-  unsubs.push(onValue(ref(db,`${base}/strokes`),snap=>{strokes=snap.val()||{};redrawCanvas();},e=>info(humanError(e))));
   unsubs.push(onValue(ref(db,`${base}/presence`),snap=>{presence=snap.val()||{};render();},e=>info(humanError(e))));
 }
 async function createRoom() {
@@ -2326,15 +2193,10 @@ screen.addEventListener('click',async e=>{
     return mutateState(old=>old.game===which?newGame(which,old):undefined);
   }
   if (action==='restart') return restart();
-  if (action==='next-draw') return nextDraw();
-  if (action==='clear-draw' && state?.game==='draw' && state.draw.drawer===role) {
-    return remove(ref(db,`rooms/${roomCode}/strokes`)).catch(err=>info(humanError(err)));
-  }
   if (button.dataset.game === 'odd' || button.dataset.game === 'pattern') return;
   if (button.dataset.game) return startGame(button.dataset.game);
   if (button.dataset.memory!==undefined) return chooseCard(Number(button.dataset.memory));
   if (button.dataset.cell!==undefined) return chooseCell(Number(button.dataset.cell));
-  if (button.dataset.guess!==undefined) return chooseGuess(Number(button.dataset.guess));
   if (button.dataset.quiz!==undefined) return chooseQuiz(Number(button.dataset.quiz));
   if (button.dataset.treasure!==undefined) return chooseTreasure(Number(button.dataset.treasure));
 });

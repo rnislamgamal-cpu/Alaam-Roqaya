@@ -7,24 +7,24 @@
 <style>
 :root{--bg:#e6f0ff;--ink:#1e1b4b;--acc:#6d4ce0;--p1:#2563eb;--p2:#db2777}
 *{box-sizing:border-box}html,body{margin:0;min-height:0}
-body{min-height:100vh;display:flex;flex-direction:column;align-items:center;gap:8px;padding:9px 8px 24px;overflow-x:hidden;background:var(--bg);color:var(--ink);font-family:system-ui,"Segoe UI",Tahoma,sans-serif;-webkit-tap-highlight-color:transparent}
-header{width:min(100%,560px);display:flex;align-items:center;justify-content:space-between;gap:8px}
-h1{margin:0;font-size:1.35rem}.hd{display:flex;align-items:center;gap:5px;font-weight:800}
+body{min-height:100%;display:flex;flex-direction:column;align-items:center;gap:6px;padding:5px 6px max(8px,env(safe-area-inset-bottom));overflow-x:hidden;background:var(--bg);color:var(--ink);font-family:system-ui,"Segoe UI",Tahoma,sans-serif;-webkit-tap-highlight-color:transparent}
+header{width:min(100%,760px);display:flex;align-items:center;justify-content:flex-start;gap:8px}
+.hd{display:flex;align-items:center;gap:5px;font-weight:800}
 .ib{width:38px;height:38px;padding:0;border:0;border-radius:50%;background:#fff;font-size:1rem;cursor:pointer;box-shadow:0 3px 0 #c9d6ef}
-#roundControls{display:none;width:min(100%,560px);grid-template-columns:1fr auto;gap:6px}
+#roundControls{display:none;width:min(100%,760px);grid-template-columns:1fr auto;gap:6px}
 #roundControls label{display:flex;align-items:center;justify-content:center;gap:7px;background:#fff;border-radius:11px;padding:6px 8px;font-size:.7rem;font-weight:800}
 #roundControls select{font:inherit;border:0;border-radius:8px;padding:4px 7px;background:#e0e7ff;color:var(--ink)}
 #newGame{display:block;background:#2f6fb1}
-#score{width:min(100%,560px);display:grid;grid-template-columns:1fr 1fr;gap:7px}
+#score{width:min(100%,760px);display:grid;grid-template-columns:1fr 1fr;gap:7px}
 .pc{display:flex;flex-direction:column;align-items:center;padding:5px 7px;border:3px solid var(--c);border-radius:14px;background:#fff;line-height:1.2}
 .pc b{color:var(--c);font-size:.76rem}.pc span{font-size:1rem;font-weight:900}.pc small{font-weight:800;font-size:.66rem;min-height:1.2em}
 .pc.on{background:var(--c);color:#fff}.pc.on b{color:#fff}
 #status{margin:0;min-height:1.45em;font-weight:900;text-align:center;font-size:.85rem}
 #word{display:none;width:min(100%,560px);padding:7px 10px;border-radius:13px;background:#fff8cf;text-align:center;font-weight:900}
 #word.show{display:block}
-#paper{padding:7px;border-radius:19px;background:#fff;border:4px solid var(--acc);box-shadow:0 5px 0 #c4b5f5}
+#paper{width:min(100%,760px);padding:5px;border-radius:16px;background:#fff;border:3px solid var(--acc);box-shadow:0 4px 0 #c4b5f5;flex:0 1 auto;min-height:0}
 canvas{display:block;border-radius:12px;touch-action:none;cursor:crosshair;background:#fffef7}
-#tools{display:none;flex-wrap:wrap;gap:6px;justify-content:center;width:min(100%,560px)}
+#tools{display:none;flex-wrap:wrap;gap:6px;justify-content:center;width:min(100%,760px)}
 .sw{width:34px;height:34px;padding:0;border:3px solid #fff;border-radius:50%;background:var(--c);box-shadow:0 0 0 2px #cbd5e1;font-size:.9rem;cursor:pointer}
 .sw.on,.sz.on{box-shadow:0 0 0 4px var(--acc)}
 .sz{width:38px;height:38px;border:0;border-radius:10px;background:#fff;display:grid;place-items:center;cursor:pointer;box-shadow:0 2px 0 #c9d6ef}
@@ -32,26 +32,39 @@ canvas{display:block;border-radius:12px;touch-action:none;cursor:crosshair;backg
 .tb{height:38px;padding:0 10px;border:0;border-radius:10px;background:#fff;color:var(--ink);font:inherit;font-size:.72rem;font-weight:800;cursor:pointer;box-shadow:0 2px 0 #c9d6ef}
 .big{display:none;font:inherit;border:0;border-radius:14px;padding:10px 22px;background:var(--acc);color:#fff;font-size:.92rem;font-weight:900;cursor:pointer;box-shadow:0 4px 0 #4a30b0}
 .big:disabled,.ib:disabled,.tb:disabled{opacity:.48;cursor:default}
-#opts{display:none;grid-template-columns:1fr 1fr;gap:8px;width:min(100%,560px)}
+#opts{display:none;grid-template-columns:1fr 1fr;gap:8px;width:min(100%,760px)}
 .opt{display:flex;flex-direction:column;align-items:center;gap:2px;padding:8px 5px;border:0;border-radius:16px;background:#fff;color:var(--ink);font:inherit;font-weight:900;font-size:.9rem;cursor:pointer;box-shadow:0 4px 0 #c9d6ef}
 .opt span{font-size:2rem;line-height:1.05}.opt.bad{background:#fee2e2;opacity:.62;box-shadow:none}.opt.ok{background:#bbf7d0;opacity:1;box-shadow:0 0 0 4px #16a34a}.opt:disabled{cursor:default}
 #fb{display:none;margin:0;min-height:1.4em;font-weight:900;text-align:center;font-size:.8rem}
-#final{display:none;width:min(100%,560px);padding:10px;border-radius:16px;background:#fff8cf;text-align:center;font-weight:900}
+#final{display:none;width:min(100%,760px);padding:10px;border-radius:16px;background:#fff8cf;text-align:center;font-weight:900}
+.game-actions{display:flex;justify-content:center;align-items:center;gap:8px;flex-wrap:wrap;width:min(100%,760px)}
+.celebrate{display:none;position:fixed;inset:0;z-index:5;place-items:center;background:#392d6033;pointer-events:none}
+.celebrate.show{display:grid;animation:fadeAway 2.4s ease forwards}.celebrate span{font-size:clamp(5rem,27vw,10rem);filter:drop-shadow(0 8px 8px #392d6040);animation:dance .55s ease-in-out infinite alternate}
+@keyframes dance{to{transform:rotate(12deg) scale(1.12) translateY(-8px)}}@keyframes fadeAway{0%,75%{opacity:1}100%{opacity:0}}
 .tip{margin:0;color:#5b5a86;font-size:.69rem;text-align:center;max-width:560px;line-height:1.5}
 [data-host=yes] #roundControls{display:grid}[data-ph=draw] #tools{display:flex}[data-ph=draw] #done{display:block}
 [data-ph=guess] #opts,[data-ph=result] #opts{display:grid}[data-ph=guess] #fb,[data-ph=result] #fb{display:block}[data-ph=end] #final{display:block}
-@media(max-width:430px){body{gap:6px;padding-inline:5px}h1{font-size:1.15rem}.ib{width:34px;height:34px}.pc{padding:4px 5px}.pc b{font-size:.66rem}.pc span{font-size:.86rem}.pc small{font-size:.57rem}#status{font-size:.74rem}.sw{width:30px;height:30px}.sz{width:34px;height:34px}.tb{height:34px;padding:0 8px;font-size:.64rem}.big{padding:9px 18px;font-size:.8rem}.opt{font-size:.78rem}.opt span{font-size:1.75rem}}
+@media(max-height:720px){body{gap:4px;padding-top:3px}#paper{width:min(100%,calc((100svh - 300px)*1.28));padding:3px}.pc{padding:3px 5px}.pc small{min-height:1em}#status{min-height:1.2em}}
+@media(max-width:430px){body{gap:5px;padding-inline:4px}.ib{width:34px;height:34px}.pc{padding:4px 5px}.pc b{font-size:.66rem}.pc span{font-size:.86rem}.pc small{font-size:.57rem}#status{font-size:.74rem}.sw{width:30px;height:30px}.sz{width:34px;height:34px}.tb{height:34px;padding:0 8px;font-size:.64rem}.big{padding:9px 14px;font-size:.8rem}.opt{font-size:.78rem}.opt span{font-size:1.75rem}}
 </style>
 <link rel="stylesheet" href="game-shell.css?v=1">
+<style>
+body.draw-game{min-height:0!important;height:auto!important;padding:4px 5px max(8px,env(safe-area-inset-bottom))!important;overflow-y:auto!important}
+body.draw-game>header .hd{position:static!important;inset:auto!important;transform:none!important;padding:0!important;background:none!important;box-shadow:none!important}
+body.draw-game:has(header .hd){padding-bottom:max(8px,env(safe-area-inset-bottom))!important}
+body.draw-game>#paper{flex:0 1 auto!important;margin:0!important}
+body.draw-game .game-actions{position:static!important;margin:0!important;padding:2px!important;background:transparent!important}
+body.draw-game .game-actions .big{min-height:42px!important;padding:8px 14px!important;font-size:.8rem!important}
+body.draw-game .tip{display:none!important}
+</style>
 </head>
-<body>
-<header><h1>🎨 ارسم وخمّن</h1><div class="hd"><span id="rnd"></span><button id="snd" class="ib" aria-label="الصوت">🔊</button><button id="city" class="ib" aria-label="المدينة">🎡</button></div></header>
-<div id="roundControls"><label>عدد الجولات <select id="rounds"><option value="4">٤</option><option value="6" selected>٦</option><option value="8">٨</option><option value="10">١٠</option></select></label><button id="newGame" class="tb">🔄 لعبة جديدة</button></div>
+<body class="draw-game">
+<header><div class="hd"><span id="rnd"></span><button id="snd" class="ib" aria-label="الصوت">🔊</button></div></header>
 <div id="score"><div id="hostPc" class="pc" style="--c:var(--p1)"><b>بابا</b><span>⭐ ٠</span><small></small></div><div id="guestPc" class="pc" style="--c:var(--p2)"><b>رقية</b><span>⭐ ٠</span><small></small></div></div>
+<div id="roundControls"><label>عدد الجولات <select id="rounds"><option value="4">٤</option><option value="6" selected>٦</option><option value="8">٨</option><option value="10">١٠</option></select></label><button id="newGame" class="tb">🔄 لعبة جديدة</button></div>
 <p id="status" aria-live="polite">جاري تجهيز اللعبة…</p><div id="word"></div>
-<div id="paper"><canvas id="cv"></canvas></div><div id="tools"></div><button id="done" class="big">خلصت الرسم ✓</button>
-<div id="opts"></div><p id="fb" aria-live="polite"></p><button id="next" class="big">الجولة اللي بعدها ◀</button><div id="final"></div>
-<p class="tip">الصح من أول اختيار = ٢ ⭐ • من المحاولة التانية أو التالتة = ١ ⭐ • الرسم يظهر للطرف الثاني مباشرة</p>
+<div id="paper"><canvas id="cv"></canvas></div><div id="tools"></div><div id="opts"></div><p id="fb" aria-live="polite"></p><div class="game-actions"><button id="done" class="big">خلصت الرسم ✓</button><button id="next" class="big">الجولة اللي بعدها ◀</button><button id="city" class="tb">🎡 المدينة</button></div><div id="final"></div><div id="celebrate" class="celebrate" aria-hidden="true"><span>🐵</span></div>
+<p class="tip">الإجابة من أول محاولة = ٢ ⭐ • من المحاولة الثانية أو الثالثة = ١ ⭐</p>
 <script>
 const $=s=>document.querySelector(s),cv=$('#cv'),ctx=cv.getContext('2d');
 const PAL=['#1f2937','#e63946','#f59e0b','#facc15','#22c55e','#2563eb','#9333ea','#92400e','#fffef7'],SIZES=[4,9,16],E='٠١٢٣٤٥٦٧٨٩',ar=v=>String(v).replace(/[0-9]/g,d=>E[d.charCodeAt(0)-48]),dpr=Math.min(devicePixelRatio||1,2);
@@ -59,12 +72,12 @@ let cfg={role:'guest',childName:'رقية',phase:'draw',roundNo:1,total:6,drawer
 let ci=0,si=1,W=520,H=390,sound=true,ac=null,cur=null,seq=0,stack=[],lines=new Map(),pending=new Map();
 const nameOf=r=>r==='host'?'بابا':(cfg.childName||'رقية'),drawer=()=>cfg.drawer===cfg.role,guesser=()=>!drawer(),canDraw=()=>cfg.phase==='draw'&&drawer();
 function tone(f,a,d,t,v,f2){if(!sound)return;try{ac=ac||new(window.AudioContext||window.webkitAudioContext)();if(ac.state==='suspended')ac.resume();const o=ac.createOscillator(),g=ac.createGain(),s=ac.currentTime+a;o.type=t;o.frequency.setValueAtTime(f,s);if(f2)o.frequency.exponentialRampToValueAtTime(f2,s+d);g.gain.setValueAtTime(v,s);g.gain.exponentialRampToValueAtTime(.001,s+d);o.connect(g);g.connect(ac.destination);o.start(s);o.stop(s+d)}catch{}}
-const sfx={ok:()=>[660,880,1100].forEach((f,k)=>tone(f,k*.09,.2,'triangle',.19)),bad:()=>tone(220,0,.3,'sawtooth',.13,110),win:()=>[523,659,784,1047,784,1047].forEach((f,k)=>tone(f,k*.14,.25,'square',.08))};
+const sfx={ok:()=>[660,880,1100].forEach((f,k)=>tone(f,k*.09,.2,'triangle',.15)),bad:()=>tone(330,0,.16,'sine',.07,260),win:()=>[523,659,784,1047,784,1047].forEach((f,k)=>tone(f,k*.14,.25,'triangle',.09))};
 $('#snd').onclick=()=>{sound=!sound;$('#snd').textContent=sound?'🔊':'🔇'};
 const sig=l=>[l.x1,l.y1,l.x2,l.y2,l.c,l.s].map(v=>Number(v).toFixed(4)).join('|');
 function seg(l){ctx.strokeStyle=PAL[l.c]||PAL[0];ctx.lineWidth=(SIZES[l.s]||SIZES[1])*W/520;ctx.lineCap=ctx.lineJoin='round';ctx.beginPath();ctx.moveTo(l.x1*W,l.y1*H);ctx.lineTo(l.x2*W,l.y2*H);ctx.stroke()}
 function redraw(){ctx.fillStyle='#fffef7';ctx.fillRect(0,0,W,H);for(const l of lines.values())seg(l)}
-function fit(){W=Math.max(250,Math.min(innerWidth-42,520));H=Math.round(W*.75);cv.style.width=W+'px';cv.style.height=H+'px';cv.width=Math.round(W*dpr);cv.height=Math.round(H*dpr);ctx.setTransform(dpr,0,0,dpr,0,0);redraw()}
+function fit(){W=Math.max(220,Math.min(innerWidth-20,760));H=Math.round(W*.68);cv.style.width=W+'px';cv.style.height=H+'px';cv.width=Math.round(W*dpr);cv.height=Math.round(H*dpr);ctx.setTransform(dpr,0,0,dpr,0,0);redraw()}
 const pt=e=>{const r=cv.getBoundingClientRect();return{x:Math.max(0,Math.min(1,(e.clientX-r.left)/r.width)),y:Math.max(0,Math.min(1,(e.clientY-r.top)/r.height))}};
 function sendLine(q){pending.set(sig(q),(pending.get(sig(q))||0)+1);seg(q);parent.postMessage({type:'roqaya-draw-segment',line:q,roundId:cfg.roundId},location.origin)}
 cv.onpointerdown=e=>{if(!canDraw())return;e.preventDefault();cv.setPointerCapture?.(e.pointerId);const p=pt(e),id=`${Date.now().toString(36)}-${++seq}`;cur={id,last:p};stack.push(id);sendLine({x1:p.x,y1:p.y,x2:Math.min(1,p.x+.001),y2:p.y,c:ci,s:si,strokeId:id})};
@@ -81,7 +94,7 @@ function render(){
  const show=guesser()&&['guess','result'].includes(cfg.phase);$('#opts').innerHTML=show?(cfg.options||[]).map((o,i)=>{const wrong=(cfg.guesses||[]).includes(i)&&i!==cfg.correctOption,correct=cfg.phase==='result'&&i===cfg.correctOption;return `<button class="opt ${wrong?'bad':''} ${correct?'ok':''}" data-i="${i}" ${cfg.phase!=='guess'||wrong?'disabled':''}><span>${o.emoji}</span>${o.name}</button>`}).join(''):'';
  if(cfg.phase==='guess'&&guesser())$('#fb').textContent=`المحاولة ${ar((cfg.guesses?.length||0)+1)} من ٣`;else if(cfg.phase==='result'&&guesser())$('#fb').textContent=cfg.result==='correct'?`صح! ✅ +${ar(cfg.lastPoints||0)} ⭐`:'خلصت المحاولات 😅';else $('#fb').textContent='';
  const next=$('#next');next.style.display=((cfg.phase==='result'||cfg.phase==='end')&&cfg.role==='host')?'block':'none';next.textContent=cfg.phase==='end'?'العب تاني 🔄':cfg.roundNo>=cfg.total?'شوف النتيجة 🏆':'الجولة اللي بعدها ◀';
- const final=$('#final');if(cfg.phase==='end'){const hs=cfg.scores?.host||0,gs=cfg.scores?.guest||0;final.textContent=cfg.winner==='draw'?`🤝 تعادل! بابا ${ar(hs)} ⭐ • ${nameOf('guest')} ${ar(gs)} ⭐`:`🏆 ${nameOf(cfg.winner)} كسب! بابا ${ar(hs)} ⭐ • ${nameOf('guest')} ${ar(gs)} ⭐`;if(!cfg._winSound){cfg._winSound=true;sfx.win()}}
+ const final=$('#final');if(cfg.phase==='end'){const hs=cfg.scores?.host||0,gs=cfg.scores?.guest||0;final.textContent=cfg.winner==='draw'?`🤝 تعادل! بابا ${ar(hs)} ⭐ • ${nameOf('guest')} ${ar(gs)} ⭐`:`🏆 ${nameOf(cfg.winner)} كسب! بابا ${ar(hs)} ⭐ • ${nameOf('guest')} ${ar(gs)} ⭐`;if(!cfg._winSound){cfg._winSound=true;sfx.win();const party=$('#celebrate');party.classList.remove('show');void party.offsetWidth;party.classList.add('show')}}else cfg._winSound=false;
 }
 const otherRole=()=>cfg.role==='host'?'guest':'host';
 $('#done').onclick=()=>{if(!canDraw())return;if(lines.size===0&&pending.size===0){cv.animate([{transform:'translateX(-6px)'},{transform:'translateX(6px)'},{transform:'none'}],{duration:250});return}parent.postMessage({type:'roqaya-draw-done',roundId:cfg.roundId},location.origin)};

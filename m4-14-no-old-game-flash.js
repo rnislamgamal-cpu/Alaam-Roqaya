@@ -84,11 +84,6 @@
       guard('jigsaw');
       return;
     }
-    if (screen.querySelector('.drawing-wrap') || screen.querySelector('#drawing')) {
-      guard('draw');
-      return;
-    }
-
     // Core app does not know the externally-added number puzzle and briefly
     // renders its generic "unknown game" message. Hide that hand-off too.
     const text = screen.textContent || '';
