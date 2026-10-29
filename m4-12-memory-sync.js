@@ -10,6 +10,7 @@ const EMO=[...'🐶🐱🐭🐰🦊🐻🐼🐯🦁🐮🐷🐸🐵🐔🐧🦆�
 const currentRoom=()=>location.hash.match(/^#room=([A-Z2-9]{8})$/)?.[1]||'';
 const other=p=>p==='host'?'guest':'host';
 const childName=()=>String(shared?.childName||'رقية');
+const addFeedback=(old,type)=>({seq:(old.feedback?.seq||0)+1,type});
 
 function shuffle(a){
   const x=[...a];
