@@ -1417,7 +1417,9 @@ function renderTtt() {
   screen.innerHTML = `<div class="panel">${gameHeading('❌⭕','إكس أو')}
     <h2 class="game-title center">حط علامتك في 3 خانات على خط واحد</h2>
     <p class="status">${state.phase === 'finished'?'الجولة خلصت 🎊':game.turn===role?'دورك دلوقتي! ✨':`دور ${nameOf(game.turn)} ⏳`}</p>
-    <div class="ttt-grid">${cells}</div>
+    <div class="ttt-board-image" role="group" aria-label="لوحة إكس أو">
+      <div class="ttt-grid">${cells}</div>
+    </div>
     ${finishBox()}
     ${role === 'host' && state.phase === 'finished' ? '<div class="btn-row"><button class="btn primary" data-action="restart">🔁 جولة جديدة</button></div>' : ''}
     <p class="rule center">بابا ❌ • ${childName()} ⭕ • الفوز 3 ⭐ والتعادل ⭐ لكل واحد</p>
