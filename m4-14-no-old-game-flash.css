@@ -1,7 +1,6 @@
 /* M4.14 — prevent legacy game UI from flashing before the replacement loads */
 
 /* JS fallback / transition state for legacy games still being replaced. */
-#screen:has(.snakes-panel),
 #screen:has(.jigsaw-panel),
 #screen.external-game-transition{
   visibility:hidden!important;

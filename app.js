@@ -65,10 +65,6 @@ const GAME_LABELS = {
   phonics:['🔤','الحروف والصور','وصّلي الحرف بالصورة التي تبدأ به']
 };
 
-const BOARD_FINAL_CELL = 100;
-const SNAKES = {98:78,94:71,87:66,64:45,55:34,48:27,35:14};
-const LADDERS = {4:25,13:46,33:49,42:63,50:69,62:81,74:92};
-const DICE_FACES = ['','⚀','⚁','⚂','⚃','⚄','⚅'];
 const COLOR_PALETTE = ['#ef5350','#42a5f5','#fdd835','#66bb6a','#ec6fa9','#ff9800','#8e6bd8','#26c6da'];
 const COLORING_PAGES = [
   {id:'sun-face',name:'الشمس المرِحة',src:'assets/coloring/sun-face.webp',level:'سهل'},
@@ -716,8 +712,6 @@ let connected = false, unsubs = [], presenceBound = false, hideKey = '';
 let lastRenderingKey = '';
 let coloringSelectedColor=COLOR_PALETTE[0], puzzleSelectedPiece=null, sortingDragSelected=false;
 let alphabetMusicTimer=null, alphabetMusicEnabled=false;
-let snakeRollVisualKey='', snakeMoveVisualKey='';
-let snakeRollVisualTimer=null;
 // V20 voice call: ultra-low-bandwidth speech mode for very weak internet,
 // Opus DTX/FEC, adaptive bitrate, a larger jitter buffer when supported,
 // trickle ICE, auto-reconnect, and an optional push-to-talk rescue mode.
@@ -760,20 +754,6 @@ function speakArabicPhrase(text){
 }
 
 
-function snakeTone(frequency=440,duration=.09,volume=.045,type='sine',delay=0){
-  if(!soundEnabled)return;
-  try{
-    const Audio=window.AudioContext||window.webkitAudioContext;if(!Audio)return;
-    audioContext ||= new Audio();if(audioContext.state==='suspended')audioContext.resume().catch(()=>{});
-    const t=audioContext.currentTime+delay,o=audioContext.createOscillator(),g=audioContext.createGain();
-    o.type=type;o.frequency.value=frequency;g.gain.setValueAtTime(.0001,t);g.gain.exponentialRampToValueAtTime(volume,t+.012);g.gain.exponentialRampToValueAtTime(.0001,t+duration);
-    o.connect(g).connect(audioContext.destination);o.start(t);o.stop(t+duration+.02);
-  }catch(_){}
-}
-function snakeDiceTick(index=0){snakeTone(150+(index%4)*34,.055,.032,'square');snakeTone(300+(index%3)*42,.04,.016,'triangle',.018);}
-function snakeStepSound(index=0){snakeTone(index%2?520:430,.08,.05,'sine');snakeTone(index%2?760:650,.045,.02,'triangle',.03);}
-function snakeLadderCheer(){[523,659,784,1047].forEach((f,i)=>snakeTone(f,.17,.065,'sine',i*.13));}
-function snakeSadSound(){[392,330,262,196].forEach((f,i)=>snakeTone(f,.22,.055,'triangle',i*.18));}
 function waitMs(ms){return new Promise(resolve=>setTimeout(resolve,ms));}
 
 function voiceCallSupported(){return Boolean(window.RTCPeerConnection&&navigator.mediaDevices?.getUserMedia);}
@@ -1492,116 +1472,6 @@ function renderTreasure() {
 function celebration(title='أحسنتِ يا بطلة!'){
   return `<div class="mini-celebration" role="status"><div class="celebration-stars">⭐ ✨ 🌟 ✨ ⭐</div><strong>${title}</strong></div>`;
 }
-function snakeTokenPosition(cell){
-  const value=Math.max(1,Math.min(BOARD_FINAL_CELL,Number(cell)||1));
-  const zero=value-1,row=Math.floor(zero/10),colInRow=zero%10;
-  const col=row%2===0?colInRow:9-colInRow;
-  return {x:((col+.5)/10)*100,y:((9-row+.5)/10)*100};
-}
-function snakeBoardPoint(cell){return snakeTokenPosition(cell);}
-function ladderOverlay(start,end){
-  const a=snakeBoardPoint(start),b=snakeBoardPoint(end),dx=b.x-a.x,dy=b.y-a.y,len=Math.hypot(dx,dy)||1;
-  const ox=(-dy/len)*1.25,oy=(dx/len)*1.25;
-  const rails=`<line x1="${a.x+ox}" y1="${a.y+oy}" x2="${b.x+ox}" y2="${b.y+oy}"/><line x1="${a.x-ox}" y1="${a.y-oy}" x2="${b.x-ox}" y2="${b.y-oy}"/>`;
-  let rungs='';for(let i=1;i<=6;i++){const t=i/7,x=a.x+dx*t,y=a.y+dy*t;rungs+=`<line x1="${x+ox}" y1="${y+oy}" x2="${x-ox}" y2="${y-oy}"/>`;}
-  return `<g class="board-ladder">${rails}${rungs}</g>`;
-}
-function snakeCurveGeometry(start,end,index=0){
-  const a=snakeBoardPoint(start),b=snakeBoardPoint(end),dx=b.x-a.x,dy=b.y-a.y,len=Math.hypot(dx,dy)||1;
-  const px=-dy/len,py=dx/len,wave=5.5+(index%3)*1.3,sign=index%2?1:-1;
-  return {a,b,c1:{x:a.x+dx*.30+px*wave*sign,y:a.y+dy*.30+py*wave*sign},c2:{x:a.x+dx*.68-px*wave*sign,y:a.y+dy*.68-py*wave*sign}};
-}
-function snakeOverlay(start,end,index){
-  const g=snakeCurveGeometry(start,end,index),colors=['#ef5b72','#7d63d9','#2cad79','#f38a38','#477bd9','#d45aa6','#28a4b8'],color=colors[index%colors.length];
-  return `<g class="board-snake" style="--snake-color:${color}"><path d="M ${g.a.x} ${g.a.y} C ${g.c1.x} ${g.c1.y}, ${g.c2.x} ${g.c2.y}, ${g.b.x} ${g.b.y}"/><circle class="snake-head" cx="${g.a.x}" cy="${g.a.y}" r="2.7"/><circle class="snake-eye" cx="${g.a.x-.85}" cy="${g.a.y-.55}" r=".45"/><circle class="snake-eye" cx="${g.a.x+.85}" cy="${g.a.y-.55}" r=".45"/></g>`;
-}
-function snakesBoardOverlay(){
-  const ladders=Object.entries(LADDERS).map(([a,b])=>ladderOverlay(Number(a),Number(b))).join('');
-  const snakes=Object.entries(SNAKES).map(([a,b],i)=>snakeOverlay(Number(a),Number(b),i)).join('');
-  return `<svg class="snakes-overlay" viewBox="0 0 100 100" preserveAspectRatio="none" aria-hidden="true">${ladders}${snakes}</svg>`;
-}
-function snakesBoardCells(){
-  const rows=[];
-  for(let row=9;row>=0;row--){
-    const vals=Array.from({length:10},(_,i)=>row*10+i+1);if(row%2===1)vals.reverse();
-    for(const n of vals){
-      const special=LADDERS[n]?'ladder-start':SNAKES[n]?'snake-start':'';
-      rows.push(`<div class="snakes-cell ${special} ${n===1?'start-cell':''} ${n===100?'finish-cell':''}"><span>${arabicDigits(n)}</span>${LADDERS[n]?'<small>🪜</small>':SNAKES[n]?'<small>🐍</small>':n===100?'<small>🏆</small>':''}</div>`);
-    }
-  }
-  return rows.join('');
-}
-function showSnakeEvent(kind){
-  const box=document.querySelector('#snake-event-effect');if(!box)return;
-  box.className=`snake-event-effect show ${kind}`;
-  box.innerHTML=kind==='ladder'?'<strong>🎉 سُلَّم!</strong><span>✨⭐✨</span>':'<strong>😢 ثعبان!</strong><span>🐍💧</span>';
-  setTimeout(()=>{if(box)box.className='snake-event-effect';},1500);
-}
-function setSnakeTokenPosition(token,pos,duration=0){
-  if(!token||!pos)return;
-  token.style.transition=duration?`left ${duration}ms cubic-bezier(.22,.75,.25,1), top ${duration}ms cubic-bezier(.22,.75,.25,1), transform ${Math.min(260,duration)}ms ease`:'none';
-  token.style.left=`${pos.x}%`;token.style.top=`${pos.y}%`;
-}
-function cubicPoint(g,t){
-  const u=1-t;
-  return {x:u*u*u*g.a.x+3*u*u*t*g.c1.x+3*u*t*t*g.c2.x+t*t*t*g.b.x,y:u*u*u*g.a.y+3*u*u*t*g.c1.y+3*u*t*t*g.c2.y+t*t*t*g.b.y};
-}
-async function animateSnakeJump(token,move){
-  if(move.jumpType==='ladder'){
-    showSnakeEvent('ladder');snakeLadderCheer();
-    const from=snakeBoardPoint(move.jumpFrom),to=snakeBoardPoint(move.jumpTo);
-    for(let i=1;i<=9;i++){const t=i/9;setSnakeTokenPosition(token,{x:from.x+(to.x-from.x)*t,y:from.y+(to.y-from.y)*t},125);await waitMs(130);}
-  } else if(move.jumpType==='snake'){
-    showSnakeEvent('snake');snakeSadSound();
-    const entries=Object.keys(SNAKES).map(Number),index=Math.max(0,entries.indexOf(move.jumpFrom)),curve=snakeCurveGeometry(move.jumpFrom,move.jumpTo,index);
-    for(let i=1;i<=14;i++){setSnakeTokenPosition(token,cubicPoint(curve,i/14),115);await waitMs(120);}
-  }
-}
-async function runSnakeMoveAnimation(g){
-  const move=g?.move;if(!move)return;
-  const key=`${state?.round}:${move.id}`;if(snakeMoveVisualKey===key)return;snakeMoveVisualKey=key;
-  await waitMs(80);
-  const token=document.querySelector(`.snake-token[data-player="${move.player}"]`);if(!token)return;
-  for(let i=0;i<(move.steps||[]).length;i++){
-    snakeStepSound(i);token.classList.add('hopping');setSnakeTokenPosition(token,snakeBoardPoint(move.steps[i]),330);await waitMs(350);token.classList.remove('hopping');await waitMs(50);
-  }
-  if(move.jumpType)await animateSnakeJump(token,move);
-  await waitMs(120);
-  if(role===move.player)finishSnakeMove(move.id);
-}
-function startDiceVisual(g){
-  const key=`${state?.round}:${g.rollId}`;if(snakeRollVisualKey===key)return;snakeRollVisualKey=key;
-  if(snakeRollVisualTimer)clearInterval(snakeRollVisualTimer);
-  let tick=0;const face=document.querySelector('#dice-face');if(!face)return;
-  face.classList.add('rolling');
-  snakeRollVisualTimer=setInterval(()=>{tick++;const v=1+((tick*5+g.rollId)%6);face.textContent=DICE_FACES[v];snakeDiceTick(tick);if(tick>=18){clearInterval(snakeRollVisualTimer);snakeRollVisualTimer=null;}},100);
-  setTimeout(()=>{if(role===g.turn)finishDiceRoll(g.rollId);},1950);
-}
-function renderSnakes(){
-  const g=state.snakes;if(!g)return;
-  const host=snakeTokenPosition(g.positions.host),guest=snakeTokenPosition(g.positions.guest);
-  const phase=g.phase||'ready',canRoll=state.phase==='playing'&&g.turn===role&&phase==='ready',canMove=state.phase==='playing'&&g.turn===role&&phase==='rolled';
-  const diceValue=phase==='rolled'?g.dice:null;
-  const status=state.phase==='finished'?'🏁 انتهى السباق!':phase==='rolling'?`🎲 ${nameOf(g.turn)} بيرمي النرد...`:phase==='rolled'?`${nameOf(g.turn)} طلع له ${arabicDigits(g.dice)} — اضغط تحرك`:phase==='moving'?`👣 ${nameOf(g.turn)} بيتحرك...`:canRoll?'دورك ترمي النرد 🎲':`دور ${nameOf(g.turn)} ⏳`;
-  const last=g.lastRoll?`آخر حركة: ${nameOf(g.lastRoll.player)} • ${arabicDigits(g.lastRoll.dice)} خطوات • وصل ${arabicDigits(g.lastRoll.landing)}${g.lastRoll.jump==='ladder'?' 🪜':g.lastRoll.jump==='snake'?' 🐍':''}`:'ابدأوا السباق!';
-  screen.innerHTML=`<div class="panel snakes-panel">${gameHeading('🐍','السلم والثعبان')}
-    <div class="snakes-title-row"><div><h2 class="game-title">سباق الـ ${arabicDigits(BOARD_FINAL_CELL)}</h2><p class="hint">النرد أولًا، وبعد ظهور الرقم اضغط «تحرك» وشوف كل خطوة.</p></div><div class="turn-badge">${g.turn==='host'?'👨 بابا':`👧 ${childName()}`}</div></div>
-    <div class="snakes-summary"><span>👨 بابا: ${arabicDigits(g.positions.host)}</span><span>👧 ${childName()}: ${arabicDigits(g.positions.guest)}</span></div>
-    <div class="snakes-pro-board" id="snakes-board">
-      <div class="snakes-grid">${snakesBoardCells()}</div>${snakesBoardOverlay()}
-      <div class="snakes-token-layer"><div class="snake-token host" data-player="host" style="left:${host.x}%;top:${host.y}%">👨</div>
-      <div class="snake-token guest" data-player="guest" style="left:${guest.x}%;top:${guest.y}%">👧</div></div>
-      <div class="snake-event-effect" id="snake-event-effect"></div>
-    </div>
-    <div class="dice-stage ${phase}"><div id="dice-face" class="dice-face ${phase==='rolling'?'rolling':''}">${diceValue?DICE_FACES[diceValue]:'🎲'}</div><div class="dice-copy"><strong>${phase==='rolled'?`طلع ${arabicDigits(g.dice)}`:phase==='rolling'?'النرد بيلف...':'جاهز؟'}</strong><span>${last}</span></div></div>
-    <p class="status">${status}</p>
-    <div class="btn-row snakes-actions">${canRoll?'<button class="btn primary dice-btn" data-action="roll-dice">🎲 ارمِ النرد</button>':''}${canMove?`<button class="btn pink move-btn" data-action="move-snakes">👣 تحرك ${arabicDigits(g.dice)} خطوات</button>`:''}</div>
-    ${state.phase==='finished'?`${celebration(state.result==='host'?'بابا وصل للكأس! 🏆':`${childName()} وصلت للكأس! 🏆`)}${role==='host'?'<div class="btn-row"><button class="btn primary" data-action="restart">🔁 سباق جديد</button></div>':''}`:''}
-    <p class="rule center">السلالم والثعابين مرسومة من نفس خريطة الحركة، لذلك مكانها مطابق ١٠٠٪ للمنطق • السلم يصعد تدريجيًا • الثعبان ينزل تدريجيًا.</p>
-  </div>`;
-  if(phase==='rolling')startDiceVisual(g);
-  if(phase==='moving')runSnakeMoveAnimation(g);
-}
 function coloringPage(){return COLORING_PAGES[(state?.coloring?.pageIndex||0)%COLORING_PAGES.length]||COLORING_PAGES[0];}
 function coloringHexToRgb(hex){const m=/^#?([0-9a-f]{2})([0-9a-f]{2})([0-9a-f]{2})$/i.exec(hex);return m?[parseInt(m[1],16),parseInt(m[2],16),parseInt(m[3],16)]:[239,83,80];}
 function floodFillColoring(ctx,x,y,color){
@@ -1733,7 +1603,6 @@ function render() {
   if (state.game === 'draw') return renderDraw();
   if (QUIZ_GAMES.includes(state.game)) return renderQuiz();
   if (state.game === 'treasure') return renderTreasure();
-  if (state.game === 'snakes') return renderSnakes();
   if (state.game === 'coloring') return renderColoring();
   if (state.game === 'jigsaw') return renderJigsaw();
   if (state.game === 'sorting') return renderSorting();
@@ -1812,7 +1681,7 @@ function newGame(which, old) {
   if (which === 'memory') {
     return { ...common,game:which,phase:'playing',scores,round };
   }
-  if (which === 'snakes') return {...common,game:which,phase:'playing',scores,round,snakes:{positions:{host:1,guest:1},turn:round%2===0?'guest':'host',phase:'ready',dice:null,pendingDice:null,rollId:0,moveId:0,move:null,lastRoll:null}};
+  if (which === 'snakes') return {...common,game:which,phase:'playing',scores,round};
   if (which === 'coloring') {
     const previous=old?.game==='coloring'?old.coloring?.pageIndex:-1,pageIndex=(Number(previous)+1)%COLORING_PAGES.length;
     return {...common,game:which,phase:'playing',scores,round,coloring:{pageIndex,ops:[]}};
@@ -1894,44 +1763,6 @@ async function chooseQuiz(index) {
   });
 }
 
-async function rollDice(){
-  const pending=1+Math.floor(Math.random()*6);
-  sound('tap');
-  await mutateState(old=>{
-    if(old.game!=='snakes'||old.phase!=='playing'||old.snakes?.turn!==role)return;
-    const g=old.snakes;if((g.phase||'ready')!=='ready')return;
-    return {...old,snakes:{...g,phase:'rolling',pendingDice:pending,dice:null,rollId:(g.rollId||0)+1,move:null}};
-  });
-}
-async function finishDiceRoll(rollId){
-  await mutateState(old=>{
-    if(old.game!=='snakes'||old.phase!=='playing'||old.snakes?.turn!==role)return;
-    const g=old.snakes;if(g.phase!=='rolling'||g.rollId!==rollId||!Number.isInteger(g.pendingDice))return;
-    return {...old,snakes:{...g,phase:'rolled',dice:g.pendingDice,pendingDice:null}};
-  });
-}
-async function startSnakeMove(){
-  await mutateState(old=>{
-    if(old.game!=='snakes'||old.phase!=='playing'||old.snakes?.turn!==role)return;
-    const g=old.snakes;if(g.phase!=='rolled'||!Number.isInteger(g.dice))return;
-    const start=Number(g.positions?.[role])||1,steps=[];
-    for(let i=1;i<=g.dice;i++){steps.push(Math.min(BOARD_FINAL_CELL,start+i));if(steps.at(-1)>=BOARD_FINAL_CELL)break;}
-    const jumpFrom=steps.at(-1)||start;
-    const jumpType=LADDERS[jumpFrom]?'ladder':SNAKES[jumpFrom]?'snake':'';
-    const jumpTo=jumpType==='ladder'?LADDERS[jumpFrom]:jumpType==='snake'?SNAKES[jumpFrom]:jumpFrom;
-    const id=(g.moveId||0)+1;
-    return {...old,snakes:{...g,phase:'moving',moveId:id,move:{id,player:role,dice:g.dice,steps,jumpType,jumpFrom,jumpTo,destination:jumpTo}}};
-  });
-}
-async function finishSnakeMove(moveId){
-  await mutateState(old=>{
-    if(old.game!=='snakes'||old.phase!=='playing'||old.snakes?.turn!==role)return;
-    const g=old.snakes,m=g.move;if(g.phase!=='moving'||!m||m.id!==moveId||m.player!==role)return;
-    const positions={...g.positions,[role]:m.destination},finished=m.destination>=BOARD_FINAL_CELL,scores={...old.scores};
-    if(finished)scores[role]+=5;
-    return {...old,scores,feedback:addFeedback(old,finished?'win':'tap'),phase:finished?'finished':'playing',...(finished?{result:role}:{}),snakes:{...g,positions,turn:finished?g.turn:other(role),phase:finished?'done':'ready',dice:null,pendingDice:null,move:null,lastRoll:{player:role,dice:m.dice,jump:m.jumpType,landing:m.destination}}};
-  });
-}
 async function colorPart(index){ return; }
 async function placePuzzle(piece,slot,source){
   if(!Number.isInteger(piece)||!Number.isInteger(slot))return;
@@ -1986,7 +1817,7 @@ async function chooseTreasure(index) {
 function detachRoom() {
   cleanupVoicePeer();
   for (const unsub of unsubs) try { unsub(); } catch(e) { console.warn(e); }
-  unsubs=[];presenceBound=false;meta=null;state=null;presence={};role='';lastAudioFeedback=null;snakeRollVisualKey='';snakeMoveVisualKey='';if(snakeRollVisualTimer){clearInterval(snakeRollVisualTimer);snakeRollVisualTimer=null;}
+  unsubs=[];presenceBound=false;meta=null;state=null;presence={};role='';lastAudioFeedback=null;
   renderVoiceCallControls();
 }
 function trackPresence() {
@@ -2110,8 +1941,6 @@ screen.addEventListener('click',async e=>{
   if (action==='join') return joinRoom();
   if (action==='copy') return copyLink();
   if (action==='lobby') return goLobby();
-  if (action==='roll-dice') return rollDice();
-  if (action==='move-snakes') return startSnakeMove();
   if (action==='reset-coloring'&&role==='host'&&state?.game==='coloring') return mutateState(old=>old.game==='coloring'?{...old,phase:'playing',coloring:{...old.coloring,ops:[]}}:undefined);
   if (action==='next-coloring'&&role==='host'&&state?.game==='coloring') return mutateState(old=>old.game==='coloring'?newGame('coloring',old):undefined);
   if (action==='alphabet-music') {toggleAlphabetMusic();render();return;}

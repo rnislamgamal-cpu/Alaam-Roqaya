@@ -72,10 +72,6 @@
     }
 
     // The memory legacy renderer has been removed; its dedicated V1 module owns it.
-    if (screen.querySelector('.snakes-panel')) {
-      guard('snakes');
-      return;
-    }
     if (screen.querySelector('.jigsaw-panel')) {
       guard('jigsaw');
       return;

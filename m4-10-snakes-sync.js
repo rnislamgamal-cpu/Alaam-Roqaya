@@ -47,16 +47,17 @@ function freshSnake(roundId,previousSeed=null){
 }
 async function ensureSync(){
   if(initBusy||role!=='host'||shared?.game!=='snakes')return;
-  if(shared.snakeV2?.v===2&&Number(shared.snakeV2.roundId)===Number(shared.round))return;
+  if(shared.snakeV2?.v===2&&Number(shared.snakeV2.roundId)===Number(shared.round)&&!shared.snakes)return;
   initBusy=true;
   try{
     await mutate(old=>{
       if(old.game!=='snakes')return;
       if(old.snakeV2?.v===2&&Number(old.snakeV2.roundId)===Number(old.round)){
-        if(old.snakeV2.boardSeed!=null)return old;
-        return {...old,snakeV2:{...old.snakeV2,boardSeed:nextBoardSeed()}};
+        const next={...old};delete next.snakes;
+        if(next.snakeV2.boardSeed==null)next.snakeV2={...next.snakeV2,boardSeed:nextBoardSeed()};
+        return next;
       }
-      return {...old,phase:'playing',snakeV2:freshSnake(Number(old.round)||1,old.snakeV2?.boardSeed)};
+      const next={...old,phase:'playing',snakeV2:freshSnake(Number(old.round)||1,old.snakeV2?.boardSeed)};delete next.snakes;return next;
     });
   }finally{initBusy=false}
 }
@@ -73,7 +74,7 @@ function ensureOverlay(){
   overlay.id='snakes-v2-overlay';
   overlay.className='snakes-v2-overlay';
   overlay.hidden=true;
-  overlay.innerHTML='<iframe class="snakes-v2-frame" src="snakes-game.html?v=10" title="السلم والثعبان" loading="eager"></iframe>';
+  overlay.innerHTML='<iframe class="snakes-v2-frame" src="snakes-game.html?v=12" title="السلم والثعبان" loading="eager"></iframe>';
   screen.insertAdjacentElement('afterend',overlay);
   frame=overlay.querySelector('iframe');
   frame.addEventListener('load',sendConfig);
@@ -90,6 +91,7 @@ function sendConfig(){
   frame.contentWindow.postMessage({type:'roqaya-snakes-config',config:{
     role,
     childName:childName(),
+    scores:shared.scores||{host:0,guest:0},
     positions:g.positions||{host:0,guest:0},
     turn:g.turn||'host',
     phase:g.phase||'ready',
